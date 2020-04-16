@@ -3,7 +3,7 @@ from ...core.types import PciAddr
 from ...core.utils import incrange
 
 from ...components.scd import Scd
-from ...components.cpu.rook import RookStatusLeds, RookSysCpld
+from ...components.cpu.rook import RookStatusLeds, RookSysCpld, RookCpldRegisters
 from ...components.lm73 import Lm73
 from ...components.max6658 import Max6658
 
@@ -16,7 +16,7 @@ class RookCpu(Cpu):
    PLATFORM = 'rook'
 
    def __init__(self, hwmonOffset=3, fanCount=4, fanCpldCls=None, mgmtBus=15,
-                **kwargs):
+                cpldRegisterCls=RookCpldRegisters, **kwargs):
       super(RookCpu, self).__init__(**kwargs)
       cpld = self.newComponent(Scd, PciAddr(bus=0xff, device=0x0b, func=3))
       self.cpld = cpld
@@ -54,7 +54,8 @@ class RookCpu(Cpu):
 
       cpld.createPowerCycle()
 
-      self.syscpld = self.newComponent(RookSysCpld, cpld.i2cAddr(8, 0x23))
+      self.syscpld = self.newComponent(RookSysCpld, cpld.i2cAddr(8, 0x23),
+                                       registerCli=cpldRegisterCls)
 
    def cpuDpmAddr(self, addr=0x4e, t=3, **kwargs):
       return self.cpld.i2cAddr(1, addr, t=t, **kwargs)
