@@ -318,6 +318,9 @@ class Scd(PciComponent):
    def getInterrupts(self):
       return self.interrupts
 
+   def getInterrupt(self, interruptId):
+      return self.interrupts[interruptId]
+
    def addBusTweak(self, addr, t=1, datr=3, datw=3, ed=0):
       self.i2cAddr(addr.bus, addr.address, t=t, datr=datr, datw=datw, ed=ed )
 
