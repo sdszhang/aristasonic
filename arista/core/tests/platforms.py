@@ -212,6 +212,9 @@ class MockTest(unittest.TestCase):
             assert isinstance(temp, TempImpl)
             assert isinstance(temp.driver, Driver)
             assert isinstance(temp.sensor, SensorDesc)
+            assert isinstance(temp.sensor.target, float)
+            assert isinstance(temp.sensor.overheat, float)
+            assert isinstance(temp.sensor.critical, float)
             assert isinstance(temp.name, str)
             assert isinstance(temp.getTemperature(), float)
             assert ((not temp.getTemperature() < 0) and

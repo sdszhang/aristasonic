@@ -14,6 +14,6 @@ class SensorDesc(HwDesc):
       self.diode = diode
       self.name = name
       self.position = position
-      self.target = target
-      self.overheat = overheat
-      self.critical = critical
+      self.target = float(target)
+      self.overheat = float(overheat)
+      self.critical = float(critical)
