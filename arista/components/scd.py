@@ -498,3 +498,7 @@ class I2cScd(I2cComponent):
       if not drivers:
          drivers = [ScdI2cDevDriver(addr=addr, registerCls=registerCls)]
       super(I2cScd, self).__init__(addr=addr, drivers=drivers, **kwargs)
+
+   def __getattr__(self, key):
+      driver = self.drivers['ScdI2cDevDriver']
+      return getattr(driver.regs, key)
