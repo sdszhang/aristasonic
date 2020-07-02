@@ -1,4 +1,4 @@
-from ctypes import c_uint8, c_uint16, c_uint32, cast, pointer, POINTER
+from ctypes import c_uint8, c_uint16, c_uint32, cast, pointer, POINTER, sizeof
 from ctypes import create_string_buffer, Structure
 from fcntl import ioctl
 
@@ -20,19 +20,21 @@ class i2c_rdwr_ioctl_data(Structure):
    ]
 
 def _makeI2cRdwrRequest(addr, reg, size, data, read):
-   msg_data_type = i2c_msg*2
+   nmsgs = 2 if read else 1
+   msg_data_type = i2c_msg * nmsgs
    msg_data = msg_data_type()
    msg_data[0].addr = addr
    msg_data[0].flags = 0
-   msg_data[0].len = 1
-   msg_data[0].buf = reg
-   msg_data[1].addr = addr
-   msg_data[1].flags = I2C_M_RD if read else 0
-   msg_data[1].len = size
-   msg_data[1].buf = data
+   msg_data[0].len = sizeof(reg.contents)
+   msg_data[0].buf = cast(reg, POINTER(c_uint8))
+   if read:
+      msg_data[1].addr = addr
+      msg_data[1].flags = I2C_M_RD if read else 0
+      msg_data[1].len = size
+      msg_data[1].buf = data
    request = i2c_rdwr_ioctl_data()
    request.msgs = msg_data
-   request.nmsgs = 2
+   request.nmsgs = nmsgs
    return request
 
 class I2cMsg(object):
@@ -61,12 +63,8 @@ class I2cMsg(object):
 
    def setI2cBlock(self, devAddr, command, data):
       length = len(data)
-      result = create_string_buffer(length)
-      for i in range(0, length):
-         cast(result, POINTER(c_uint8))[i] = data[i]
-      reg = c_uint8(command)
-      request = _makeI2cRdwrRequest(devAddr, pointer(reg), length,
-                                    cast(result, POINTER(c_uint8)), 0)
+      reg = (c_uint8 * (1 + length))(command, *data)
+      request = _makeI2cRdwrRequest(devAddr, pointer(reg), 0, None, 0)
       ioctl(self.device.fileno(), I2C_RDWR, request)
 
    def getI2cBlock(self, devAddr, command, length):

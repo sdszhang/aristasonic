@@ -609,7 +609,8 @@ static u32 scd_smbus_func(struct i2c_adapter *adapter)
 {
    return I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
       I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_WORD_DATA |
-      I2C_FUNC_SMBUS_I2C_BLOCK | I2C_FUNC_SMBUS_BLOCK_DATA | I2C_FUNC_I2C;
+      I2C_FUNC_SMBUS_I2C_BLOCK | I2C_FUNC_SMBUS_BLOCK_DATA |
+      I2C_FUNC_I2C | I2C_FUNC_NOSTART;
 }
 
 static void smbus_master_reset(struct scd_smbus_master *master)
@@ -946,55 +947,348 @@ static s32 scd_smbus_access(struct i2c_adapter *adap, u16 addr,
                                 data, I2C_SMBUS_BLOCK_MAX + 2);
 }
 
-static int scd_smbus_master_xfer_get_command(struct i2c_msg *msg) {
-   if ((msg->flags & I2C_M_RD) || (msg->len != 1)) {
-      scd_dbg("i2c rw: unsupported command.\n");
-      return -EINVAL;
+static int scd_smbus_master_enter(struct scd_smbus_master *master,
+                                  int foe, union smbus_ctrl_status_reg *_cs)
+{
+   union smbus_ctrl_status_reg cs;
+   int err;
+
+   err = 0;
+
+   cs = smbus_master_read_cs(master);
+
+   if (cs.fe || cs.brb || cs.nrq || cs.fs) {
+      int i;
+
+      cs.reset = 1;
+      smbus_master_write_cs(master, cs);
+
+      for (i = 1; i <= 8; i *= 2) {
+         cs = smbus_master_read_cs(master);
+
+         err = (cs.reset &&
+                !cs.fe && !cs.brb && !cs.nrq && !cs.fs) ? 0 : -EIO;
+         if (!err)
+            break;
+
+         msleep(i);
+      }
+      if (err)
+         master_err(master, "cs " CS_FMT " err=%d\n", CS_ARGS(cs), err);
    }
-   return msg->buf[0];
+
+   if (!err && (cs.reset || cs.foe != foe)) {
+      cs.reset = 0;
+      cs.foe = foe;
+      smbus_master_write_cs(master, cs);
+
+      cs = smbus_master_read_cs(master);
+      err = cs.reset ? -EIO : 0;
+      if (err)
+         master_err(master, "cs " CS_FMT " err=%d\n", CS_ARGS(cs), err);
+   }
+
+   if (!err && _cs)
+      *_cs = cs;
+
+   return err;
+}
+
+static void scd_smbus_master_leave(struct scd_smbus_master *master,
+                                   int err)
+{
+   union smbus_ctrl_status_reg cs;
+
+   cs = smbus_master_read_cs(master);
+
+   if (!err && cs.fs) {
+      int i;
+
+      /* Show data left in the response fifo.
+         Unconsumed PEC codes etc. */
+      master_dbg(master,
+                 "cs " CS_FMT " dropping %d rsps\n",
+                 CS_ARGS(cs), cs.fs);
+
+      for (i = 0; i < cs.fs; i++) {
+         union smbus_response_reg rsp =
+            __smbus_master_read_resp(master);
+         master_dbg(master, "rsp " RSP_FMT "\n", RSP_ARGS(rsp));
+      }
+
+      cs = smbus_master_read_cs(master);
+   }
+
+   if (cs.fs || cs.fe) {
+      cs.reset = 1;
+      smbus_master_write_cs(master, cs);
+   }
+}
+
+static int scd_smbus_master_wait(struct scd_smbus_master *master)
+{
+   const int delay_per_byte[4] = { 110, 35, 14, 14 };
+   union smbus_ctrl_status_reg cs;
+   unsigned long start;
+
+   start = jiffies;
+
+   cs = smbus_master_read_cs(master);
+
+   while (!cs.fe) {
+      int nrq;
+      unsigned long timeo;
+
+      /* reset timeo */
+      nrq = cs.nrq;
+      timeo = jiffies + msecs_to_jiffies(100);
+
+      do {
+         int fsz, delay;
+
+         fsz = scd_smbus_cs_fsz(cs);
+         if (fsz > 0 && cs.fs >= fsz) {
+            /* saw req { .br=1, .sp=1, .. } reproduce this */
+            master_err(master,
+                       "cs " CS_FMT " fsz=%d, overflow\n",
+                       CS_ARGS(cs), fsz);
+            return -EOVERFLOW;
+         }
+
+         if (jiffies > timeo) {
+            master_err(master,
+                       "cs " CS_FMT " timed out after %ums\n",
+                       CS_ARGS(cs), jiffies_to_msecs(jiffies - start));
+            return -ETIMEDOUT;
+         }
+
+         delay = (nrq + 1) * delay_per_byte[cs.sp];
+         master_dbg(master, "delay=%dus\n", delay);
+
+         usleep_range(delay, 2 * delay);
+
+         cs = smbus_master_read_cs(master);
+
+      } while (!cs.fe && nrq == cs.nrq);
+   }
+
+   smbus_master_write_cs(master, cs); /* clear cs.fe */
+
+   return 0;
 }
 
 static int scd_smbus_master_xfer(struct i2c_adapter *adap,
-                           struct i2c_msg *msgs,
-                           int num)
+                                 struct i2c_msg *msgs, int num)
 {
    struct scd_smbus *bus = i2c_get_adapdata(adap);
-   int ret, command;
-   int read_write;
-   union i2c_smbus_data *data;
-   int len;
-   struct i2c_msg *msg;
+   struct i2c_msg *msg, *end = msgs + num;
+   union smbus_ctrl_status_reg cs;
+   union smbus_request_reg req;
+   int ss, ti, err;
 
-   if (num > 2) {
-      scd_err("i2c rw num=%d adapter=\"%s\" (unsupported request)\n",
-              num, bus->adap.name);
-      return -EINVAL;
-   }
+   ss = 0;
+   for (msg = msgs; msg < end; msg++) {
+      ss += 1 + msg->len;
 
-   if (num == 2) {
-      command = scd_smbus_master_xfer_get_command(&msgs[0]);
-      if (command < 0) {
-         return command;
+      master_dbg(bus->master,
+                 "bus %d msg[%ld] { .addr=%#x .flags=%#x .len=%#x } ss=%d\n",
+                 bus->id, msg - msgs, msg->addr, msg->flags, msg->len, ss );
+
+      if (msg->flags & I2C_M_TEN) {
+         return -EOPNOTSUPP;
       }
-      data = (union i2c_smbus_data*)msgs[1].buf;
-      len = msgs[1].len;
-      msg = &msgs[1];
-   } else {
-      command = msgs[0].buf[0];
-      data = (union i2c_smbus_data*)&msgs[0].buf[1];
-      len = msgs[0].len - 1;
-      msg = &msgs[0];
+
+      if ((msg->flags & I2C_M_RECV_LEN) && msg + 1 < end) {
+         return -EOPNOTSUPP;
+      }
    }
 
-   scd_dbg("i2c rw num=%d adapter=\"%s\"\n", num, bus->adap.name);
-   read_write = (msg->flags & I2C_M_RD) ? I2C_SMBUS_READ : 0;
-   ret = scd_smbus_access_impl(adap, msg->addr, 0, read_write, command,
-                               I2C_SMBUS_I2C_BLOCK_DATA_MSG, data, len);
-   if (ret) {
-      scd_warn("i2c rw error=0x%x adapter=\"%s\"\n", ret, bus->adap.name);
-      return ret;
+   smbus_master_lock(bus->master);
+
+   err = scd_smbus_master_enter(bus->master, 1, &cs);
+   if (err)
+      goto out;
+
+   req.reg = 0;
+   req.ss = ss;
+
+   ti = 0;
+   for (msg = msgs; msg < end; msg++) {
+      int rd = !!(msg->flags & I2C_M_RD);
+      int br = !!(msg->flags & I2C_M_RECV_LEN);
+      int ns = !!(msg->flags & I2C_M_NOSTART);
+      const struct bus_params *params;
+      int i;
+
+      params = get_smbus_params(bus, msg->addr);
+
+      req.ti = ti++;
+      req.sp = req.ti == ss;
+      req.bs = bus->id;
+      req.st = !ns;
+      req.dod = 1;
+      req.da = 0;
+      req.br = 0;
+      req.d = (msg->addr << 1) | rd;
+      req.t = params->t;
+
+      smbus_master_write_req(bus->master, req);
+
+      req.st = 0;
+      req.ss = 0;
+      req.dod = !rd;
+
+      i = 0;
+
+      if (br) {
+         req.ti = ti++;
+         req.sp = 0;
+         req.br = cs.ver >= 2;
+         req.da = 1;
+         req.d = 0;
+         req.ed = params->ed;
+
+         smbus_master_write_req(bus->master, req);
+
+         i++;
+      }
+
+      for (; i < msg->len; i++) {
+         req.ti = ti++;
+         req.sp = ti == ss;
+         req.d = rd ? 0 : msg->buf[i];
+         req.da = rd && !req.sp;
+         req.ed = req.sp ? params->ed : 0;
+
+         smbus_master_write_req(bus->master, req);
+      }
    }
-   return num;
+
+   err = scd_smbus_master_wait(bus->master);
+   if (err)
+      goto out;
+
+   ti = 0;
+   for (msg = msgs; msg < end; msg++) {
+      union smbus_response_reg rsp;
+      int rd = !!(msg->flags & I2C_M_RD);
+      int br = !!(msg->flags & I2C_M_RECV_LEN);
+      int i;
+
+      rsp = __smbus_master_read_resp(bus->master);
+      err = smbus_check_resp(rsp, ti, NULL);
+      if (err) {
+         /* nak for msg[0].addr is not a protocol violation, so lower
+            the log level. */
+         union smbus_response_reg nak = {
+            .ti=0, .ss=ss, .ack_error=1
+         };
+         if (ti == 0 && rsp.reg == nak.reg) {
+            master_dbg(bus->master,
+                       "rsp " RSP_FMT " ti=%d err=%d\n",
+                       RSP_ARGS(rsp), ti, err);
+         } else {
+            master_err(bus->master,
+                       "rsp " RSP_FMT " ti=%d err=%d\n",
+                       RSP_ARGS(rsp), ti, err);
+         }
+         goto out;
+      }
+      ti++;
+
+      for (i = 0; i < msg->len; i++) {
+         rsp = __smbus_master_read_resp(bus->master);
+         err = smbus_check_resp(rsp, ti, NULL);
+         if (err) {
+            master_err(bus->master,
+                       "rsp " RSP_FMT " ti=%d err=%d\n",
+                       RSP_ARGS(rsp), ti, err);
+            goto out;
+         }
+         ti++;
+
+         if (rd)
+            msg->buf[i] = rsp.d;
+
+         if (i == 0 && br) {
+            /*
+              msg.len (I2C_M_RECV_LEN block transfer)
+
+              At time of user entry
+
+              - msg.len holds msg.buf size.
+              - msg.buf[0] holds extra byte count: len [, pec..])
+
+              Next, i2cdev_ioctl_rdwr will
+
+              1. check msg.buf[0] >= 1, to accomodate len.
+              2. check msg.len >= msg.buf[0] + I2C_SMBUS_BLOCK_MAX
+              3. set msg.len := msg.buf[0]
+              4. call master_xfer
+              5. copy_to_user(..., msg->buf, msg->len)
+
+              Therefore, master_xfer will
+
+              1. receive msg.buf[0]
+              2. add msg.buf[0] to to msg.len
+
+              As with smbus block transfers:
+                1 <= valid len <= I2C_SMBUS_BLOCK_MAX.
+            */
+
+            if (msg->buf[0] < 1 ||
+                msg->buf[0] > I2C_SMBUS_BLOCK_MAX) {
+               err = -EPROTO;
+               master_err(bus->master,
+                          "rsp " RSP_FMT " ti=%d err=%d\n",
+                          RSP_ARGS(rsp), ti, err);
+               goto out;
+            }
+
+            msg->len += msg->buf[0];
+
+            if (cs.ver < 2) {
+               const struct bus_params *params;
+               int j;
+
+               params = get_smbus_params(bus, msg->addr);
+
+               ti = 0;
+               ss = msg->len - 1;
+
+               req.reg = 0;
+               req.bs = bus->id;
+               req.ss = ss;
+               req.t = params->t;
+
+               for (j = 0; j < ss; j++) {
+
+                  req.ti = ti++;
+                  req.sp = ti == ss;
+                  req.da = !req.sp;
+                  req.ed = req.sp ? params->ed : 0;
+
+                  smbus_master_write_req(bus->master, req);
+
+                  req.ss = 0;
+               }
+
+               err = scd_smbus_master_wait(bus->master);
+               if (err)
+                  goto out;
+
+               ti = 0;
+            }
+         }
+      }
+   }
+
+out:
+   scd_smbus_master_leave(bus->master, err);
+
+   smbus_master_unlock(bus->master);
+
+   return err ? : num;
 }
 
 static struct i2c_algorithm scd_smbus_algorithm = {
