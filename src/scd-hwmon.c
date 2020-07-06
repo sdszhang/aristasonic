@@ -102,6 +102,19 @@ struct scd_smbus_master {
    int max_retries;
 };
 
+#define master_dbg(_master, _fmt, _args... )          \
+   dev_dbg(&(_master)->ctx->pdev->dev, "#%d " _fmt,    \
+           (_master)->id, ##_args)
+#define master_notice(_master, _fmt, _args... )       \
+   dev_notice(&(_master)->ctx->pdev->dev, "#%d " _fmt, \
+              (_master)->id, ##_args)
+#define master_warn(_master, _fmt, _args... )         \
+   dev_warn(&(_master)->ctx->pdev->dev, "#%d " _fmt " (%s:%d)",   \
+            (_master)->id, ##_args, __func__, __LINE__)
+#define master_err(_master, _fmt, _args... )          \
+   dev_err(&(_master)->ctx->pdev->dev, "#%d " _fmt " (%s:%d)",   \
+           (_master)->id, ##_args, __func__, __LINE__)
+
 struct bus_params {
    struct list_head list;
    u16 addr;
@@ -492,13 +505,14 @@ static void scd_unlock(struct scd_context *ctx)
 static void smbus_master_write_req(struct scd_smbus_master *master,
                                    union smbus_request_reg req)
 {
-   u32 addr = (u32)master->req;
-   scd_write_register(master->ctx->pdev, addr, req.reg);
+   master_dbg(master, "wr req " REQ_FMT "\n", REQ_ARGS(req) );
+   scd_write_register(master->ctx->pdev, master->req, req.reg);
 }
 
 static void smbus_master_write_cs(struct scd_smbus_master *master,
                                   union smbus_ctrl_status_reg cs)
 {
+   master_dbg(master, "wr cs " CS_FMT "\n", CS_ARGS(cs));
    scd_write_register(master->ctx->pdev, master->cs, cs.reg);
 }
 
@@ -506,6 +520,7 @@ static union smbus_ctrl_status_reg smbus_master_read_cs(struct scd_smbus_master 
 {
    union smbus_ctrl_status_reg cs;
    cs.reg = scd_read_register(master->ctx->pdev, master->cs);
+   master_dbg(master, "rd cs " CS_FMT "\n", CS_ARGS(cs));
    return cs;
 }
 
@@ -521,7 +536,7 @@ static union smbus_response_reg smbus_master_read_resp(struct scd_smbus_master *
       cs = smbus_master_read_cs(master);
    }
    if (!cs.fs)
-      scd_dbg("smbus response: fifo still empty after retries");
+      master_err(master, "fifo still empty after retries");
 
    resp.reg = scd_read_register(master->ctx->pdev, master->resp);
    return resp;
