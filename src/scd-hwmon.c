@@ -336,6 +336,38 @@ union smbus_request_reg {
    } __packed;
 };
 
+#define REQ_FMT     \
+   "{"              \
+   " .reg=0x%08x,"  \
+   " .ti=%02d,"     \
+   " .bs=%#x,"      \
+   " .st=%d,"       \
+   " .dod=%d,"      \
+   " .da=%d,"       \
+   " .sp=%d,"       \
+   " .t=%d,"        \
+   " .dat=%#x,"     \
+   " .br=%d,"       \
+   " .ed=%d,"       \
+   " .ss=%02d,"     \
+   " .d=0x%02x"    \
+   " }"
+
+#define REQ_ARGS(_req)  \
+   (_req).reg,          \
+   (_req).ti,           \
+   (_req).bs,           \
+   (_req).st,           \
+   (_req).dod,          \
+   (_req).da,           \
+   (_req).sp,           \
+   (_req).t,            \
+   (_req).dat,          \
+   (_req).br,           \
+   (_req).ed,           \
+   (_req).ss,           \
+   (_req).d
+
 union smbus_ctrl_status_reg {
    u32 reg;
    struct {
@@ -350,6 +382,26 @@ union smbus_ctrl_status_reg {
       u32 reset:1;
    } __packed;
 };
+
+#define CS_FMT      \
+   "{"              \
+   " .reg=0x%08x,"  \
+   " .reset=%d"     \
+   " .fe=%d,"       \
+   " .ver=%d,"      \
+   " .brb=%d,"      \
+   " .foe=%d,"      \
+   " .fs=%d"        \
+   " }"
+
+#define CS_ARGS(_cs)  \
+   (_cs).reg,         \
+   (_cs).reset,       \
+   (_cs).fe,          \
+   (_cs).ver,         \
+   (_cs).brb,         \
+   (_cs).foe,         \
+   (_cs).fs
 
 union smbus_response_reg {
    u32 reg;
@@ -366,6 +418,32 @@ union smbus_response_reg {
       u32 fe:1;
    } __packed;
 };
+
+#define RSP_FMT                \
+   "{"                         \
+   " .reg=0x%08x,"             \
+   " .fe=%d,"                  \
+   " .foe=%d,"                 \
+   " .ss=%02d,"                \
+   " .ti=%02d,"                \
+   " .flushed=%d,"             \
+   " .ack_error=%d,"           \
+   " .timeout_error=%d,"       \
+   " .bus_conflict_error=%d,"  \
+   " .d=0x%02x"                \
+   " }"
+
+#define RSP_ARGS(_rsp)        \
+   (_rsp).reg,                \
+   (_rsp).fe,                 \
+   (_rsp).foe,                \
+   (_rsp).ss,                 \
+   (_rsp).ti,                 \
+   (_rsp).flushed,            \
+   (_rsp).ack_error,          \
+   (_rsp).timeout_error,      \
+   (_rsp).bus_conflict_error, \
+   (_rsp).d
 
 /* locking functions */
 static struct mutex scd_hwmon_mutex;
