@@ -387,7 +387,8 @@ union smbus_ctrl_status_reg {
       u32 fs:10;
       u32 reserved1:3;
       u32 foe:1;
-      u32 reserved2:12;
+      u32 sp:2;
+      u32 nrq:10;
       u32 brb:1;
       u32 reserved3:1;
       u32 ver:2;
@@ -403,6 +404,8 @@ union smbus_ctrl_status_reg {
    " .fe=%d,"       \
    " .ver=%d,"      \
    " .brb=%d,"      \
+   " .nrq=%d,"      \
+   " .sp=%#x,"      \
    " .foe=%d,"      \
    " .fs=%d"        \
    " }"
@@ -413,6 +416,8 @@ union smbus_ctrl_status_reg {
    (_cs).fe,          \
    (_cs).ver,         \
    (_cs).brb,         \
+   (_cs).nrq,         \
+   (_cs).sp,          \
    (_cs).foe,         \
    (_cs).fs
 
