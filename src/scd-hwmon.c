@@ -524,10 +524,17 @@ static union smbus_ctrl_status_reg smbus_master_read_cs(struct scd_smbus_master 
    return cs;
 }
 
+static union smbus_response_reg __smbus_master_read_resp(struct scd_smbus_master *master)
+{
+   union smbus_response_reg resp;
+   resp.reg = scd_read_register(master->ctx->pdev, master->resp);
+   master_dbg(master, "rd rsp " RSP_FMT "\n", RSP_ARGS(resp));
+   return resp;
+}
+
 static union smbus_response_reg smbus_master_read_resp(struct scd_smbus_master *master)
 {
    union smbus_ctrl_status_reg cs;
-   union smbus_response_reg resp;
    u32 retries = 20;
 
    cs = smbus_master_read_cs(master);
@@ -538,8 +545,7 @@ static union smbus_response_reg smbus_master_read_resp(struct scd_smbus_master *
    if (!cs.fs)
       master_err(master, "fifo still empty after retries");
 
-   resp.reg = scd_read_register(master->ctx->pdev, master->resp);
-   return resp;
+   return __smbus_master_read_resp(master);
 }
 
 static s32 smbus_check_resp(union smbus_response_reg resp, u32 tid,
