@@ -587,7 +587,7 @@ static s32 smbus_check_resp(union smbus_response_reg resp, u32 tid,
       error = "flush";
       goto fail;
    }
-   if (resp.ti != tid) {
+   if (resp.ti != (tid & 0xf)) {
       error = "tid";
       goto fail;
    }
