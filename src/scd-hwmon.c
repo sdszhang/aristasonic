@@ -385,7 +385,7 @@ union smbus_ctrl_status_reg {
    u32 reg;
    struct {
       u32 fs:10;
-      u32 reserved1:3;
+      u32 fsz:3;
       u32 foe:1;
       u32 sp:2;
       u32 nrq:10;
@@ -397,6 +397,12 @@ union smbus_ctrl_status_reg {
    } __packed;
 };
 
+static inline int
+scd_smbus_cs_fsz(union smbus_ctrl_status_reg cs)
+{
+   return ((int[]){127, 255, 511, 1023, -1, -1, -1, -1})[cs.fsz];
+}
+
 #define CS_FMT      \
    "{"              \
    " .reg=0x%08x,"  \
@@ -407,6 +413,7 @@ union smbus_ctrl_status_reg {
    " .nrq=%d,"      \
    " .sp=%#x,"      \
    " .foe=%d,"      \
+   " .fsz=%d,"      \
    " .fs=%d"        \
    " }"
 
@@ -419,6 +426,7 @@ union smbus_ctrl_status_reg {
    (_cs).nrq,         \
    (_cs).sp,          \
    (_cs).foe,         \
+   (_cs).fsz,         \
    (_cs).fs
 
 union smbus_response_reg {
