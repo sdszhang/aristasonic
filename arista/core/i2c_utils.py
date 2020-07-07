@@ -1,9 +1,20 @@
-from ctypes import c_uint8, c_uint16, c_uint32, cast, pointer, POINTER, sizeof
-from ctypes import create_string_buffer, Structure
+from ctypes import \
+   c_uint8, \
+   c_uint16, \
+   c_uint32, \
+   POINTER, \
+   Structure, \
+   sizeof, \
+   cast, \
+   pointer
 from fcntl import ioctl
 
 I2C_M_RD = 0x0001
+I2C_M_RECV_LEN = 0x0400
+
 I2C_RDWR = 0x0707
+
+I2C_SMBUS_BLOCK_MAX = 32
 
 class i2c_msg(Structure):
    _fields_ = [
@@ -13,29 +24,64 @@ class i2c_msg(Structure):
       ('buf', POINTER(c_uint8))
    ]
 
+   def __str__(self):
+      return "%s(%#x, %#x, %d, [%s])" % (
+         self.__class__.__name__,
+         self.addr, self.flags, self.len,
+         ', '.join([
+            "%#x" % self.buf[i]
+            for i in range(self.len)
+         ]))
+
+   def __repr__(self):
+      return str(self)
+
 class i2c_rdwr_ioctl_data(Structure):
    _fields_ = [
       ('msgs', POINTER(i2c_msg)),
       ('nmsgs', c_uint32)
    ]
 
-def _makeI2cRdwrRequest(addr, reg, size, data, read):
-   nmsgs = 2 if read else 1
-   msg_data_type = i2c_msg * nmsgs
-   msg_data = msg_data_type()
-   msg_data[0].addr = addr
-   msg_data[0].flags = 0
-   msg_data[0].len = sizeof(reg.contents)
-   msg_data[0].buf = cast(reg, POINTER(c_uint8))
-   if read:
-      msg_data[1].addr = addr
-      msg_data[1].flags = I2C_M_RD if read else 0
-      msg_data[1].len = size
-      msg_data[1].buf = data
-   request = i2c_rdwr_ioctl_data()
-   request.msgs = msg_data
-   request.nmsgs = nmsgs
-   return request
+   @classmethod
+   def write_bytes(cls, addr, wrbuf):
+      msg_data = (i2c_msg * 1)(
+         i2c_msg(addr, 0,
+                 sizeof(wrbuf.contents),
+                 cast(wrbuf, POINTER(c_uint8)))
+      )
+      return cls(msg_data, 1)
+
+   @classmethod
+   def read_bytes(cls, addr, wrbuf, rdbuf):
+      msg_data = (i2c_msg * 2)(
+         i2c_msg(addr, 0,
+                 sizeof(wrbuf.contents),
+                 cast(wrbuf, POINTER(c_uint8))),
+         i2c_msg(addr, I2C_M_RD,
+                 sizeof(rdbuf.contents),
+                 cast(rdbuf, POINTER(c_uint8)))
+      )
+      return cls(msg_data, 2)
+
+   @classmethod
+   def read_block(cls, addr, wrbuf, rdbuf):
+      msg_data = (i2c_msg * 2)(
+         i2c_msg(addr, 0,
+                 sizeof(wrbuf.contents),
+                 cast(wrbuf, POINTER(c_uint8))),
+         i2c_msg(addr, I2C_M_RD | I2C_M_RECV_LEN,
+                 sizeof(rdbuf.contents),
+                 cast(rdbuf, POINTER(c_uint8)))
+      )
+      return cls(msg_data, 2)
+
+   def __str__(self):
+      return "%s(%s)" % (
+         self.__class__.__name__,
+         [self.msgs[i] for i in range(self.nmsgs)])
+
+   def __repr__(self):
+      return str(self)
 
 class I2cMsg(object):
    def __init__(self, addr):
@@ -61,16 +107,29 @@ class I2cMsg(object):
    def __exit__(self, *args):
       self.close()
 
-   def setI2cBlock(self, devAddr, command, data):
-      length = len(data)
-      reg = (c_uint8 * (1 + length))(command, *data)
-      request = _makeI2cRdwrRequest(devAddr, pointer(reg), 0, None, 0)
-      ioctl(self.device.fileno(), I2C_RDWR, request)
+   def i2c_rdwr(self, data):
+      ioctl(self.device.fileno(), I2C_RDWR, data)
 
-   def getI2cBlock(self, devAddr, command, length):
-      result = create_string_buffer(length)
-      reg = c_uint8(command)
-      request = _makeI2cRdwrRequest(devAddr, pointer(reg), length,
-                                    cast(result, POINTER(c_uint8)), 1)
-      ioctl(self.device.fileno(), I2C_RDWR, request)
-      return [ord(c) for c in result.raw]
+   def write_bytes(self, addr, cmd):
+      wrbuf = (c_uint8 * len(cmd))(*cmd)
+      ioctl_data = i2c_rdwr_ioctl_data.write_bytes(addr,
+                                                   pointer(wrbuf))
+      self.i2c_rdwr(ioctl_data)
+
+   def read_bytes(self, addr, cmd, datalen):
+      wrbuf = (c_uint8 * len(cmd))(*cmd)
+      rdbuf = (c_uint8 * datalen)()
+      ioctl_data = i2c_rdwr_ioctl_data.read_bytes(addr,
+                                                  pointer(wrbuf),
+                                                  pointer(rdbuf))
+      self.i2c_rdwr(ioctl_data)
+      return [c for c in rdbuf]
+
+   def read_block(self, addr, cmd):
+      wrbuf = (c_uint8 * len(cmd))(*cmd)
+      rdbuf = (c_uint8 * (1 + I2C_SMBUS_BLOCK_MAX))( 1 )
+      ioctl_data = i2c_rdwr_ioctl_data.read_block(addr,
+                                                  pointer(wrbuf),
+                                                  pointer(rdbuf))
+      self.i2c_rdwr(ioctl_data)
+      return [rdbuf[i] for i in range(ioctl_data.msgs[1].len)]

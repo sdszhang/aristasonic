@@ -30,11 +30,11 @@ class UcdI2cDevDriver(Driver):
 
    def getBlock(self, reg):
       size = self.bus.read_byte_data(self.addr.address, reg) + 1
-      data = self.busMsg.getI2cBlock(self.addr.address, reg, size)
+      data = self.busMsg.read_bytes(self.addr.address, [reg], size)
       return data[1:data[0]+1]
 
    def setBlock(self, reg, data):
-      self.busMsg.setI2cBlock(self.addr.address, reg, [ len(data) ] + data)
+      self.busMsg.write_bytes(self.addr.address, [reg, len(data)] + data)
 
    def getVersion(self):
       if inSimulation():
