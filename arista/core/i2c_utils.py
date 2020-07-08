@@ -8,6 +8,9 @@ from ctypes import \
    cast, \
    pointer
 from fcntl import ioctl
+from .log import getLogger
+
+logging = getLogger(__name__)
 
 I2C_M_RD = 0x0001
 I2C_M_RECV_LEN = 0x0400
@@ -89,7 +92,10 @@ class I2cMsg(object):
       self.device = None
 
    def __str__(self):
-      return '%s(addr=%s, device=%s)' % (self.__class__.__name__, self.addr, self.device)
+      return '%s(%s, fd=%d)' % (
+         self.__class__.__name__,
+         self.addr,
+         self.device.fileno() if self.device else -1)
 
    def open(self):
       if self.device is None:
@@ -108,7 +114,18 @@ class I2cMsg(object):
       self.close()
 
    def i2c_rdwr(self, data):
-      ioctl(self.device.fileno(), I2C_RDWR, data)
+      logging.debug('%s.i2c_rdwr(%s) ..', self, data) # user msgs
+      try:
+         ret = ioctl(self.device.fileno(), I2C_RDWR, data)
+      except IOError as e:
+         ret = -e.errno
+         raise
+      except:
+         ret = None
+         raise
+      finally:
+         logging.debug('%s.i2c_rdwr(%s): ret=%s',
+                       self, data, ret) # kernel msgs
 
    def write_bytes(self, addr, cmd):
       wrbuf = (c_uint8 * len(cmd))(*cmd)
