@@ -26,6 +26,10 @@ class I2cAddr(SysfsPath):
    def address(self):
       return self.address_
 
+   def __repr__(self):
+      return "%s(%d, %#x)" % (
+         self.__class__.__name__, self.bus, self.address)
+
    def __str__(self):
       return '%d-00%02x' % (self.bus, self.address)
 
