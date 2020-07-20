@@ -165,7 +165,7 @@ class Component(object):
    def dump(self, depth=0, prefix=' - '):
       spacer = ' ' * (depth * 3)
       end = '' if len(self.drivers) == 1 else '\n'
-      print('%s%s%s' % (spacer, prefix,self), end=end)
+      print('%s%s%s' % (spacer, prefix, self), end=end)
       if self.components:
          self._dumpNode(depth, prefix)
       else:
@@ -179,7 +179,7 @@ class Component(object):
          "version": 1,
          "name": self.__class__.__name__,
          "data": self.__diag__(ctx),
-         "drivers": [ d.genDiag(ctx) for d in self.drivers.values() ],
+         "drivers": [d.genDiag(ctx) for d in self.drivers.values()],
       }
       if self.inventory not in ctx.inventories:
          output["inventory"] = self.inventory.__diag__(ctx)
@@ -187,7 +187,7 @@ class Component(object):
       else:
          output["inventory"] = None
       if ctx.recursive:
-         output["components"] = [ c.genDiag(ctx) for c in self.iterComponents() ]
+         output["components"] = [c.genDiag(ctx) for c in self.iterComponents()]
       else:
          output["components"] = []
       return output

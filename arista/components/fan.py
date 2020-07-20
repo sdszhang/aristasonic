@@ -10,7 +10,8 @@ from .common import PciComponent
 logging = getLogger(__name__)
 
 class ScdFanComponent(PciComponent):
-   def __init__(self, drivers=None, waitFile=None, fans=[], **kwargs):
+   def __init__(self, drivers=None, waitFile=None, fans=None, **kwargs):
+      fans = fans or []
       fanSysfsDriver = FanSysfsDriver(maxPwm=255,
             sysfsPath='/sys/devices/pci0000:00/0000:00:09.0/hwmon/hwmon2',
             waitFile=waitFile)

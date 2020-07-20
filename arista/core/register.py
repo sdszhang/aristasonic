@@ -165,5 +165,3 @@ class RegisterMap(object):
 
          res.append(info)
       return res
-
-

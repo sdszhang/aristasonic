@@ -22,7 +22,7 @@ class I2cKernelDriver(Driver):
       else:
          self.kernelDriver = None
       if waitFile == utils.WAITFILE_HWMON:
-         waitFile = (self.getSysfsPath(), 'hwmon', 'hwmon\d')
+         waitFile = (self.getSysfsPath(), 'hwmon', r'hwmon\d')
       self.fileWaiter = utils.FileWaiter(waitFile, waitTimeout)
       super(I2cKernelDriver, self).__init__(**kwargs)
 
