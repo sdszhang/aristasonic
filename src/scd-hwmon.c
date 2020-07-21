@@ -384,16 +384,16 @@ union smbus_request_reg {
 union smbus_ctrl_status_reg {
    u32 reg;
    struct {
-      u32 fs:10;
+      u32 nrs:10;
       u32 fsz:3;
       u32 foe:1;
       u32 sp:2;
       u32 nrq:10;
       u32 brb:1;
-      u32 reserved3:1;
+      u32 rsv:1;
       u32 ver:2;
       u32 fe:1;
-      u32 reset:1;
+      u32 rst:1;
    } __packed;
 };
 
@@ -406,7 +406,7 @@ scd_smbus_cs_fsz(union smbus_ctrl_status_reg cs)
 #define CS_FMT      \
    "{"              \
    " .reg=0x%08x,"  \
-   " .reset=%d"     \
+   " .rst=%d"       \
    " .fe=%d,"       \
    " .ver=%d,"      \
    " .brb=%d,"      \
@@ -414,12 +414,12 @@ scd_smbus_cs_fsz(union smbus_ctrl_status_reg cs)
    " .sp=%#x,"      \
    " .foe=%d,"      \
    " .fsz=%d,"      \
-   " .fs=%d"        \
+   " .nrs=%d"       \
    " }"
 
 #define CS_ARGS(_cs)  \
    (_cs).reg,         \
-   (_cs).reset,       \
+   (_cs).rst,         \
    (_cs).fe,          \
    (_cs).ver,         \
    (_cs).brb,         \
@@ -427,7 +427,7 @@ scd_smbus_cs_fsz(union smbus_ctrl_status_reg cs)
    (_cs).sp,          \
    (_cs).foe,         \
    (_cs).fsz,         \
-   (_cs).fs
+   (_cs).nrs
 
 union smbus_response_reg {
    u32 reg;
@@ -601,11 +601,11 @@ static void smbus_master_reset(struct scd_smbus_master *master)
 {
    union smbus_ctrl_status_reg cs;
    cs = smbus_master_read_cs(master);
-   cs.reset = 1;
+   cs.rst = 1;
    cs.foe = 1;
    smbus_master_write_cs(master, cs);
    mdelay(50);
-   cs.reset = 0;
+   cs.rst = 0;
    smbus_master_write_cs(master, cs);
    mdelay(50);
 }
@@ -634,17 +634,17 @@ static int scd_smbus_master_enter(struct scd_smbus_master *master,
 
    cs = smbus_master_read_cs(master);
 
-   if (cs.fe || cs.brb || cs.nrq || cs.fs) {
+   if (cs.fe || cs.brb || cs.nrq || cs.nrs) {
       int i;
 
-      cs.reset = 1;
+      cs.rst = 1;
       smbus_master_write_cs(master, cs);
 
       for (i = 1; i <= 8; i *= 2) {
          cs = smbus_master_read_cs(master);
 
-         err = (cs.reset &&
-                !cs.fe && !cs.brb && !cs.nrq && !cs.fs) ? 0 : -EIO;
+         err = (cs.rst &&
+                !cs.fe && !cs.brb && !cs.nrq && !cs.nrs) ? 0 : -EIO;
          if (!err)
             break;
 
@@ -654,15 +654,13 @@ static int scd_smbus_master_enter(struct scd_smbus_master *master,
          master_err(master, "cs " CS_FMT " err=%d\n", CS_ARGS(cs), err);
    }
 
-   if (!err && (cs.reset || cs.foe != foe)) {
-      cs.reset = 0;
+   if (!err && (cs.rst || cs.foe != foe)) {
+      cs.rst = 0;
       cs.foe = foe;
       smbus_master_write_cs(master, cs);
 
       cs = smbus_master_read_cs(master);
-      err = cs.reset ? -EIO : 0;
-      if (err)
-         master_err(master, "cs " CS_FMT " err=%d\n", CS_ARGS(cs), err);
+      err = cs.rst ? -EIO : 0;
    }
 
    if (!err && _cs)
@@ -678,16 +676,16 @@ static void scd_smbus_master_leave(struct scd_smbus_master *master,
 
    cs = smbus_master_read_cs(master);
 
-   if (!err && cs.fs) {
+   if (!err && cs.nrs) {
       int i;
 
       /* Show data left in the response fifo.
          Unconsumed PEC codes etc. */
       master_dbg(master,
                  "cs " CS_FMT " dropping %d rsps\n",
-                 CS_ARGS(cs), cs.fs);
+                 CS_ARGS(cs), cs.nrs);
 
-      for (i = 0; i < cs.fs; i++) {
+      for (i = 0; i < cs.nrs; i++) {
          union smbus_response_reg rsp =
             __smbus_master_read_resp(master);
          master_dbg(master, "rsp " RSP_FMT "\n", RSP_ARGS(rsp));
@@ -696,8 +694,8 @@ static void scd_smbus_master_leave(struct scd_smbus_master *master,
       cs = smbus_master_read_cs(master);
    }
 
-   if (cs.fs || cs.fe) {
-      cs.reset = 1;
+   if (cs.fe || cs.brb || cs.nrq || cs.nrs) {
+      cs.rst = 1;
       smbus_master_write_cs(master, cs);
    }
 }
@@ -724,7 +722,7 @@ static int scd_smbus_master_wait(struct scd_smbus_master *master)
          int fsz, delay;
 
          fsz = scd_smbus_cs_fsz(cs);
-         if (fsz > 0 && cs.fs >= fsz) {
+         if (fsz > 0 && cs.nrs >= fsz) {
             /* saw req { .br=1, .sp=1, .. } reproduce this */
             master_err(master,
                        "cs " CS_FMT " fsz=%d, overflow\n",
