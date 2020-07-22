@@ -161,7 +161,7 @@ class BlackhawkO(FixedSystem):
          'overtemp': UcdGpi(1),
          'powerloss': UcdGpi(3),
          'watchdog': UcdGpi(5),
-         'reboot': UcdGpi(7),
+         'reboot': UcdGpi(6),
       })
       self.cpu = cpu
       self.syscpld = cpu.syscpld
