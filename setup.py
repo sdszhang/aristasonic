@@ -16,6 +16,10 @@ package_exclude = [
 file_exclude = []
 tests_require = []
 
+py_install_requires = [
+   'pyyaml',
+]
+
 if sys.version_info.major == 2:
    # these sources are python3 only, they raise SyntaxError on python2
    package_exclude.extend([
@@ -27,6 +31,9 @@ if sys.version_info.major == 2:
    ])
    tests_require.extend([
       'mock<=3.0.5', # for python2, version >=4.0.0 drops support for py2
+   ])
+   py_install_requires.extend([
+      'enum34', # for python2, enum support requires this package
    ])
 
 class build_py_with_exclude(build_py):
@@ -42,7 +49,7 @@ setup(
    name='platform-arista',
    version='%s' % os.environ.get('ARISTA_PLATFORM_MODULE_VERSION', '1.0'),
    description='Module to initialize arista platforms',
-   install_requires=['pyyaml'],
+   install_requires=py_install_requires,
    packages=find_packages(exclude=package_exclude),
    test_suite='arista.tests.selftest.allTests',
    tests_require=tests_require,

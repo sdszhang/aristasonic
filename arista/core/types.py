@@ -1,3 +1,4 @@
+import enum
 import os
 
 from collections import namedtuple
@@ -49,11 +50,11 @@ class PciAddr(SysfsPath):
    def getSysfsPath(self):
       return os.path.join('/sys/bus/pci/devices', str(self))
 
-class MdioClause:
+class MdioClause(enum.IntEnum):
    C22 = 1
    C45 = 2
 
-class MdioSpeed:
+class MdioSpeed(enum.IntEnum):
    S20 = 0
    S2_5 = 1
    S5 = 2
