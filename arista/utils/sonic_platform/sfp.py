@@ -40,6 +40,7 @@ class Sfp(SfpBase):
       self._index = index
       self._sfp = sfp
       self._sfputil = None
+      self.sfp_type = sfp.getType().upper()
 
    def get_id(self):
       return self._index
