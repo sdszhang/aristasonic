@@ -98,6 +98,7 @@ struct fan_info {
 struct fan_platform {
    u32 id;
    size_t max_fan_count;
+   size_t max_attr_count;
    const struct fan_info *fan_infos;
    size_t fan_info_count;
 

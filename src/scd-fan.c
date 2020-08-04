@@ -94,7 +94,7 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = NOT_PRESENT_40,
       .hz = 100000,
-      .fans = 1,
+      .fans = 2,
       .rotors = 1,
       .pulses = 2,
       .forward = true,
@@ -103,7 +103,7 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = NOT_PRESENT_80,
       .hz = 100000,
-      .fans = 1,
+      .fans = 2,
       .rotors = 1,
       .pulses = 2,
       .forward = true,
@@ -116,6 +116,7 @@ static const struct fan_platform fan_platforms[] = {
    {
       .id = 3,
       .max_fan_count = 4,
+      .max_attr_count = 7,
       .fan_infos = p3_fan_infos,
       .fan_info_count = ARRAY_SIZE(p3_fan_infos),
 
@@ -512,6 +513,9 @@ static int scd_fan_add(struct scd_fan_group *fan_group, u32 index) {
 
    for (i = 0; i < fan->info->fans; ++i) {
       scd_fan_add_attrs(fan, fan_group->attr_index_count++);
+      if (fan_group->attr_index_count >= fan_group->platform->max_attr_count) {
+         break;
+      }
    }
    fan_group->attr_count += fan->attr_count;
 
