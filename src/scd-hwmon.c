@@ -36,6 +36,9 @@
 #include "scd-fan.h"
 #include "scd-hwmon.h"
 #include "scd-mdio.h"
+#include "scd-smbus.h"
+#define CREATE_TRACE_POINTS
+#include "scd-smbus-trace.h"
 
 // sizeof_field was introduced in v4.15 and FIELD_SIZEOF removed in 4.20
 #ifndef sizeof_field
@@ -43,12 +46,6 @@
 #endif
 
 #define SCD_MODULE_NAME "scd-hwmon"
-
-#define SMBUS_REQUEST_OFFSET 0x10
-#define SMBUS_CONTROL_STATUS_OFFSET 0x20
-#define SMBUS_RESPONSE_OFFSET 0x30
-
-#define I2C_SMBUS_I2C_BLOCK_DATA_MSG 0x9
 
 #define RESET_SET_OFFSET 0x00
 #define RESET_CLEAR_OFFSET 0x10
@@ -58,8 +55,6 @@
 
 #define MAX_CONFIG_LINE_SIZE 100
 
-#define SMBUS_BLOCK_READ_TIMEOUT_STEP 1
-
 #define FAIL_REASON_MAX_SZ 50
 #define SET_FAIL_REASON(fail_reason, ...) \
    snprintf(fail_reason, FAIL_REASON_MAX_SZ, ##__VA_ARGS__)
@@ -68,38 +63,6 @@ static int smbus_master_max_retries = MASTER_DEFAULT_MAX_RETRIES;
 module_param(smbus_master_max_retries, int, S_IRUSR | S_IWUSR);
 MODULE_PARM_DESC(smbus_master_max_retries,
                  "Number of smbus transaction retries to perform on error");
-
-struct scd_context {
-   struct pci_dev *pdev;
-   size_t res_size;
-
-   struct list_head list;
-
-   struct mutex mutex;
-   bool initialized;
-
-   struct list_head gpio_list;
-   struct list_head reset_list;
-   struct list_head led_list;
-   struct list_head smbus_master_list;
-   struct list_head mdio_master_list;
-   struct list_head xcvr_list;
-   struct list_head fan_group_list;
-};
-
-struct scd_smbus_master {
-   struct scd_context *ctx;
-   struct list_head list;
-
-   u32 id;
-   u32 req;
-   u32 cs;
-   u32 resp;
-   struct mutex mutex;
-   struct list_head bus_list;
-
-   int max_retries;
-};
 
 #define master_dbg(_master, _fmt, _args... )          \
    dev_dbg(&(_master)->ctx->pdev->dev, "#%d " _fmt,    \
@@ -330,146 +293,6 @@ struct scd_fan_group {
    size_t fan_count;
 };
 
-union smbus_request_reg {
-   u32 reg;
-   struct {
-      u32 d:8;
-      u32 ss:6;
-      u32 ed:1;
-      u32 br:1;
-      u32 dat:2;
-      u32 t:2;
-      u32 sp:1;
-      u32 da:1;
-      u32 dod:1;
-      u32 st:1;
-      u32 bs:4;
-      u32 ti:4;
-   } __packed;
-};
-
-#define REQ_FMT     \
-   "{"              \
-   " .reg=0x%08x,"  \
-   " .ti=%02d,"     \
-   " .bs=%#x,"      \
-   " .st=%d,"       \
-   " .dod=%d,"      \
-   " .da=%d,"       \
-   " .sp=%d,"       \
-   " .t=%d,"        \
-   " .dat=%#x,"     \
-   " .br=%d,"       \
-   " .ed=%d,"       \
-   " .ss=%02d,"     \
-   " .d=0x%02x"    \
-   " }"
-
-#define REQ_ARGS(_req)  \
-   (_req).reg,          \
-   (_req).ti,           \
-   (_req).bs,           \
-   (_req).st,           \
-   (_req).dod,          \
-   (_req).da,           \
-   (_req).sp,           \
-   (_req).t,            \
-   (_req).dat,          \
-   (_req).br,           \
-   (_req).ed,           \
-   (_req).ss,           \
-   (_req).d
-
-union smbus_ctrl_status_reg {
-   u32 reg;
-   struct {
-      u32 nrs:10;
-      u32 fsz:3;
-      u32 foe:1;
-      u32 sp:2;
-      u32 nrq:10;
-      u32 brb:1;
-      u32 rsv:1;
-      u32 ver:2;
-      u32 fe:1;
-      u32 rst:1;
-   } __packed;
-};
-
-static inline int
-scd_smbus_cs_fsz(union smbus_ctrl_status_reg cs)
-{
-   return ((int[]){127, 255, 511, 1023, -1, -1, -1, -1})[cs.fsz];
-}
-
-#define CS_FMT      \
-   "{"              \
-   " .reg=0x%08x,"  \
-   " .rst=%d"       \
-   " .fe=%d,"       \
-   " .ver=%d,"      \
-   " .brb=%d,"      \
-   " .nrq=%d,"      \
-   " .sp=%#x,"      \
-   " .foe=%d,"      \
-   " .fsz=%d,"      \
-   " .nrs=%d"       \
-   " }"
-
-#define CS_ARGS(_cs)  \
-   (_cs).reg,         \
-   (_cs).rst,         \
-   (_cs).fe,          \
-   (_cs).ver,         \
-   (_cs).brb,         \
-   (_cs).nrq,         \
-   (_cs).sp,          \
-   (_cs).foe,         \
-   (_cs).fsz,         \
-   (_cs).nrs
-
-union smbus_response_reg {
-   u32 reg;
-   struct {
-      u32 d:8;
-      u32 bus_conflict_error:1;
-      u32 timeout_error:1;
-      u32 ack_error:1;
-      u32 flushed:1;
-      u32 ti:4;
-      u32 ss:6;
-      u32 reserved2:8;
-      u32 foe:1;
-      u32 fe:1;
-   } __packed;
-};
-
-#define RSP_FMT                \
-   "{"                         \
-   " .reg=0x%08x,"             \
-   " .fe=%d,"                  \
-   " .foe=%d,"                 \
-   " .ss=%02d,"                \
-   " .ti=%02d,"                \
-   " .flushed=%d,"             \
-   " .ack_error=%d,"           \
-   " .timeout_error=%d,"       \
-   " .bus_conflict_error=%d,"  \
-   " .d=0x%02x"                \
-   " }"
-
-#define RSP_ARGS(_rsp)        \
-   (_rsp).reg,                \
-   (_rsp).fe,                 \
-   (_rsp).foe,                \
-   (_rsp).ss,                 \
-   (_rsp).ti,                 \
-   (_rsp).flushed,            \
-   (_rsp).ack_error,          \
-   (_rsp).timeout_error,      \
-   (_rsp).bus_conflict_error, \
-   (_rsp).d
-
 /* locking functions */
 static struct mutex scd_hwmon_mutex;
 
@@ -517,6 +340,7 @@ static void scd_unlock(struct scd_context *ctx)
 static void smbus_master_write_req(struct scd_smbus_master *master,
                                    union smbus_request_reg req)
 {
+   trace_scd_smbus_req_wr(master, req);
    master_dbg(master, "wr req " REQ_FMT "\n", REQ_ARGS(req) );
    scd_write_register(master->ctx->pdev, master->req, req.reg);
 }
@@ -524,6 +348,7 @@ static void smbus_master_write_req(struct scd_smbus_master *master,
 static void smbus_master_write_cs(struct scd_smbus_master *master,
                                   union smbus_ctrl_status_reg cs)
 {
+   trace_scd_smbus_cs_wr(master, cs);
    master_dbg(master, "wr cs " CS_FMT "\n", CS_ARGS(cs));
    scd_write_register(master->ctx->pdev, master->cs, cs.reg);
 }
@@ -532,6 +357,7 @@ static union smbus_ctrl_status_reg smbus_master_read_cs(struct scd_smbus_master 
 {
    union smbus_ctrl_status_reg cs;
    cs.reg = scd_read_register(master->ctx->pdev, master->cs);
+   trace_scd_smbus_cs_rd(master, cs);
    master_dbg(master, "rd cs " CS_FMT "\n", CS_ARGS(cs));
    return cs;
 }
@@ -540,6 +366,7 @@ static union smbus_response_reg __smbus_master_read_resp(struct scd_smbus_master
 {
    union smbus_response_reg resp;
    resp.reg = scd_read_register(master->ctx->pdev, master->resp);
+   trace_scd_smbus_rsp_rd(master, resp);
    master_dbg(master, "rd rsp " RSP_FMT "\n", RSP_ARGS(resp));
    return resp;
 }
