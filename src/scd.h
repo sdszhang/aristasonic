@@ -43,6 +43,7 @@ struct scd_em_ops {
 struct scd_ext_ops {
    int (*probe)(struct pci_dev *pdev, size_t mem_len);
    void (*remove)(struct pci_dev *pdev);
+   int (*init_trigger)(struct pci_dev *pdev);
    int (*finish_init)(struct pci_dev *pdev);
 };
 

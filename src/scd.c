@@ -330,6 +330,9 @@ int scd_register_ext_ops(struct scd_ext_ops *ops) {
       if (scd_ext_ops->probe) {
          scd_ext_ops->probe(priv->pdev, priv->mem_len);
       }
+      if (priv->initialized && scd_ext_ops->finish_init) {
+         scd_ext_ops->finish_init(priv->pdev);
+      }
    }
    scd_unlock();
    return 0;
@@ -769,6 +772,11 @@ static int scd_finish_init(struct device *dev)
          priv->irq_info[0].interrupt_mask_read_offset,
          priv->irq_info[0].interrupt_mask_set_offset,
          priv->irq_info[0].interrupt_mask_clear_offset);
+   }
+
+   // scd_ext init_trigger
+   if (scd_ext_ops && scd_ext_ops->init_trigger) {
+      scd_ext_ops->init_trigger(priv->pdev);
    }
 
    // scd_ext finish_init
