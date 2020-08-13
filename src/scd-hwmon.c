@@ -97,7 +97,6 @@ struct scd_smbus_master {
    u32 resp;
    struct mutex mutex;
    struct list_head bus_list;
-   bool br_supported;
 
    int max_retries;
 };
@@ -1136,8 +1135,7 @@ static int scd_smbus_master_add(struct scd_context *ctx, u32 addr, u32 id,
    smbus_master_reset(master);
 
    cs = smbus_master_read_cs(master);
-   master->br_supported = (cs.ver >= 2);
-   scd_dbg("smbus 0x%x:0x%x version %d", id, addr, cs.ver);
+   master_dbg(master, "@%#x version %d", addr, cs.ver);
 
    list_add_tail(&master->list, &ctx->smbus_master_list);
 
