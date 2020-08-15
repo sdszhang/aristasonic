@@ -45,20 +45,63 @@ class HwApi(object):
          return HwApi(value)
       return HwApi((int(v) for v in value.split('.')))
 
-class MmapResource(object):
-   """Resource implementation for a directly-mapped memory region."""
+class ResourceAccessor(object):
+   ''' Base abstraction for accessing resource like files '''
    def __init__(self, path):
       self.path_ = path
-      self.mmap_ = None
+
+   def openResource(self):
+      raise NotImplementedError
+
+   def closeResource(self):
+      raise NotImplementedError
+
+   def readResource(self, addr, size):
+      raise NotImplementedError
+
+   def writeResource(self, addr, size, value):
+      raise NotImplementedError
 
    def __enter__(self):
-      if not self.map():
+      if not self.openResource():
          # raise the last exception from self.map()
-         raise RuntimeError('failed to mmap %s' % self.path_ )
+         raise RuntimeError('failed to mmap %s' % self.path_)
       return self
 
    def __exit__(self, *args):
-      self.close()
+      self.closeResource()
+
+   def _doRead(self, addr, size, unpackFormat):
+      val = self.readResource(addr, size)
+      return unpack('<%s' % unpackFormat, val)[0]
+
+   def _doWrite(self, addr, size, value, packFormat):
+      packedVal = pack('<%s' % packFormat, value)
+      self.writeResource(addr, size, packedVal)
+
+   def read32(self, addr):
+      return self._doRead(addr, 4, 'L')
+
+   def write32(self, addr, value):
+      self._doWrite(addr, 4, value, 'L')
+
+   def read16(self, addr):
+      return self._doRead(addr, 2, 'H')
+
+   def write16(self, addr, value):
+      self._doWrite(addr, 2, value, 'H')
+
+   def read8(self, addr):
+      return self._doRead(addr, 1, 'B')
+
+   def write8(self, addr, value):
+      self._doWrite(addr, 1, value, 'B')
+
+class MmapResource(ResourceAccessor):
+   """Resource implementation for a directly-mapped memory region."""
+   def __init__(self, *args, **kwargs):
+      super(MmapResource, self).__init__(*args, **kwargs)
+      self.mmap_ = None
 
    def map(self):
       assert not self.mmap_, "Resource already mapped"
@@ -93,15 +136,54 @@ class MmapResource(object):
             pass
       return True
 
-   def close( self ):
-      self.mmap_.close()
-      self.mmap_ = None
+   def openResource(self):
+      return self.map()
 
-   def read32( self, addr ):
-      return unpack( '<L', self.mmap_[ addr : addr + 4 ] )[ 0 ]
+   def closeResource(self):
+      if self.mmap_:
+         self.mmap_.close()
+         self.mmap_ = None
 
-   def write32( self, addr, value ):
-      self.mmap_[ addr: addr + 4 ] = pack( '<L', value )
+   def readResource(self, addr, size):
+      return self.mmap_[addr : addr + size]
+
+   def writeResource(self, addr, size, value):
+      self.mmap_[addr: addr + size] = value
+
+class FileResource(ResourceAccessor):
+   ''' Resource implementation for a file base memory region. '''
+   def __init__(self, *args, **kwargs):
+      super(FileResource, self).__init__(*args, **kwargs)
+      self.file_ = None
+
+   def openResource(self):
+      assert not self.file_, 'Resource already opened'
+      try:
+         self.file_ = open(self.path_, mode='rb+')
+      except IOError:
+         logging.error("failed to open file %s", self.path_)
+         return False
+      return True
+
+   def closeResource(self):
+      if self.file_:
+         self.file_.close()
+         self.file_ = None
+
+   def readResource(self, addr, size):
+      # In python3 there's os.pread()
+      p = self.file_.tell()
+      self.file_.seek(addr, os.SEEK_SET)
+      v = self.file_.read(size)
+      self.file_.seek(p, os.SEEK_SET)
+      return v
+
+   def writeResource(self, addr, size, value):
+      # In python3 there's os.pwrite()
+      p = self.file_.tell()
+      self.file_.seek(addr, os.SEEK_SET)
+      self.file_.write(value)
+      self.file_.seek(p, os.SEEK_SET)
 
 def sysfsFmtHex(x):
    return "0x%08x" % x
