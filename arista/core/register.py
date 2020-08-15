@@ -134,15 +134,17 @@ class SetClearRegister(Register):
       self.parent.write(addr, 1 << bitpos)
 
 class RegisterMap(object):
-   def __init__(self, parent):
+   def __init__(self, parent, offset=0):
       self.parent_ = parent
       self.attributes_ = []
+      self.offset = offset
       for key in dir(self):
          attr = getattr(self, key)
          if isinstance(attr, Register):
             self._updateAttributes(copy.deepcopy(attr))
 
    def _updateAttributes(self, reg):
+      reg.addr += self.offset
       attrs = reg.generateAttributes(self.parent_)
       for key, value in attrs.items():
          logging.debug('registering reg: %s', key)
