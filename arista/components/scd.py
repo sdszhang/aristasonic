@@ -266,6 +266,7 @@ class Scd(PciComponent):
       self.mdioMasters = {}
       self.mdios = []
       self.msiRearmOffset = None
+      self.uartPorts = {}
       super(Scd, self).__init__(addr=addr, drivers=drivers, **kwargs)
       self.regs = self.drivers['scd-hwmon'].regs
 
@@ -446,6 +447,16 @@ class Scd(PciComponent):
       mdio = ScdMdio(self, master, bus, devIndex, portAddr, devAddr, clause, name)
       self.mdios.append(mdio)
       return mdio
+
+   def addUartPort(self, addr, portId):
+      self.uartPorts[addr] = {
+         'id': portId,
+      }
+
+   def addUartPortRange(self, base, count, spacing=0x10):
+      addrs = range(base, base + count * spacing, spacing)
+      for i, addr in enumerate(addrs, 0):
+         self.addUartPort(addr, i)
 
    def getSysfsResetNameList(self, xcvrs=True):
       entries = [reset.name for reset in self.resets]

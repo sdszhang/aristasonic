@@ -388,6 +388,25 @@ static ssize_t parse_new_object_gpio(struct scd_context *ctx,
    return count;
 }
 
+// new_uart <addr> <name>
+static ssize_t parse_new_object_uart(struct scd_context *ctx,
+                                     char *buf, size_t count)
+{
+   u32 addr;
+   u32 id;
+
+   const char *tmp;
+
+   if (!buf)
+      return -EINVAL;
+
+   PARSE_ADDR_OR_RETURN(&buf, tmp, u32, &addr, ctx->res_size);
+   PARSE_INT_OR_RETURN(&buf, tmp, u32, &id);
+   PARSE_END_OR_RETURN(&buf, tmp);
+
+   return count;
+}
+
 typedef ssize_t (*new_object_parse_func)(struct scd_context*, char*, size_t);
 static struct {
    const char *name;
@@ -403,6 +422,7 @@ static struct {
    { "reset",           parse_new_object_reset },
    { "sfp",             parse_new_object_sfp },
    { "smbus_master",    parse_new_object_smbus_master },
+   { "uart",            parse_new_object_uart },
    { NULL, NULL }
 };
 
