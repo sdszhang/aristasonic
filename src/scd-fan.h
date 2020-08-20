@@ -18,6 +18,60 @@
 #ifndef _LINUX_DRIVER_SCD_FAN_H_
 #define _LINUX_DRIVER_SCD_FAN_H_
 
+#include <linux/hwmon.h>
+#include <linux/hwmon-sysfs.h>
+
+#include "scd-led.h"
+
+struct scd_context;
+
+struct scd_fan;
+struct scd_fan_group;
+
+#define FAN_ATTR_NAME_MAX_SZ 16
+struct scd_fan_attribute {
+   struct sensor_device_attribute sensor_attr;
+   struct scd_fan *fan;
+
+   char name[FAN_ATTR_NAME_MAX_SZ];
+};
+
+/* Driver data for each fan slot */
+struct scd_fan {
+   struct scd_fan_group *fan_group;
+   struct list_head list;
+
+   u8 index;
+   const struct fan_info *info;
+
+   struct scd_fan_attribute *attrs;
+   size_t attr_count;
+
+   struct led_classdev led_cdev;
+   char led_name[LED_NAME_MAX_SZ];
+};
+
+#define FAN_GROUP_NAME_MAX_SZ 50
+/* Driver data for each fan group */
+struct scd_fan_group {
+   struct scd_context *ctx;
+   struct list_head list;
+
+   char name[FAN_GROUP_NAME_MAX_SZ];
+   const struct fan_platform *platform;
+   struct list_head slot_list;
+
+   struct device *hwmon_dev;
+   const struct attribute_group *groups[2];
+   struct attribute_group group;
+
+   size_t attr_count;
+   size_t attr_index_count;
+
+   u32 addr_base;
+   size_t fan_count;
+};
+
 /* Fan info is for each fan slot */
 enum fan_info_type {
    FAN_7011H_F = 0b000111,
@@ -38,82 +92,6 @@ struct fan_info {
    u8 pulses;
    bool forward;
    bool present;
-};
-
-/* List of fan infos for platform 3 */
-const static struct fan_info p3_fan_infos[] = {
-   {
-      .id = FAN_7011H_F,
-      .hz = 100000,
-      .fans = 2,
-      .rotors = 2,
-      .pulses = 2,
-      .forward = true,
-      .present = true,
-   },
-   {
-      .id = FAN_7011S_F,
-      .hz = 100000,
-      .fans = 2,
-      .rotors = 1,
-      .pulses = 2,
-      .forward = true,
-      .present = true,
-   },
-   {
-      .id = FAN_7011M_F,
-      .hz = 100000,
-      .fans = 2,
-      .rotors = 1,
-      .pulses = 2,
-      .forward = true,
-      .present = true,
-   },
-   {
-      .id = FAN_7011H_R,
-      .hz = 100000,
-      .fans = 2,
-      .rotors = 2,
-      .pulses = 2,
-      .forward = false,
-      .present = true,
-   },
-   {
-      .id = FAN_7011S_R,
-      .hz = 100000,
-      .fans = 2,
-      .rotors = 1,
-      .pulses = 2,
-      .forward = false,
-      .present = true,
-   },
-   {
-      .id = FAN_7011M_R,
-      .hz = 100000,
-      .fans = 2,
-      .rotors = 1,
-      .pulses = 2,
-      .forward = false,
-      .present = true,
-   },
-   {
-      .id = NOT_PRESENT_40,
-      .hz = 100000,
-      .fans = 1,
-      .rotors = 1,
-      .pulses = 2,
-      .forward = true,
-      .present = false,
-   },
-   {
-      .id = NOT_PRESENT_80,
-      .hz = 100000,
-      .fans = 1,
-      .rotors = 1,
-      .pulses = 2,
-      .forward = true,
-      .present = false,
-   },
 };
 
 /* For each fan platform, there are multiple fan slots */
@@ -146,38 +124,6 @@ struct fan_platform {
    u32 mask_red_led;
 };
 
-/* List of fan platforms */
-static const struct fan_platform fan_platforms[] = {
-   {
-      .id = 3,
-      .max_fan_count = 4,
-      .fan_infos = p3_fan_infos,
-      .fan_info_count = ARRAY_SIZE(p3_fan_infos),
-
-      .id_offset = 0x180,
-      .id_step = 0x10,
-
-      .platform_offset = 0x0,
-      .present_offset = 0x1c0,
-      .ok_offset = 0x1d0,
-      .green_led_offset = 0x1e0,
-      .red_led_offset = 0x1f0,
-
-      .speed_offset = 0x10,
-      .speed_step = 0x30,
-      .speed_pwm_offset = 0x0,
-      .speed_tach_outer_offset = 0x10,
-      .speed_tach_inner_offset = 0x20,
-
-      .mask_platform = GENMASK(1, 0),
-      .mask_id = GENMASK(4, 0),
-      .mask_pwm = GENMASK(7, 0),
-      .mask_tach = GENMASK(15, 0),
-      .mask_green_led = 1,
-      .mask_red_led = 2
-   },
-};
-
 /* Constants */
 #define FAN_LED_COLOR_GREEN(_fan) \
     (0xff & (_fan)->fan_group->platform->mask_green_led)
@@ -193,27 +139,8 @@ static const struct fan_platform fan_platforms[] = {
     (FAN_ADDR_2(_group, _type, _index) + \
      (_group)->platform->_type##_##_type2##_offset)
 
-static const struct fan_platform *fan_platform_find(u32 id) {
-   size_t i;
-
-   for (i = 0; i < ARRAY_SIZE(fan_platforms); ++i) {
-      if (fan_platforms[i].id == id) {
-         return &fan_platforms[i];
-      }
-   }
-   return NULL;
-}
-
-static const struct fan_info *fan_info_find(const struct fan_info * infos,
-                                            size_t num, u32 fan_id) {
-   size_t i;
-
-   for (i = 0; i < num; ++i) {
-      if (infos[i].id == fan_id) {
-         return &infos[i];
-      }
-   }
-   return NULL;
-}
+extern int scd_fan_group_add(struct scd_context *ctx, u32 addr, u32 platform_id,
+                             u32 fan_count);
+extern void scd_fan_group_remove_all(struct scd_context *ctx);
 
 #endif /* !_LINUX_DRIVER_SCD_FAN_H_ */

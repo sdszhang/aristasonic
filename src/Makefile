@@ -7,6 +7,7 @@ KBUILD_EXTRA_SYMBOLS += $(EXTRA_SYMBOLS)
 endif
 
 obj-m += scd-hwmon.o
+scd-hwmon-objs += scd-fan.o
 scd-hwmon-objs += scd-led.o
 scd-hwmon-objs += scd-main.o
 scd-hwmon-objs += scd-mdio.o
