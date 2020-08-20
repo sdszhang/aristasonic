@@ -21,6 +21,8 @@
 #include <linux/printk.h>
 #include <linux/pci.h>
 
+#include "scd-uart.h"
+
 // sizeof_field was introduced in v4.15 and FIELD_SIZEOF removed in 4.20
 #ifndef sizeof_field
 # define sizeof_field FIELD_SIZEOF
@@ -42,6 +44,8 @@ struct scd_context {
    struct list_head mdio_master_list;
    struct list_head xcvr_list;
    struct list_head fan_group_list;
+
+   struct scd_uart uart;
 };
 
 static inline struct device *get_scd_dev(struct scd_context *ctx)

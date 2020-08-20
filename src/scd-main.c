@@ -34,6 +34,7 @@
 #include "scd-reset.h"
 #include "scd-smbus.h"
 #include "scd-xcvr.h"
+#include "scd-uart.h"
 
 #define SCD_MODULE_NAME "scd-hwmon"
 
@@ -394,6 +395,7 @@ static ssize_t parse_new_object_uart(struct scd_context *ctx,
 {
    u32 addr;
    u32 id;
+   int res;
 
    const char *tmp;
 
@@ -403,6 +405,10 @@ static ssize_t parse_new_object_uart(struct scd_context *ctx,
    PARSE_ADDR_OR_RETURN(&buf, tmp, u32, &addr, ctx->res_size);
    PARSE_INT_OR_RETURN(&buf, tmp, u32, &id);
    PARSE_END_OR_RETURN(&buf, tmp);
+
+   res = scd_uart_add(ctx, addr, id);
+   if (res)
+      return res;
 
    return count;
 }
@@ -710,6 +716,7 @@ static void scd_ext_hwmon_remove(struct pci_dev *pdev)
    scd_reset_remove_all(ctx);
    scd_xcvr_remove_all(ctx);
    scd_fan_group_remove_all(ctx);
+   scd_uart_remove_all(ctx);
    scd_unlock(ctx);
 
    module_lock();
