@@ -23,10 +23,8 @@
 #include <linux/hwmon.h>
 #include <linux/hwmon-sysfs.h>
 #include <linux/delay.h>
-#include <linux/leds.h>
 #include <linux/gpio.h>
 #include <linux/i2c.h>
-#include <linux/pci.h>
 #include <linux/stat.h>
 #include <linux/mii.h>
 #include <linux/netdevice.h>
@@ -35,15 +33,11 @@
 #include "scd.h"
 #include "scd-fan.h"
 #include "scd-hwmon.h"
+#include "scd-led.h"
 #include "scd-mdio.h"
 #include "scd-smbus.h"
 #define CREATE_TRACE_POINTS
 #include "scd-smbus-trace.h"
-
-// sizeof_field was introduced in v4.15 and FIELD_SIZEOF removed in 4.20
-#ifndef sizeof_field
-# define sizeof_field FIELD_SIZEOF
-#endif
 
 #define SCD_MODULE_NAME "scd-hwmon"
 
@@ -101,16 +95,6 @@ struct scd_smbus {
    struct list_head params;
 
    struct i2c_adapter adap;
-};
-
-#define LED_NAME_MAX_SZ 40
-struct scd_led {
-   struct scd_context *ctx;
-   struct list_head list;
-
-   u32 addr;
-   char name[LED_NAME_MAX_SZ];
-   struct led_classdev cdev;
 };
 
 struct scd_gpio_attribute {
@@ -815,17 +799,6 @@ static struct scd_context *get_context_for_pdev(struct pci_dev *pdev)
    return NULL;
 }
 
-static inline struct device *get_scd_dev(struct scd_context *ctx)
-{
-   return &ctx->pdev->dev;
-}
-
-
-static inline struct kobject *get_scd_kobj(struct scd_context *ctx)
-{
-   return &ctx->pdev->dev.kobj;
-}
-
 static struct scd_context *get_context_for_dev(struct device *dev)
 {
    struct scd_context *ctx;
@@ -1433,98 +1406,6 @@ static int scd_mdio_master_add(struct scd_context *ctx, u32 addr, u16 id,
 fail_bus:
    scd_mdio_master_remove(master);
    return err;
-}
-
-static void led_brightness_set(struct led_classdev *led_cdev,
-                               enum led_brightness value)
-{
-   struct scd_led *led = container_of(led_cdev, struct scd_led, cdev);
-   u32 reg;
-
-   switch ((int)value) {
-   case 0:
-      reg = 0x0006ff00;
-      break;
-   case 1:
-      reg = 0x1006ff00;
-      break;
-   case 2:
-      reg = 0x0806ff00;
-      break;
-   case 3:
-      reg = 0x1806ff00;
-      break;
-   case 4:
-      reg = 0x1406ff00;
-      break;
-   case 5:
-      reg = 0x0C06ff00;
-      break;
-   case 6:
-      reg = 0x1C06ff00;
-      break;
-   default:
-      reg = 0x1806ff00;
-      break;
-   }
-   scd_write_register(led->ctx->pdev, led->addr, reg);
-}
-
-/*
- * Must be called with the scd lock held.
- */
-static void scd_led_remove_all(struct scd_context *ctx)
-{
-   struct scd_led *led;
-   struct scd_led *led_tmp;
-
-   list_for_each_entry_safe(led, led_tmp, &ctx->led_list, list) {
-      led_classdev_unregister(&led->cdev);
-      list_del(&led->list);
-      kfree(led);
-   }
-}
-
-static struct scd_led *scd_led_find(struct scd_context *ctx, u32 addr)
-{
-   struct scd_led *led;
-
-   list_for_each_entry(led, &ctx->led_list, list) {
-      if (led->addr == addr)
-         return led;
-   }
-   return NULL;
-}
-
-static int scd_led_add(struct scd_context *ctx, const char *name, u32 addr)
-{
-   struct scd_led *led;
-   int ret;
-
-   if (scd_led_find(ctx, addr))
-      return -EEXIST;
-
-   led = kzalloc(sizeof(*led), GFP_KERNEL);
-   if (!led)
-      return -ENOMEM;
-
-   led->ctx = ctx;
-   led->addr = addr;
-   strncpy(led->name, name, sizeof_field(typeof(*led), name));
-   INIT_LIST_HEAD(&led->list);
-
-   led->cdev.name = led->name;
-   led->cdev.brightness_set = led_brightness_set;
-
-   ret = led_classdev_register(get_scd_dev(ctx), &led->cdev);
-   if (ret) {
-      kfree(led);
-      return ret;
-   }
-
-   list_add_tail(&led->list, &ctx->led_list);
-
-   return 0;
 }
 
 static ssize_t attribute_gpio_get(struct device *dev,

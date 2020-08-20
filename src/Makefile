@@ -7,6 +7,9 @@ KBUILD_EXTRA_SYMBOLS += $(EXTRA_SYMBOLS)
 endif
 
 obj-m += scd-hwmon.o
+scd-hwmon-objs += scd-led.o
+scd-hwmon-objs += scd-main.o
+
 obj-m += crow-fan-driver.o
 obj-m += raven-fan-driver.o
 obj-m += rook-led-driver.o

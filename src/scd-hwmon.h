@@ -19,6 +19,7 @@
 #define _LINUX_DRIVER_SCD_HWMON_H_
 
 #include <linux/printk.h>
+#include <linux/pci.h>
 
 #define scd_err(fmt, ...) \
    pr_err("scd-hwmon: " fmt, ##__VA_ARGS__);
@@ -28,6 +29,11 @@
    pr_info("scd-hwmon: " fmt, ##__VA_ARGS__);
 #define scd_dbg(fmt, ...) \
    pr_debug("scd-hwmon: " fmt, ##__VA_ARGS__);
+
+// sizeof_field was introduced in v4.15 and FIELD_SIZEOF removed in 4.20
+#ifndef sizeof_field
+# define sizeof_field FIELD_SIZEOF
+#endif
 
 struct scd_context {
    struct pci_dev *pdev;
@@ -46,5 +52,16 @@ struct scd_context {
    struct list_head xcvr_list;
    struct list_head fan_group_list;
 };
+
+static inline struct device *get_scd_dev(struct scd_context *ctx)
+{
+   return &ctx->pdev->dev;
+}
+
+
+static inline struct kobject *get_scd_kobj(struct scd_context *ctx)
+{
+   return &ctx->pdev->dev.kobj;
+}
 
 #endif /* !_LINUX_DRIVER_SCD_HWMON_H_ */
