@@ -18,6 +18,10 @@
 #ifndef _LINUX_DRIVER_SCD_MDIO_H_
 #define _LINUX_DRIVER_SCD_MDIO_H_
 
+#include <linux/mii.h>
+#include <linux/netdevice.h>
+#include <linux/phy.h>
+
 #define MDIO_REQUEST_LO_OFFSET 0x00
 #define MDIO_REQUEST_HI_OFFSET 0x10
 #define MDIO_CONTROL_STATUS_OFFSET 0x20
@@ -123,5 +127,11 @@ struct scd_mdio_device {
    struct net_device *net_dev;
    struct mdio_device *mdio_dev;
 };
+
+extern int scd_mdio_device_add(struct scd_context *ctx, u16 master_id, u16 bus_id,
+                               u16 dev_id, u16 prtad, u16 devad, u16 clause);
+extern int scd_mdio_master_add(struct scd_context *ctx, u32 addr, u16 id,
+                               u16 bus_count, u16 speed);
+extern void scd_mdio_remove_all(struct scd_context *ctx);
 
 #endif /* !_LINUX_DRIVER_SCD_MDIO_H_ */

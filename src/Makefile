@@ -9,6 +9,7 @@ endif
 obj-m += scd-hwmon.o
 scd-hwmon-objs += scd-led.o
 scd-hwmon-objs += scd-main.o
+scd-hwmon-objs += scd-mdio.o
 
 obj-m += crow-fan-driver.o
 obj-m += raven-fan-driver.o
