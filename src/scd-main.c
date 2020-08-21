@@ -27,6 +27,7 @@
 #include "scd.h"
 #include "scd-attrs.h"
 #include "scd-fan.h"
+#include "scd-gpio.h"
 #include "scd-hwmon.h"
 #include "scd-led.h"
 #include "scd-mdio.h"
@@ -38,17 +39,6 @@
 #define RESET_CLEAR_OFFSET 0x10
 
 #define MAX_CONFIG_LINE_SIZE 100
-
-struct scd_gpio_attribute {
-   struct device_attribute dev_attr;
-   struct scd_context *ctx;
-
-   u32 addr;
-   u32 bit;
-   u32 active_low;
-};
-
-#define GPIO_NAME_MAX_SZ 32
 struct scd_xcvr_attribute {
    struct device_attribute dev_attr;
    struct scd_xcvr *xcvr;
@@ -60,12 +50,6 @@ struct scd_xcvr_attribute {
    u32 clear_on_read_value;
 };
 
-struct scd_gpio {
-   char name[GPIO_NAME_MAX_SZ];
-   struct scd_gpio_attribute attr;
-   struct list_head list;
-};
-
 #define XCVR_ATTR_MAX_COUNT 9
 struct scd_xcvr {
    struct scd_context *ctx;
@@ -75,28 +59,6 @@ struct scd_xcvr {
    char name[GPIO_NAME_MAX_SZ];
    u32 addr;
 };
-
-#define to_scd_gpio_attr(_dev_attr) \
-   container_of(_dev_attr, struct scd_gpio_attribute, dev_attr)
-
-#define to_scd_xcvr_attr(_dev_attr) \
-   container_of(_dev_attr, struct scd_xcvr_attribute, dev_attr)
-
-#define SCD_GPIO_ATTR(_name, _mode, _show, _store, _ctx, _addr, _bit, _active_low) \
-   { .dev_attr = __ATTR_NAME_PTR(_name, _mode, _show, _store),                     \
-     .ctx = _ctx,                                                                  \
-     .addr = _addr,                                                                \
-     .bit = _bit,                                                                  \
-     .active_low = _active_low                                                     \
-   }
-
-#define SCD_RW_GPIO_ATTR(_name, _ctx, _addr, _bit, _active_low)                    \
-   SCD_GPIO_ATTR(_name, S_IRUGO | S_IWUSR, attribute_gpio_get, attribute_gpio_set, \
-                 _ctx, _addr, _bit, _active_low)
-
-#define SCD_RO_GPIO_ATTR(_name, _ctx, _addr, _bit, _active_low) \
-   SCD_GPIO_ATTR(_name, S_IRUGO, attribute_gpio_get, NULL,      \
-                 _ctx, _addr, _bit, _active_low)
 
 #define SCD_XCVR_ATTR(_xcvr_attr, _name, _name_size, _mode, _show, _store, _xcvr, \
                       _bit, _active_low, _clear_on_read)                          \
@@ -205,49 +167,6 @@ static struct scd_context *get_context_for_dev(struct device *dev)
    return NULL;
 }
 
-static ssize_t attribute_gpio_get(struct device *dev,
-                                  struct device_attribute *devattr, char *buf)
-{
-   const struct scd_gpio_attribute *gpio = to_scd_gpio_attr(devattr);
-   u32 reg = scd_read_register(gpio->ctx->pdev, gpio->addr);
-   u32 res = !!(reg & (1 << gpio->bit));
-   res = (gpio->active_low) ? !res : res;
-   return sprintf(buf, "%u\n", res);
-}
-
-static ssize_t attribute_gpio_set(struct device *dev,
-                                  struct device_attribute *devattr,
-                                  const char *buf, size_t count)
-{
-   const struct scd_gpio_attribute *gpio = to_scd_gpio_attr(devattr);
-   long value;
-   int res;
-   u32 reg;
-
-   res = kstrtol(buf, 10, &value);
-   if (res < 0)
-      return res;
-
-   if (value != 0 && value != 1)
-      return -EINVAL;
-
-   reg = scd_read_register(gpio->ctx->pdev, gpio->addr);
-   if (gpio->active_low) {
-      if (value)
-         reg &= ~(1 << gpio->bit);
-      else
-         reg |= ~(1 << gpio->bit);
-   } else {
-      if (value)
-         reg |= 1 << gpio->bit;
-      else
-         reg &= ~(1 << gpio->bit);
-   }
-   scd_write_register(gpio->ctx->pdev, gpio->addr, reg);
-
-   return count;
-}
-
 static u32 scd_xcvr_read_register(const struct scd_xcvr_attribute *gpio)
 {
    struct scd_xcvr *xcvr = gpio->xcvr;
@@ -314,11 +233,6 @@ static ssize_t attribute_xcvr_set(struct device *dev,
    return count;
 }
 
-static void scd_gpio_unregister(struct scd_context *ctx, struct scd_gpio *gpio)
-{
-   sysfs_remove_file(get_scd_kobj(ctx), &gpio->attr.dev_attr.attr);
-}
-
 static void scd_xcvr_unregister(struct scd_context *ctx, struct scd_xcvr *xcvr)
 {
    int i;
@@ -330,20 +244,6 @@ static void scd_xcvr_unregister(struct scd_context *ctx, struct scd_xcvr *xcvr)
    }
 }
 
-static int scd_gpio_register(struct scd_context *ctx, struct scd_gpio *gpio)
-{
-   int res;
-
-   res = sysfs_create_file(get_scd_kobj(ctx), &gpio->attr.dev_attr.attr);
-   if (res) {
-      pr_err("could not create %s attribute for gpio: %d",
-             gpio->attr.dev_attr.attr.name, res);
-      return res;
-   }
-
-   list_add_tail(&gpio->list, &ctx->gpio_list);
-   return 0;
-}
 
 struct gpio_cfg {
    u32 bitpos;
@@ -389,17 +289,6 @@ static int scd_xcvr_register(struct scd_xcvr *xcvr, const struct gpio_cfg *cfgs,
 /*
  * Must be called with the scd lock held.
  */
-static void scd_gpio_remove_all(struct scd_context *ctx)
-{
-   struct scd_gpio *tmp_gpio;
-   struct scd_gpio *gpio;
-
-   list_for_each_entry_safe(gpio, tmp_gpio, &ctx->gpio_list, list) {
-      scd_gpio_unregister(ctx, gpio);
-      list_del(&gpio->list);
-      kfree(gpio);
-   }
-}
 
 static void scd_xcvr_remove_all(struct scd_context *ctx)
 {
@@ -569,34 +458,6 @@ static int scd_xcvr_osfp_add(struct scd_context *ctx, u32 addr, u32 id)
 
    scd_dbg("osfp %u @ 0x%04x\n", id, addr);
    return scd_xcvr_add(ctx, "osfp", osfp_gpios, ARRAY_SIZE(osfp_gpios), addr, id);
-}
-
-static int scd_gpio_add(struct scd_context *ctx, const char *name,
-                        u32 addr, u32 bitpos, bool read_only, bool active_low)
-{
-   int err;
-   struct scd_gpio *gpio;
-
-   gpio = kzalloc(sizeof(*gpio), GFP_KERNEL);
-   if (!gpio) {
-      return -ENOMEM;
-   }
-
-   snprintf(gpio->name, sizeof_field(typeof(*gpio), name), name);
-   if (read_only)
-      gpio->attr = (struct scd_gpio_attribute)SCD_RO_GPIO_ATTR(
-                           gpio->name, ctx, addr, bitpos, active_low);
-   else
-      gpio->attr = (struct scd_gpio_attribute)SCD_RW_GPIO_ATTR(
-                           gpio->name, ctx, addr, bitpos, active_low);
-
-   err = scd_gpio_register(ctx, gpio);
-   if (err) {
-      kfree(gpio);
-      return err;
-   }
-
-   return 0;
 }
 
 static int scd_reset_add(struct scd_context *ctx, const char *name,

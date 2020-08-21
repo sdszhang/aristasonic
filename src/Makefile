@@ -8,6 +8,7 @@ endif
 
 obj-m += scd-hwmon.o
 scd-hwmon-objs += scd-fan.o
+scd-hwmon-objs += scd-gpio.o
 scd-hwmon-objs += scd-led.o
 scd-hwmon-objs += scd-main.o
 scd-hwmon-objs += scd-mdio.o
