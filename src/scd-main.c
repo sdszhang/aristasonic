@@ -31,12 +31,10 @@
 #include "scd-hwmon.h"
 #include "scd-led.h"
 #include "scd-mdio.h"
+#include "scd-reset.h"
 #include "scd-smbus.h"
 
 #define SCD_MODULE_NAME "scd-hwmon"
-
-#define RESET_SET_OFFSET 0x00
-#define RESET_CLEAR_OFFSET 0x10
 
 #define MAX_CONFIG_LINE_SIZE 100
 struct scd_xcvr_attribute {
@@ -83,32 +81,6 @@ struct scd_xcvr {
                          _active_low, _clear_on_read)                        \
    SCD_XCVR_ATTR(_xcvr_attr, _name, _name_size, S_IRUGO, attribute_xcvr_get, \
                  NULL, _xcvr, _bit, _active_low, _clear_on_read)
-
-struct scd_reset_attribute {
-   struct device_attribute dev_attr;
-   struct scd_context *ctx;
-
-   u32 addr;
-   u32 bit;
-};
-
-#define RESET_NAME_MAX_SZ 50
-struct scd_reset {
-   char name[RESET_NAME_MAX_SZ];
-   struct scd_reset_attribute attr;
-   struct list_head list;
-};
-
-#define to_scd_reset_attr(_dev_attr) \
-   container_of(_dev_attr, struct scd_reset_attribute, dev_attr)
-
-#define SCD_RESET_ATTR(_name, _ctx, _addr, _bit)                                \
-   { .dev_attr = __ATTR_NAME_PTR(_name, S_IRUGO | S_IWUSR, attribute_reset_get, \
-                                 attribute_reset_set),                          \
-     .ctx = _ctx,                                                               \
-     .addr = _addr,                                                             \
-     .bit = _bit,                                                               \
-   }
 
 /* locking functions */
 static struct mutex scd_hwmon_mutex;
@@ -302,77 +274,9 @@ static void scd_xcvr_remove_all(struct scd_context *ctx)
    }
 }
 
-static ssize_t attribute_reset_get(struct device *dev,
-                                   struct device_attribute *devattr, char *buf)
-{
-   const struct scd_reset_attribute *reset = to_scd_reset_attr(devattr);
-   u32 reg = scd_read_register(reset->ctx->pdev, reset->addr);
-   u32 res = !!(reg & (1 << reset->bit));
-   return sprintf(buf, "%u\n", res);
-}
-
-// write 1 -> set, 0 -> clear
-static ssize_t attribute_reset_set(struct device *dev,
-                                   struct device_attribute *devattr,
-                                   const char *buf, size_t count)
-{
-   const struct scd_reset_attribute *reset = to_scd_reset_attr(devattr);
-   u32 offset = RESET_SET_OFFSET;
-   long value;
-   int res;
-   u32 reg;
-
-   res = kstrtol(buf, 10, &value);
-   if (res < 0)
-      return res;
-
-   if (value != 0 && value != 1)
-      return -EINVAL;
-
-   if (!value)
-      offset = RESET_CLEAR_OFFSET;
-
-   reg = 1 << reset->bit;
-   scd_write_register(reset->ctx->pdev, reset->addr + offset, reg);
-
-   return count;
-}
-
-static void scd_reset_unregister(struct scd_context *ctx, struct scd_reset *reset)
-{
-   sysfs_remove_file(get_scd_kobj(ctx), &reset->attr.dev_attr.attr);
-}
-
-static int scd_reset_register(struct scd_context *ctx, struct scd_reset *reset)
-{
-   int res;
-
-   res = sysfs_create_file(get_scd_kobj(ctx), &reset->attr.dev_attr.attr);
-   if (res) {
-      pr_err("could not create %s attribute for reset: %d",
-             reset->attr.dev_attr.attr.name, res);
-      return res;
-   }
-
-   list_add_tail(&reset->list, &ctx->reset_list);
-   return 0;
-}
-
 /*
  * Must be called with the scd lock held.
  */
-static void scd_reset_remove_all(struct scd_context *ctx)
-{
-   struct scd_reset *tmp_reset;
-   struct scd_reset *reset;
-
-   list_for_each_entry_safe(reset, tmp_reset, &ctx->reset_list, list) {
-      scd_reset_unregister(ctx, reset);
-      list_del(&reset->list);
-      kfree(reset);
-   }
-}
-
 static int scd_xcvr_add(struct scd_context *ctx, const char *prefix,
                         const struct gpio_cfg *cfgs, size_t gpio_count,
                         u32 addr, u32 id)
@@ -458,29 +362,6 @@ static int scd_xcvr_osfp_add(struct scd_context *ctx, u32 addr, u32 id)
 
    scd_dbg("osfp %u @ 0x%04x\n", id, addr);
    return scd_xcvr_add(ctx, "osfp", osfp_gpios, ARRAY_SIZE(osfp_gpios), addr, id);
-}
-
-static int scd_reset_add(struct scd_context *ctx, const char *name,
-                         u32 addr, u32 bitpos)
-{
-   int err;
-   struct scd_reset *reset;
-
-   reset = kzalloc(sizeof(*reset), GFP_KERNEL);
-   if (!reset) {
-      return -ENOMEM;
-   }
-
-   snprintf(reset->name, sizeof_field(typeof(*reset), name), name);
-   reset->attr = (struct scd_reset_attribute)SCD_RESET_ATTR(
-                                                reset->name, ctx, addr, bitpos);
-
-   err = scd_reset_register(ctx, reset);
-   if (err) {
-      kfree(reset);
-      return err;
-   }
-   return 0;
 }
 
 #define PARSE_INT_OR_RETURN(Buf, Tmp, Type, Ptr)        \

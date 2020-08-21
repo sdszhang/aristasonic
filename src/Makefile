@@ -12,6 +12,7 @@ scd-hwmon-objs += scd-gpio.o
 scd-hwmon-objs += scd-led.o
 scd-hwmon-objs += scd-main.o
 scd-hwmon-objs += scd-mdio.o
+scd-hwmon-objs += scd-reset.o
 scd-hwmon-objs += scd-smbus.o
 
 obj-m += crow-fan-driver.o
