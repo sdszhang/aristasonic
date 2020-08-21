@@ -11,6 +11,7 @@ scd-hwmon-objs += scd-fan.o
 scd-hwmon-objs += scd-led.o
 scd-hwmon-objs += scd-main.o
 scd-hwmon-objs += scd-mdio.o
+scd-hwmon-objs += scd-smbus.o
 
 obj-m += crow-fan-driver.o
 obj-m += raven-fan-driver.o

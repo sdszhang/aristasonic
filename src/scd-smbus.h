@@ -19,12 +19,16 @@
 #define _LINUX_DRIVER_SCD_SMBUS_H_
 
 #include <linux/list.h>
+#include <linux/i2c.h>
 
 struct scd_context;
 
 #define SMBUS_REQUEST_OFFSET 0x10
 #define SMBUS_CONTROL_STATUS_OFFSET 0x20
 #define SMBUS_RESPONSE_OFFSET 0x30
+
+#define MASTER_DEFAULT_BUS_COUNT 8
+#define MASTER_DEFAULT_MAX_RETRIES 6
 
 struct scd_smbus_master {
    struct scd_context *ctx;
@@ -38,6 +42,25 @@ struct scd_smbus_master {
    struct list_head bus_list;
 
    int max_retries;
+};
+
+struct bus_params {
+   struct list_head list;
+   u16 addr;
+   u8 t;
+   u8 datw;
+   u8 datr;
+   u8 ed;
+};
+
+struct scd_smbus {
+   struct scd_smbus_master *master;
+   struct list_head list;
+
+   u32 id;
+   struct list_head params;
+
+   struct i2c_adapter adap;
 };
 
 union smbus_ctrl_status_reg {
@@ -179,5 +202,11 @@ union smbus_response_reg {
    (_rsp).timeout_error,      \
    (_rsp).bus_conflict_error, \
    (_rsp).d
+
+extern int scd_smbus_master_add(struct scd_context *ctx, u32 addr, u32 id,
+                                u32 bus_count);
+extern void scd_smbus_remove_all(struct scd_context *ctx);
+extern ssize_t scd_set_smbus_params(struct scd_context *ctx, u16 bus,
+                                    struct bus_params *params);
 
 #endif /* _LINUX_DRIVER_SCD_SMBUS_H_ */
