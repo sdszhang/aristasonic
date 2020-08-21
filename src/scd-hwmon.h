@@ -21,15 +21,6 @@
 #include <linux/printk.h>
 #include <linux/pci.h>
 
-#define scd_err(fmt, ...) \
-   pr_err("scd-hwmon: " fmt, ##__VA_ARGS__);
-#define scd_warn(fmt, ...) \
-   pr_warn("scd-hwmon: " fmt, ##__VA_ARGS__);
-#define scd_info(fmt, ...) \
-   pr_info("scd-hwmon: " fmt, ##__VA_ARGS__);
-#define scd_dbg(fmt, ...) \
-   pr_debug("scd-hwmon: " fmt, ##__VA_ARGS__);
-
 // sizeof_field was introduced in v4.15 and FIELD_SIZEOF removed in 4.20
 #ifndef sizeof_field
 # define sizeof_field FIELD_SIZEOF

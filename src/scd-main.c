@@ -416,7 +416,7 @@ static ssize_t parse_new_object(struct scd_context *ctx, const char *buf,
    ssize_t err;
 
    if (count >= MAX_CONFIG_LINE_SIZE) {
-      scd_warn("new_object line is too long\n");
+      dev_err(get_scd_dev(ctx), "new_object line is too long\n");
       return -EINVAL;
    }
 
@@ -510,7 +510,7 @@ static ssize_t parse_smbus_tweak(struct scd_context *ctx, const char *buf,
    u16 bus;
 
    if (count >= MAX_CONFIG_LINE_SIZE) {
-      scd_warn("smbus_tweak line is too long\n");
+      dev_err(get_scd_dev(ctx), "smbus_tweak line is too long: %zu\n", count);
       return -EINVAL;
    }
 
@@ -621,7 +621,7 @@ static int scd_ext_hwmon_probe(struct pci_dev *pdev, size_t mem_len)
    int err;
 
    if (ctx) {
-      scd_warn("this pci device has already been probed\n");
+      dev_warn(get_scd_dev(ctx), "this pci device has already been probed\n");
       return -EEXIST;
    }
 
@@ -680,7 +680,7 @@ static void scd_ext_hwmon_remove(struct pci_dev *pdev)
       return;
    }
 
-   scd_info("removing scd components\n");
+   dev_info(get_scd_dev(ctx), "removing scd components\n");
 
    scd_lock(ctx);
    scd_smbus_remove_all(ctx);
@@ -729,13 +729,13 @@ static int __init scd_hwmon_init(void)
 {
    int err = 0;
 
-   scd_info("loading scd hwmon driver\n");
+   pr_info("scd-hwmon: loading scd hwmon driver\n");
    mutex_init(&scd_hwmon_mutex);
    INIT_LIST_HEAD(&scd_list);
 
    err = scd_register_ext_ops(&scd_hwmon_ops);
    if (err) {
-      scd_warn("scd_register_ext_ops failed\n");
+      pr_warn("scd-hwmon: scd_register_ext_ops failed\n");
       return err;
    }
 
@@ -744,7 +744,7 @@ static int __init scd_hwmon_init(void)
 
 static void __exit scd_hwmon_exit(void)
 {
-   scd_info("unloading scd hwmon driver\n");
+   pr_info("scd-hwmon: unloading scd hwmon driver\n");
    scd_unregister_ext_ops();
 }
 
