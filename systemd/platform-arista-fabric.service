@@ -1,0 +1,20 @@
+[Unit]
+Description=Arista fabric support
+Before=database-chassis.service
+Before=opennsl-modules.service
+After=platform-arista-pmon.service
+Requires=platform-arista-pmon.service
+PartOf=platform-arista.target
+ConditionKernelCommandLine=Aboot
+ConditionKernelCommandLine=sonic.mode=supervisor
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+
+ExecStart=/usr/bin/arista --syslog -l /var/log/arista-fabric.log fabric setup --on
+
+ExecStop=/usr/bin/arista --syslog -l /var/log/arista-fabric.log fabric clean
+
+[Install]
+RequiredBy=platform-arista.target
