@@ -1,0 +1,12 @@
+
+from __future__ import absolute_import, division, print_function
+
+from .. import registerParser
+from ..common import addPriorityArgs
+from . import fabricParser
+
+@registerParser('setup', parent=fabricParser)
+def setupParser(parser):
+   addPriorityArgs(parser)
+   parser.add_argument('--on', action='store_true',
+      help='turn on fabric card')
