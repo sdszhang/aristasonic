@@ -3,13 +3,20 @@ from __future__ import with_statement
 import datetime
 from collections import namedtuple
 
-from ..core.cause import datetimeToStr, ReloadCauseEntry, ReloadCauseDataStore
+from ..core.cause import (
+   ReloadCauseDataStore,
+   ReloadCauseEntry,
+   ReloadCauseProviderHelper,
+   ReloadCauseScore,
+)
 from ..core.component import Priority
 from ..core.config import Config
 from ..core.utils import inSimulation
 from ..core.log import getLogger
 
 from ..drivers.dpm import UcdI2cDevDriver
+
+from ..libs.date import datetimeToStr
 
 from .common import I2cComponent
 
@@ -20,6 +27,14 @@ UcdMon = namedtuple( 'UcdMon', [ 'val' ] )
 
 class UcdReloadCauseEntry(ReloadCauseEntry):
    pass
+
+class UcdReloadCauseProvider(ReloadCauseProviderHelper):
+   def __init__(self, ucd):
+      super(UcdReloadCauseProvider, self).__init__(name=str(ucd))
+      self.ucd = ucd
+
+   def process(self):
+      self.causes = self.ucd.getReloadCauses()
 
 class Ucd(I2cComponent):
    class Registers(object):
@@ -50,6 +65,7 @@ class Ucd(I2cComponent):
       self.oldestTime = datetime.datetime(1970, 1, 1)
       super(Ucd, self).__init__(addr=addr, drivers=drivers, priority=priority,
                                 **kwargs)
+      self.inventory.addReloadCauseProvider(UcdReloadCauseProvider(self))
 
    def __str__(self):
       return '%s()' % self.__class__.__name__

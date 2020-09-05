@@ -2,7 +2,7 @@ from collections import defaultdict
 
 # NOTE: these import are for inventory objects critical to the .core package
 # pylint: disable=unused-import
-from ..inventory.reloadcause import ReloadCause
+from ..inventory.reloadcause import ReloadCause, ReloadCauseProvider
 from ..inventory.slot import Slot
 from ..inventory.watchdog import Watchdog
 
@@ -57,6 +57,8 @@ class Inventory(object):
       self.temps = []
 
       self.gpios = {}
+
+      self.causeProviders = []
 
    def addPorts(self, sfps=None, qsfps=None, osfps=None):
       if sfps:
@@ -319,6 +321,15 @@ class Inventory(object):
 
    def getGpio(self, name):
       return self.gpios[name]
+
+   def addReloadCauseProvider(self, provider):
+      self.causeProviders.append(provider)
+
+   def addReloadCauseProviders(self, providers):
+      self.causeProviders.extend(providers)
+
+   def getReloadCauseProviders(self):
+      return self.causeProviders
 
    def __diag__(self, ctx):
       return {

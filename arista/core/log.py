@@ -1,12 +1,8 @@
-from __future__ import absolute_import, division, print_function
-
 import logging
+from logging import DEBUG, INFO, WARNING, ERROR
 import logging.handlers
-import os
 import re
 import sys
-
-from logging import DEBUG, INFO, WARNING, ERROR
 
 logLevelDict = {
    'DEBUG': DEBUG,
@@ -101,12 +97,14 @@ class Logger(object):
       self.syslogLevel = syslogLevel
       self.logger = None
 
-   def log(self, level, msg, *args, **kwargs):
+   def _maybeCreateLogger(self):
       if not self.logger:
          self.logger = loggerManager.newLogger(self.name,
                                                self.cliLevel,
                                                self.syslogLevel)
 
+   def log(self, level, msg, *args, **kwargs):
+      self._maybeCreateLogger()
       self.logger.log(level, msg, *args, **kwargs)
 
    def debug(self, msg, *args, **kwargs):
@@ -123,6 +121,10 @@ class Logger(object):
 
    def error(self, msg, *args, **kwargs):
       self.log(ERROR, msg, *args, **kwargs)
+
+   def exception(self, msg, *args, **kwargs):
+      self._maybeCreateLogger()
+      self.logger.exception(msg, *args, **kwargs)
 
 def getLogger(name, cliLevel=INFO, syslogLevel=WARNING):
    return Logger(name, cliLevel=cliLevel, syslogLevel=syslogLevel)

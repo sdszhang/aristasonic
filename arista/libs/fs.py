@@ -1,6 +1,10 @@
 
 import os
 
+def readFileContent(path):
+   with open(path) as f:
+      return f.read()
+
 def touch(path, mode=0o644, times=None):
    try:
       with open(path, 'a'):

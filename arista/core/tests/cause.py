@@ -1,12 +1,199 @@
 
+import datetime
 import json
+import os
 import tempfile
 
-from ...tests.testing import unittest
 from ...libs.fs import touch, rmfile
+from ...libs.date import datetimeToStr, strToDatetime
+from ...tests.testing import unittest
 
-from ..cause import ReloadCauseDataStore, ReloadCauseEntry
+from ..cause import (
+   ReloadCauseDataStore,
+   ReloadCauseEntry,
+   ReloadCauseManager,
+   ReloadCauseProviderHelper,
+   ReloadCauseScore,
+)
 from ..config import Config
+from ..inventory import Inventory
+
+class MockReloadCauseProvider(ReloadCauseProviderHelper):
+   def __init__(self, name, causes, extra=None):
+      super(MockReloadCauseProvider, self).__init__(name=name, causes=causes,
+                                                    extra=extra or {})
+      self.causesRead = False
+
+   def process(self):
+      self.causesRead = True
+
+class ReloadCauseManagerTest(unittest.TestCase):
+   EXPECTED_DATE = datetimeToStr(datetime.datetime.now())
+   EXPECTED_SIMPLE = {
+      "version": 3,
+      "name": "switch reload cause",
+      "reports": [
+         {
+            "date": EXPECTED_DATE,
+            "cause": {
+               'cause': 'powerloss',
+               'time': EXPECTED_DATE,
+               'description': 'user triggered',
+               'score': ReloadCauseScore.LOGGED,
+            },
+            "providers": [
+               {
+                  "name": "primary provider",
+                  "causes": [
+                  ],
+                  "extra": {},
+               },
+               {
+                  "name": "secondary provider",
+                  "causes": [
+                     {
+                        'cause': 'powerloss',
+                        'time': EXPECTED_DATE,
+                        'description': 'user triggered',
+                        'score': ReloadCauseScore.LOGGED,
+                     }
+                  ],
+                  "extra": {},
+               },
+            ],
+         },
+      ],
+   }
+   PROVIDERS_SIMPLE = [
+      MockReloadCauseProvider(
+         name='primary provider',
+         causes=[
+         ],
+      ),
+      MockReloadCauseProvider(
+         name='secondary provider',
+         causes=[
+            ReloadCauseEntry(
+               cause='powerloss',
+               rcTime=EXPECTED_DATE,
+               rcDesc='user triggered',
+               score=ReloadCauseScore.LOGGED,
+            ),
+         ],
+      ),
+   ]
+
+   def setUp(self):
+      path = tempfile.mktemp(prefix='unittest-arista-rcm-', suffix='.json')
+      self.rcm = ReloadCauseManager(name='switch reload cause', path=path)
+
+   def tearDown(self):
+      if os.path.exists(self.rcm.path):
+         os.remove(self.rcm.path)
+
+   def _getReloadCauseInventory(self, providers=None):
+      inventory = Inventory()
+      inventory.addReloadCauseProviders(providers or self.PROVIDERS_SIMPLE)
+      return inventory
+
+   def _loadReloadCauses(self, data):
+      inv = self._getReloadCauseInventory([
+         MockReloadCauseProvider(
+            name=name,
+            causes=[
+               ReloadCauseEntry(
+                  cause=cause,
+                  rcTime=self.EXPECTED_DATE,
+                  rcDesc=desc,
+                  score=score,
+               ) for cause, score, desc in causes
+            ]
+         ) for name, causes in data.items()
+      ])
+      self.rcm.readCauses(inv, date=strToDatetime(self.EXPECTED_DATE))
+
+   def storeJson(self, data):
+      with open(self.rcm.path, 'w') as f:
+         json.dump(data, f)
+
+   def assertCauseStoreEqual(self, expected):
+      with open(self.rcm.path) as f:
+         data = json.load(f)
+      self.maxDiff = None
+      self.assertDictEqual(data, expected)
+
+   def testReloadCauseManager(self):
+      inv = self._getReloadCauseInventory()
+      self.rcm.readCauses(inv)
+
+      for provider in inv.getReloadCauseProviders():
+         self.assertTrue(provider.causesRead)
+
+   def testToFromDict(self):
+      self.rcm.fromDict(self.EXPECTED_SIMPLE)
+      result = self.rcm.toDict()
+      self.assertDictEqual(self.EXPECTED_SIMPLE, result,
+         msg='Serialization/Deserialization of reload cause failed')
+
+   def testLoadStore(self):
+      self.storeJson(self.EXPECTED_SIMPLE)
+      self.rcm.loadCauses()
+      self.rcm.storeCauses()
+      self.assertCauseStoreEqual(self.EXPECTED_SIMPLE)
+
+   def testLoadEmptyFile(self):
+      touch(self.rcm.path)
+      self.rcm.loadCauses()
+
+   def testLoadMissingFile(self):
+      self.rcm.loadCauses()
+      self.rcm.storeCauses()
+      self.assertCauseStoreEqual({
+         "name": 'switch reload cause',
+         "reports": [],
+         "version": 3,
+      })
+
+   def testLoadReadStore(self):
+      inv = self._getReloadCauseInventory()
+      self.rcm.readCauses(inv, date=strToDatetime(self.EXPECTED_DATE))
+      self.rcm.storeCauses()
+      self.assertCauseStoreEqual(self.EXPECTED_SIMPLE)
+
+   def assertReloadCauseEquals(self, rc, cause=None, description=None, score=None,
+                               time=None):
+      self.assertIsInstance(rc, ReloadCauseEntry)
+      if cause is not None:
+         self.assertEquals(rc.getCause(), cause)
+      if description is not None:
+         self.assertEquals(rc.getDescription(), description)
+      if time is not None:
+         self.assertEquals(rc.getTime(), time)
+      if score is not None:
+         self.assertEquals(rc.getScore(), score)
+
+   def testReloadCauseAlgorithm(self):
+      self._loadReloadCauses({
+         'primary': [
+            ('under-voltage', ReloadCauseScore.EVENT, 'Rail X'),
+         ],
+         'secondary': [
+            ('under-voltage', ReloadCauseScore.EVENT, 'Rail Y'),
+            ('powerloss', ReloadCauseScore.LOGGED, 'user triggered'),
+         ],
+      })
+      self.assertReloadCauseEquals(self.rcm.lastReport().cause, cause='powerloss')
+      self._loadReloadCauses({
+         'primary': [
+            ('under-voltage', ReloadCauseScore.EVENT, 'Rail X'),
+         ],
+         'secondary': [
+            ('under-voltage', ReloadCauseScore.EVENT, 'Rail Y'),
+         ],
+      })
+      self.assertReloadCauseEquals(self.rcm.lastReport().cause,
+                                   cause='under-voltage')
+      self.assertEquals(len(self.rcm.reports), 2)
 
 class ReloadCauseTest(unittest.TestCase):
    EXPECTED = [
@@ -64,6 +251,7 @@ class ReloadCauseTest(unittest.TestCase):
       expectedKeys = [
          "cause",
          "description",
+         "score",
          "time",
       ]
       self.assertEqual(len(cause.__dict__), len(expectedKeys))

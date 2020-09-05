@@ -10,3 +10,21 @@ class ReloadCause(InventoryInterface):
    @diagmethod('cause')
    def getCause(self):
       raise NotImplementedError
+
+   @diagmethod('score')
+   def getScore(self):
+      raise NotImplementedError
+
+@diagcls
+class ReloadCauseProvider(InventoryInterface):
+   @diagmethod('source')
+   def getSourceName(self):
+      raise NotImplementedError
+
+   @diagmethod('causes', diag=True)
+   def getCauses(self):
+      raise NotImplementedError
+
+   @diagmethod('extra')
+   def getExtra(self):
+      raise NotImplementedError
