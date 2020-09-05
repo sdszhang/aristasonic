@@ -32,8 +32,8 @@ PREFDL_EXPECT = {
 class PrefdlTest(unittest.TestCase):
    def testNoDuplicates(self):
       names = sum(1 + len(f.aliases) for f in PrefdlBase.FIELDS)
-      self.assertEquals(names, len(PrefdlBase.FIELD_NAME))
-      self.assertEquals(len(PrefdlBase.FIELDS), len(PrefdlBase.FIELD_CODE))
+      self.assertEqual(names, len(PrefdlBase.FIELD_NAME))
+      self.assertEqual(len(PrefdlBase.FIELDS), len(PrefdlBase.FIELD_CODE))
 
    def _checkPrefdl(self, pfdl, expected):
       self.assertTrue(pfdl.isCrcValid())

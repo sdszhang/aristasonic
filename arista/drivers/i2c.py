@@ -13,6 +13,10 @@ from ..core.utils import SMBus
 
 logging = getLogger(__name__)
 
+def busNameToId(name):
+   '''name is assumed to be of the form i2c-X'''
+   return int(name[4:])
+
 class I2cKernelDriver(Driver):
    def __init__(self, name=None, addr=None, waitFile=None, waitTimeout=None,
                 module=None, **kwargs):
