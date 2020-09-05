@@ -73,7 +73,7 @@ class ClearwaterCpuBase(ClearwaterBase):
 
    def standbyDomain(self):
       super(ClearwaterCpuBase, self).standbyDomain()
-      self.syscpld = self.pca.newComponent(I2cScd, addr=self.slot.bus.i2cAddr(0x23),
+      self.syscpld = self.pca.newComponent(I2cScd, addr=self.pca.i2cAddr(0x23),
                                            registerCls=ClearwaterCpuScdRegMap)
 
 @registerPlatform()

@@ -1,8 +1,4 @@
 
-from __future__ import absolute_import, division, print_function
-
-import time
-
 from ...core.register import RegBitField, RegisterMap
 from ...drivers.pca9555 import GpioRegister
 from ...libs.wait import waitFor
@@ -30,13 +26,11 @@ class DenaliFabric(DenaliCard, Fabric):
    PLATFORM = None
 
    def createGpio1(self):
-      self.gpio1 = self.standby.newComponent(Pca9555,
-                                             addr=self.slot.bus.i2cAddr(0x20),
+      self.gpio1 = self.standby.newComponent(Pca9555, addr=self.pca.i2cAddr(0x20),
                                              registerCls=Gpio1Registers)
 
    def createPlx(self):
-      self.plx = self.standby.newComponent(PlxPex8700,
-                                           addr=self.slot.bus.i2cAddr(0x38))
+      self.plx = self.standby.newComponent(PlxPex8700, addr=self.pca.i2cAddr(0x38))
 
    def powerStandbyDomainIs(self, on):
       '''Turn on card Ecbs and fan Ecbs. On Denali fabric, we expect

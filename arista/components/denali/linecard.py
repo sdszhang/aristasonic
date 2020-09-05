@@ -25,8 +25,7 @@ class DenaliLinecard(DenaliCard, Linecard):
    PLX_LCPU_MODE = None
 
    def createPlx(self):
-      self.plx = self.standby.newComponent(PlxPex8700,
-                                           addr=self.slot.bus.i2cAddr(0x38))
+      self.plx = self.standby.newComponent(PlxPex8700, addr=self.pca.i2cAddr(0x38))
 
    def createScd(self):
       scdAddr = self.slot.pciAddr(bus=self.SCD_PCI_OFFSET)

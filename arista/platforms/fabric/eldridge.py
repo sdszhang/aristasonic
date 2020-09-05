@@ -51,7 +51,7 @@ class Eldridge(DenaliFabric):
 
    def createGpio2(self):
       if not hasattr(self, 'gpio2') or not self.gpio2:
-         self.gpio2 = self.main.newComponent(Pca9555, self.slot.bus.i2cAddr(0x21),
+         self.gpio2 = self.main.newComponent(Pca9555, self.pca.i2cAddr(0x21),
                                              registerCls=Gpio2Registers)
          # FIXME: IO should not happen in the constructor. Move this to setup.
          # Always enable 2 pins to access Ramon and Pol via Smbus
@@ -76,18 +76,18 @@ class Eldridge(DenaliFabric):
                            pcieResetGpio=asicResetGpios[i][1]))
 
    def standbyDomain(self):
-      self.pca.newComponent(Ucd90320, self.slot.bus.i2cAddr(0x11))
-      self.pca.newComponent(Max31790, self.slot.bus.i2cAddr(0x2c), fans=[
+      self.pca.newComponent(Ucd90320, self.pca.i2cAddr(0x11))
+      self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2c), fans=[
          FanDesc(fanId=fanId) for fanId in incrange(5, 8)
       ])
-      self.pca.newComponent(Max31790, self.slot.bus.i2cAddr(0x2d), fans=[
+      self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d), fans=[
          FanDesc(fanId=fanId) for fanId in incrange(1, 4)
       ])
 
       self.createStandbySensors()
 
    def createOldStandbySensors(self):
-      self.pca.newComponent(Tmp468, self.slot.bus.i2cAddr(0x48), sensors=[
+      self.pca.newComponent(Tmp468, self.pca.i2cAddr(0x48), sensors=[
          SensorDesc(diode=0, name='Board sensor 1',
                     position=Position.OTHER, target=75, overheat=85, critical=95),
          SensorDesc(diode=1, name='Ramon 0 PCB',
@@ -105,7 +105,7 @@ class Eldridge(DenaliFabric):
          SensorDesc(diode=8, name='Ramon 1 Core (secondary)',
                     position=Position.OTHER, target=75, overheat=85, critical=95),
       ])
-      self.pca.newComponent(Max6658, self.slot.bus.i2cAddr(0x4c), sensors=[
+      self.pca.newComponent(Max6658, self.pca.i2cAddr(0x4c), sensors=[
          SensorDesc(diode=0, name='Ramon 2 Core (secondary)',
                     position=Position.OTHER, target=75, overheat=85, critical=95),
       ])
@@ -115,7 +115,7 @@ class Eldridge(DenaliFabric):
          self.createOldStandbySensors()
          return
 
-      self.pca.newComponent(Tmp464, self.slot.bus.i2cAddr(0x48), sensors=[
+      self.pca.newComponent(Tmp464, self.pca.i2cAddr(0x48), sensors=[
          SensorDesc(diode=0, name='Board sensor 1',
                     position=Position.OTHER, target=75, overheat=85, critical=95),
          SensorDesc(diode=1, name='Ramon 0 PCB',
@@ -127,7 +127,7 @@ class Eldridge(DenaliFabric):
          SensorDesc(diode=4, name='Inlet',
                     position=Position.INLET, target=75, overheat=85, critical=95),
       ])
-      self.pca.newComponent(Tmp464, self.slot.bus.i2cAddr(0x49), sensors=[
+      self.pca.newComponent(Tmp464, self.pca.i2cAddr(0x49), sensors=[
          SensorDesc(diode=0, name='Board sensor 2',
                     position=Position.OTHER, target=75, overheat=85, critical=95),
          SensorDesc(diode=1, name='Exhaust',

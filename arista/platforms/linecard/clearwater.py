@@ -77,7 +77,7 @@ class ClearwaterBase(DenaliLinecard):
       self.cwMainDomainCommon()
 
    def cwStandbyDomainCommon(self):
-      bus = self.slot.bus
+      bus = self.pca
 
       if self.STANDBY_TEMP_SENSORS_CLS:
          # The front sensor is currently defined as INLET because we don't have
@@ -105,7 +105,7 @@ class ClearwaterBase(DenaliLinecard):
       return 0x74
 
    def createGpio1(self):
-      addr = self.slot.bus.i2cAddr(self.gpio1Addr())
+      addr = self.pca.i2cAddr(self.gpio1Addr())
       self.gpio1 = self.standby.newComponent(self.GPIO1_CLS, addr,
                                              registerCls=GpioRegisterMap)
 
