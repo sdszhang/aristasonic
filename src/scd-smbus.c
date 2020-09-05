@@ -226,9 +226,10 @@ static void scd_smbus_master_leave(struct scd_smbus_master *master,
    }
 }
 
-static int scd_smbus_master_wait(struct scd_smbus_master *master)
+static int scd_smbus_master_wait(struct scd_smbus *bus, u16 addr)
 {
    const int delay_per_byte[4] = { 110, 35, 14, 14 };
+   struct scd_smbus_master *master = bus->master;
    union smbus_ctrl_status_reg cs;
    unsigned long start;
 
@@ -251,15 +252,16 @@ static int scd_smbus_master_wait(struct scd_smbus_master *master)
          if (fsz > 0 && cs.nrs >= fsz) {
             /* saw req { .br=1, .sp=1, .. } reproduce this */
             master_err(master,
-                       "cs " CS_FMT " fsz=%d, overflow\n",
-                       CS_ARGS(cs), fsz);
+                       "cs " CS_FMT " bus=%d addr=%#02x fsz=%d, overflow\n",
+                       CS_ARGS(cs), bus->adap.nr, addr, fsz);
             return -EOVERFLOW;
          }
 
          if (jiffies > timeo) {
             master_err(master,
-                       "cs " CS_FMT " timed out after %ums\n",
-                       CS_ARGS(cs), jiffies_to_msecs(jiffies - start));
+                       "cs " CS_FMT " timed out after %ums bus=%d addr=%#02x\n",
+                       CS_ARGS(cs), jiffies_to_msecs(jiffies - start),
+                       bus->adap.nr, addr);
             return -ETIMEDOUT;
          }
 
@@ -292,8 +294,8 @@ static int scd_smbus_master_xfer(struct i2c_adapter *adap,
       ss += 1 + msg->len;
 
       master_dbg(bus->master,
-                 "bus %d msg[%ld] { .addr=%#x .flags=%#x .len=%#x } ss=%d\n",
-                 bus->id, msg - msgs, msg->addr, msg->flags, msg->len, ss );
+                 "bus %d msg[%ld] { .addr=%#02x .flags=%#x .len=%#x } ss=%d\n",
+                 adap->nr, msg - msgs, msg->addr, msg->flags, msg->len, ss );
 
       if (msg->flags & I2C_M_TEN) {
          return -EOPNOTSUPP;
@@ -365,7 +367,7 @@ static int scd_smbus_master_xfer(struct i2c_adapter *adap,
       }
    }
 
-   err = scd_smbus_master_wait(bus->master);
+   err = scd_smbus_master_wait(bus, msg->addr);
    if (err)
       goto out;
 
@@ -386,12 +388,12 @@ static int scd_smbus_master_xfer(struct i2c_adapter *adap,
          };
          if (ti == 0 && rsp.reg == nak.reg) {
             master_dbg(bus->master,
-                       "rsp " RSP_FMT " ti=%d err=%d\n",
-                       RSP_ARGS(rsp), ti, err);
+                       "rsp " RSP_FMT " bus=%d addr=%#02x ti=%d err=%d\n",
+                       RSP_ARGS(rsp), adap->nr, msg->addr, ti, err);
          } else {
             master_err(bus->master,
-                       "rsp " RSP_FMT " ti=%d err=%d\n",
-                       RSP_ARGS(rsp), ti, err);
+                       "rsp " RSP_FMT " bus=%d addr=%#02x ti=%d err=%d\n",
+                       RSP_ARGS(rsp), adap->nr, msg->addr, ti, err);
          }
          goto out;
       }
@@ -402,8 +404,8 @@ static int scd_smbus_master_xfer(struct i2c_adapter *adap,
          err = smbus_check_resp(rsp, ti);
          if (err) {
             master_err(bus->master,
-                       "rsp " RSP_FMT " ti=%d err=%d\n",
-                       RSP_ARGS(rsp), ti, err);
+                       "rsp " RSP_FMT " bus=%d addr=%#02x ti=%d err=%d\n",
+                       RSP_ARGS(rsp), adap->nr, msg->addr, ti, err);
             goto out;
          }
          ti++;
@@ -438,11 +440,11 @@ static int scd_smbus_master_xfer(struct i2c_adapter *adap,
             */
 
             if (msg->buf[0] < 1 ||
-                msg->buf[0] > I2C_SMBUS_BLOCK_MAX) {
+               msg->buf[0] > I2C_SMBUS_BLOCK_MAX) {
                err = -EPROTO;
                master_err(bus->master,
-                          "rsp " RSP_FMT " ti=%d err=%d\n",
-                          RSP_ARGS(rsp), ti, err);
+                          "rsp " RSP_FMT " bus=%d addr=%#02x ti=%d err=%d\n",
+                          RSP_ARGS(rsp), adap->nr, msg->addr, ti, err);
                goto out;
             }
 
@@ -474,7 +476,7 @@ static int scd_smbus_master_xfer(struct i2c_adapter *adap,
                   req.ss = 0;
                }
 
-               err = scd_smbus_master_wait(bus->master);
+               err = scd_smbus_master_wait(bus, msg->addr);
                if (err)
                   goto out;
 
