@@ -1,21 +1,23 @@
 
-from __future__ import absolute_import, division, print_function
-
 from ...core.card import LC_BASE_SLOTID, FC_BASE_SLOTID
+from ...core.psu import PsuSlot
 from ...core.supervisor import Supervisor
 from ...core.types import PciAddr
-
-from .card import DenaliCardSlot
 
 from ...descs.gpio import GpioDesc
 
 from ..eeprom import PrefdlSeeprom
 from ..microsemi import Microsemi, MicrosemiPort
+from ..pca9541 import Pca9541
+from ..psu.delta import ECD16020097
 from ..scd import Scd
+
+from .card import DenaliCardSlot
 
 class DenaliSupervisor(Supervisor):
    LINECARD_PORTS = []
    FABRIC_PORTS = []
+   PSUS = []
 
    def __init__(self, scdAddr=None, pciSwitchCls=Microsemi, **kwargs):
       super(DenaliSupervisor, self).__init__(**kwargs)
@@ -39,6 +41,7 @@ class DenaliSupervisor(Supervisor):
       self.createPciSwitch()
       self.createLinecards()
       self.createFabricCards()
+      self.createPsus()
 
    def createScd(self):
       self.scd = self.newComponent(Scd, self.scdAddr)
@@ -114,6 +117,44 @@ class DenaliSupervisor(Supervisor):
          presenceGpio = self.inventory.getGpio("%s_present" % name)
          self.fabricSlots.append(DenaliCardSlot(self, slotId, pci, bus,
                                                 presenceGpio=presenceGpio))
+
+   def createPsus(self):
+      for idx, desc in enumerate(self.PSUS):
+         name = "psu%d" % desc.psuId
+         # NOTE: Otterlake has a gap of 1 between banks. The gpio creation might
+         #       have to become shim specific in the future.
+         bit = idx if desc.bank == 1 else idx + 1
+         self.scd.addGpios([
+            GpioDesc("%s_present" % name, 0x5080, bit, ro=True),
+            GpioDesc("%s_present_changed" % name, 0x5080, 16 + bit),
+            GpioDesc("%s_ok" % name, 0x5090, bit, ro=True),
+            GpioDesc("%s_ok_changed" % name, 0x5090, 16 + bit),
+            GpioDesc("%s_ac_a_ok" % name, 0x50A0, bit, ro=True),
+            GpioDesc("%s_ac_a_ok_changed" % name, 0x50A0, 16 + bit),
+            GpioDesc("%s_ac_b_ok" % name, 0x50B0, bit, ro=True),
+            GpioDesc("%s_ac_b_ok_changed" % name, 0x50B0, 16 + bit),
+         ])
+         pca = self.scd.newComponent(
+            Pca9541,
+            addr=self.scd.i2cAddr(desc.bus, desc.addr),
+            driverMode='kernel',
+         )
+         slot = pca.newComponent(
+            PsuSlot,
+            slotId=desc.psuId,
+            desc=desc,
+            addrFunc=pca.i2cAddr,
+            presentGpio=self.scd.inventory.getGpio('%s_present' % name),
+            inputOkGpio=self.scd.inventory.getGpio('%s_ok' % name),
+            outputOkGpio=[
+               self.scd.inventory.getGpio('%s_ac_a_ok' % name),
+               self.scd.inventory.getGpio('%s_ac_b_ok' % name),
+            ],
+            psus=[
+               ECD16020097,
+            ],
+         )
+         self.psuSlots.append(slot)
 
    def readSlotId(self):
       # FIXME: read the slotId via scd gpio

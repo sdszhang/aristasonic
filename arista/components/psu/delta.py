@@ -90,3 +90,19 @@ class DPS1900AB(DeltaPsu):
       PsuIdent('DPS-1900AB A',   'PWR-1900AC-F', Airflow.FORWARD),
       PsuIdent('DPS-1900AB-1 A', 'PWR-1900AC-R', Airflow.REVERSE),
    ]
+
+class ECD16020102(DeltaPsu):
+   IDENTIFIERS = [
+      PsuIdent('ECD16020102', 'PWR-3001-AC-RED', Airflow.FORWARD),
+   ]
+
+class ECD26020037(DeltaPsu):
+   IDENTIFIERS = [
+      PsuIdent('ECD26020037', 'PWR-3001-DC-RED', Airflow.FORWARD),
+   ]
+
+class ECD16020097(DeltaPsu):
+   PMBUS_ADDR = 0x40
+   IDENTIFIERS = [
+      PsuIdent('ECD16020097', 'PWR-D1-3041-AC-BLUE', Airflow.REVERSE),
+   ]

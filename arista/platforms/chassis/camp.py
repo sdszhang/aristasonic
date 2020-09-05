@@ -11,4 +11,4 @@ class Camp(DenaliChassis):
    NUM_LINECARDS = 4
    NUM_FABRICS = 6
    NUM_FANS = 24
-   NUM_PSUS = 10
+   NUM_PSUS = 8

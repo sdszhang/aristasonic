@@ -11,4 +11,4 @@ class NorthFace(DenaliChassis):
    NUM_LINECARDS = 8
    NUM_FABRICS = 6
    NUM_FANS = 48
-   NUM_PSUS = 20
+   NUM_PSUS = 12

@@ -1,6 +1,7 @@
 
 from __future__ import absolute_import, division
 
+from ...components.denali.psu import DenaliPsuSlotDesc
 from ...components.denali.supervisor import DenaliSupervisor
 from ...components.dpm import Ucd90120A, Ucd90160, UcdMon, UcdGpi
 from ...components.eeprom import PrefdlSeeprom
@@ -8,8 +9,6 @@ from ...components.microsemi import MicrosemiPortDesc
 
 from ...core.platform import registerPlatform
 from ...core.types import PciAddr
-
-from ...descs.gpio import GpioDesc
 
 from ..cpu.sprucefish import SprucefishCpu
 
@@ -40,7 +39,20 @@ class OtterLake(DenaliSupervisor):
       MicrosemiPortDesc(29, 6, 0),
    ]
 
-   ALL_PSUS = [(1, p) for p in range(7)] + [(2, p) for p in range(6)]
+   PSUS = [
+      DenaliPsuSlotDesc(psuId=1, bank=1, slot=1, bus=16, addr=0x70),
+      DenaliPsuSlotDesc(psuId=2, bank=1, slot=2, bus=16, addr=0x71),
+      DenaliPsuSlotDesc(psuId=3, bank=1, slot=3, bus=16, addr=0x72),
+      DenaliPsuSlotDesc(psuId=4, bank=1, slot=4, bus=17, addr=0x70),
+      DenaliPsuSlotDesc(psuId=5, bank=1, slot=5, bus=17, addr=0x71),
+      DenaliPsuSlotDesc(psuId=6, bank=1, slot=6, bus=17, addr=0x72),
+      DenaliPsuSlotDesc(psuId=7, bank=2, slot=1, bus=18, addr=0x70),
+      DenaliPsuSlotDesc(psuId=8, bank=2, slot=2, bus=18, addr=0x71),
+      DenaliPsuSlotDesc(psuId=9, bank=2, slot=3, bus=18, addr=0x72),
+      DenaliPsuSlotDesc(psuId=10, bank=2, slot=4, bus=19, addr=0x70),
+      DenaliPsuSlotDesc(psuId=11, bank=2, slot=5, bus=19, addr=0x71),
+      DenaliPsuSlotDesc(psuId=12, bank=2, slot=6, bus=19, addr=0x72),
+   ]
 
    def __init__(self, chassis=None, slot=None, **kwargs):
       super(OtterLake, self).__init__(chassis=chassis, slot=slot,
@@ -48,7 +60,6 @@ class OtterLake(DenaliSupervisor):
 
       self.cpu = None
       self.createCpuCard()
-      self.createPsus()
 
    def createCpuCard(self):
       self.cpu = self.newComponent(SprucefishCpu)
@@ -63,19 +74,3 @@ class OtterLake(DenaliSupervisor):
 
       self.eeprom = self.cpu.cpld.newComponent(PrefdlSeeprom,
                                                self.cpu.shimEepromAddr())
-
-   def createPsus(self):
-      for idx, (bankId, psuId) in enumerate(self.ALL_PSUS):
-         name = "bank%d_psu%d" % (bankId, psuId + 1)
-         self.scd.addGpios([
-            GpioDesc("%s_present" % name, 0x5080, idx, ro=True),
-            GpioDesc("%s_present_changed" % name, 0x5080, 16 + idx),
-            GpioDesc("%s_ok" % name, 0x5090, idx, ro=True),
-            GpioDesc("%s_ok_changed" % name, 0x5090, 16 + idx),
-            GpioDesc("%s_ac_a_ok" % name, 0x50A0, idx, ro=True),
-            GpioDesc("%s_ac_a_ok_changed" % name, 0x50A0, 16 + idx),
-            GpioDesc("%s_ac_b_ok" % name, 0x50B0, idx, ro=True),
-            GpioDesc("%s_ac_b_ok_changed" % name, 0x50B0, 16 + idx),
-         ])
-
-         # TODO: PSU smbus
