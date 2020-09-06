@@ -157,5 +157,4 @@ class DenaliSupervisor(Supervisor):
          self.psuSlots.append(slot)
 
    def readSlotId(self):
-      # FIXME: read the slotId via scd gpio
-      return 0
+      return 1 if self.inventory.getGpio('supervisor_slotid').isActive() else 2

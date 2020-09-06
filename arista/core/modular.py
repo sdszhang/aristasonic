@@ -56,8 +56,8 @@ class Modular(Sku):
       return self.active.readChassisEeprom()
 
    def insertSupervisor(self, supervisor, slotId, active=False):
-      assert self.supervisors[slotId] is None
-      self.supervisors[slotId] = supervisor
+      assert self.supervisors[slotId - 1] is None
+      self.supervisors[slotId - 1] = supervisor
       if active:
          self.active = supervisor
 

@@ -36,11 +36,22 @@ def doShowPsu(ctx, args, slot):
    except Exception: # pylint: disable=broad-except
       print("  %d: Error" % slotId)
 
+def doShowSupervisors(ctx, args):
+   for sup in ctx.chassis.iterSupervisors():
+      if sup == ctx.chassis.active: # TODO: add support for standby
+         slotId = sup.getSlotId()
+         eeprom = sup.getEeprom()
+         sku = eeprom.get('SKU')
+         serial = eeprom.get('SerialNumber')
+         print("  %d: %s (%s)" % (slotId, sku, serial))
+
 @registerAction(chassisSummaryParser)
 def doChassisSummary(ctx, args):
    eeprom = ctx.chassis.getEeprom()
    print("Sku: %s" % eeprom.get('SKU'))
    print("Serial: %s" % eeprom.get('SerialNumber'))
+   print("Supervisors:")
+   doShowSupervisors(ctx, args)
    print("Linecards:")
    for linecard in ctx.chassis.iterLinecards():
       doShowCard(ctx, args, linecard)
