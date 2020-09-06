@@ -18,6 +18,23 @@ def doShowCard(ctx, args, card):
       print("  %d: invalid prefdl" % card.slot.slotId)
    except IOError:
       print("  %d: IO Error" % card.slot.slotId)
+   except Exception: # pylint: disable=broad-except
+      print("  %d: Error" % card.slot.slotId)
+
+def doShowPsu(ctx, args, slot):
+   slotId = slot.slotId
+   try:
+      if slot.getPresence():
+         ident = slot.model.identifier
+         sku = ident.aristaName
+         serial = ident.metadata['serial']
+         print("  %d: %s (%s)" % (slotId, sku, serial))
+      else:
+         print("  %d: not present" % slotId)
+   except IOError:
+      print("  %d: IO Error" % slotId)
+   except Exception: # pylint: disable=broad-except
+      print("  %d: Error" % slotId)
 
 @registerAction(chassisSummaryParser)
 def doChassisSummary(ctx, args):
@@ -30,4 +47,7 @@ def doChassisSummary(ctx, args):
    print("Fabrics:")
    for fabric in ctx.chassis.iterFabrics():
       doShowCard(ctx, args, fabric)
+   print("Psus:")
+   for psu in ctx.chassis.iterPsus():
+      doShowPsu(ctx, args, psu)
 

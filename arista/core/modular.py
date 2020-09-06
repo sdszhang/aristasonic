@@ -10,11 +10,11 @@ class Modular(Sku):
    CARD_SLOT_CLS = None
    CARD_CLS = None
 
-   NUM_SUPERVISORS = 2
-   NUM_LINECARDS = 8
-   NUM_FABRICS = 6
-   NUM_FANS = 48
-   NUM_PSUS = 20
+   NUM_SUPERVISORS = None
+   NUM_LINECARDS = None
+   NUM_FABRICS = None
+   NUM_FANS = None
+   NUM_PSUS = None
 
    def __init__(self, inventory=None, **kwargs):
       inventory = inventory or MetaInventory()
@@ -89,19 +89,20 @@ class Modular(Sku):
          logging.debug('Loading psu slot %d', slot.slotId)
          slot.loadPsu()
 
-   def _iterSlots(self, slots, count, presentOnly=True):
+   def _iterSlots(self, slots, count, presentOnly=True, key=lambda s: s):
       for slot in slots[:count]:
-         if slot.card is None and presentOnly:
+         item = key(slot)
+         if item is None and presentOnly:
             continue
-         yield slot.card
+         yield item
 
    def iterLinecards(self, presentOnly=True):
       return self._iterSlots(self.active.linecardSlots, self.NUM_LINECARDS,
-                             presentOnly=presentOnly)
+                             presentOnly=presentOnly, key=lambda s: s.card)
 
    def iterFabrics(self, presentOnly=True):
       return self._iterSlots(self.active.fabricSlots, self.NUM_FABRICS,
-                             presentOnly=presentOnly)
+                             presentOnly=presentOnly, key=lambda s: s.card)
 
    def iterFans(self, presentOnly=True):
       return self._iterSlots(self.active.fanSlots, self.NUM_FANS,
