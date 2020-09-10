@@ -1,6 +1,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+import time
+
 from .card import DenaliCard, DenaliCardSlot
 from ..asic.jericho2 import Jericho2
 from ..linecard import Linecard
@@ -73,6 +75,17 @@ class DenaliLinecard(DenaliCard, Linecard):
          self.syscpld.lcpuDisableSet(False)
          self.syscpld.lcpuResetSet(False)
          waitFor(self.syscpld.lcpuPowerGood, "LCPU power to be good")
+         # This is rather ugly, but seems to be necessary to avoid any issues with
+         # the tg3 driver for the SUP GMAC. With a shorter sleep, or no sleep at all
+         # we sometimes experience TX transmit timeouts during the lifetime of the
+         # linecard. This sleep seems to completely remove this issue. Time will tell
+         # if it's a real fix for that, but so far looks necessary. Sleeping 4
+         # seconds or more also seem to not show up the tg3_abort_hw timed out error
+         # at power on time.
+         #
+         # Unfortunately for now I can't think of a better fix than sleep. I don't
+         # think we can wait on anything...
+         time.sleep(4)
       else:
          self.syscpld.lcpuResetSet(True)
          self.syscpld.lcpuDisableSet(True)

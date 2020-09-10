@@ -94,10 +94,12 @@ class PciConfig(object):
       return self.pcieCapability().disabled()
 
    def enable(self):
-      self.pcieCapability().disabled(False)
+      if self.disabled():
+         self.pcieCapability().disabled(False)
 
    def disable(self):
-      self.pcieCapability().disabled(True)
+      if not self.disabled():
+         self.pcieCapability().disabled(True)
 
 class PciSwitchPortDriver(Driver):
    def __init__(self, addr=None, upstreamAddr=None, **kwargs):

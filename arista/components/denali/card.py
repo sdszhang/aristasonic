@@ -5,7 +5,6 @@ import copy
 
 from ...core.card import Card, CardSlot
 from ...core.log import getLogger
-from ...libs.pci import pciRescan
 from ...libs.wait import waitFor
 from ..dpm import Ucd90320
 from ..eeprom import PrefdlSeeprom
@@ -117,22 +116,24 @@ class DenaliCard(Card):
             waitFor(asic.isInReset, "Can't have asic in reset")
             logging.debug('Asic %d on card %s is in reset', asicId, self)
 
-      pciRescan() # XXX I believe pci rescan has a pretty big caveat
-
       if on:
+         self.slot.enablePciPort()
          # Check chip visiblity in pci domain
          for asic in self.asics:
             asic.waitForIt()
 
    def powerOnIs(self, on, lcpuCtx=None):
       if on:
-         self.slot.enablePciPort()
+         # Make sure the port is disabled before we start. If it isn't we risk
+         # triggering bogus PCI state that will result in kernel lockups later.
+         self.slot.disablePciPort()
          self.powerStandbyDomainIs(True)
          self.powerPremainPowerDomainIs(True)
          if lcpuCtx:
             self.powerLcpuIs(True, lcpuCtx)
          else:
             self.powerMainPowerDomainIs(True)
+         self.slot.enablePciPort()
       else:
          self.slot.disablePciPort()
          if lcpuCtx:
@@ -163,8 +164,6 @@ class DenaliCard(Card):
       waitFor(lambda: (not self.plx.smbusPing()), "Can't take Plx in reset")
       self.gpio1.pcieReset(False)
       waitFor(self.plx.smbusPing, "Can't take Plx out of reset")
-
-      pciRescan()
 
    def setupPlx(self):
       self.enablePlxDownstreamHotplug()
