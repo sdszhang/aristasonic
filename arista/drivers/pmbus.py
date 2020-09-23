@@ -4,7 +4,68 @@ from ..core.driver import Driver
 from ..core.utils import simulateWith
 from ..core.log import getLogger
 
+from .i2c import I2cDevDriver
+
 logging = getLogger(__name__)
+
+class PsuPmbusDetect(I2cDevDriver):
+
+   MFR_ID = 0x99
+   MFR_MODEL = 0x9a
+   MFR_REVISION = 0x9b
+   MFR_LOCATION = 0x9c
+   MFR_DATE = 0x9d
+   MFR_SERIAL = 0x9e
+
+   def __init__(self, addr):
+      super(PsuPmbusDetect, self).__init__(name='pmbus-detect', addr=addr)
+      self.addr = addr
+      self.id_ = None
+      self.model_ = None
+      self.revision_ = None
+      self.location_ = None
+      self.date_ = None
+      self.serial_ = None
+
+   def id(self):
+      if self.id_ is None:
+         self.id_ = self.read_block_data_str(self.MFR_ID)
+      return self.id_
+
+   def model(self):
+      if self.model_ is None:
+         self.model_ = self.read_block_data_str(self.MFR_MODEL)
+      return self.model_
+
+   def revision(self):
+      if self.revision_ is None:
+         self.revision_ = self.read_block_data_str(self.MFR_REVISION)
+      return self.revision_
+
+   def location(self):
+      if self.location_ is None:
+         self.location_ = self.read_block_data_str(self.MFR_LOCATION)
+      return self.location_
+
+   def date(self):
+      if self.date_ is None:
+         self.date_ = self.read_block_data_str(self.MFR_DATE)
+      return self.date_
+
+   def serial(self):
+      if self.serial_ is None:
+         self.serial_ = self.read_block_data_str(self.MFR_SERIAL)
+      return self.serial_
+
+   def getMetadata(self):
+      return {
+         'id': self.id(),
+         'model': self.model(),
+         'revision': self.revision(),
+         'location': self.location(),
+         'date': self.date(),
+         'serial': self.serial(),
+      }
 
 class PmbusDriver(Driver):
    def __init__(self, addr=None, hwmonDir=None, sensors=None, **kwargs):

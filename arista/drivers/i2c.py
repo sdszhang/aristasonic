@@ -138,6 +138,12 @@ class I2cDevDriver(Driver):
    def write_byte_data(self, reg, data):
       return self.bus.write_byte_data(self.addr.address, reg, data)
 
+   def read_block_data(self, reg):
+      return self.bus.read_block_data(self.addr.address, reg)
+
+   def read_block_data_str(self, reg):
+      return ''.join(chr(c) for c in self.read_block_data(reg))
+
    def read(self, reg):
       res = self.read_byte_data(reg)
       if res is None:
