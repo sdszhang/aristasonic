@@ -1,4 +1,5 @@
 from ..core.fixed import FixedSystem
+from ..core.psu import PsuSlot
 from ..core.platform import registerPlatform
 from ..core.utils import incrange
 from ..core.types import PciAddr, ResetGpio
@@ -9,11 +10,10 @@ from ..components.cpu.intel.pch import Pch
 from ..components.cpu.rook import LAFanCpldComponent
 from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi
 from ..components.max6658 import Max6658
-from ..components.psu import PmbusPsu
+from ..components.psu.delta import DPS750AB, DPS1900AB
 from ..components.scd import Scd
 
 from ..descs.gpio import GpioDesc
-from ..descs.psu import PsuDesc
 from ..descs.sensor import Position, SensorDesc
 
 from .cpu.rook import RookCpu
@@ -88,25 +88,21 @@ class Gardena(FixedSystem):
       self.syscpld = cpu.syscpld
 
       for psuId in incrange(1, 2):
-         scd.addPsu(PmbusPsu, addr=scd.i2cAddr(1 + psuId, 0x58, t=3, datr=2, datw=3),
-                    waitFile="/sys/class/hwmon/hwmon%d" % (5 + psuId),
-                    psus=[
-            PsuDesc(psuId=psuId,
-                    led=cpu.leds.inventory.getLed('psu%d_status' % psuId), sensors=[
-               SensorDesc(diode=0,
-                          name='Power supply %d hotspot sensor' % psuId,
-                          position=Position.OTHER,
-                          target=80, overheat=95, critical=100),
-               SensorDesc(diode=1,
-                          name='Power supply %d inlet temp sensor' % psuId,
-                          position=Position.INLET,
-                          target=55, overheat=70, critical=75),
-               SensorDesc(diode=2,
-                          name='Power supply %d exhaust temp sensor' % psuId,
-                          position=Position.OUTLET,
-                          target=80, overheat=108, critical=113),
-            ]),
-         ])
+         addrFunc=lambda addr, i=psuId: scd.i2cAddr(1 + i, addr, t=3, datr=2, datw=3)
+         name = "psu%d" % psuId
+         scd.newComponent(
+            PsuSlot,
+            slotId=psuId,
+            addrFunc=addrFunc,
+            presentGpio=scd.inventory.getGpio("%s_present" % name),
+            inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
+            outputOkGpio=scd.inventory.getGpio("%s_status" % name),
+            led=cpu.leds.inventory.getLed('%s_status' % name),
+            psus=[
+               DPS750AB,
+               DPS1900AB,
+            ],
+         )
 
       addr = 0x6100
       for xcvrId in self.qsfpRange:
