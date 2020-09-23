@@ -17,3 +17,6 @@ class SensorDesc(HwDesc):
       self.target = float(target)
       self.overheat = float(overheat)
       self.critical = float(critical)
+
+   def renderName(self, **kwargs):
+      self.name = self.name % kwargs

@@ -344,6 +344,9 @@ class StoredData(object):
       else:
          self.path = path
 
+   def __str__(self):
+      return '%s(%s)' % (self.__class__.__name__, self.path)
+
    def exist(self):
       return os.path.isfile(self.path)
 
@@ -364,6 +367,15 @@ class StoredData(object):
    def clear(self):
       if self.exist():
          os.remove(self.path)
+
+   def readOrClear(self):
+      if self.exist():
+         try:
+            return self.read()
+         except Exception: # pylint: disable=broad-except
+            logging.error("failed to load cached data %s", self)
+            self.clear()
+      return None
 
 class JsonStoredData(StoredData):
 

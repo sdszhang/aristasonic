@@ -1,5 +1,6 @@
 import os.path
 
+from ..core.utils import inSimulation
 from ..inventory.gpio import Gpio
 
 class GpioImpl(Gpio):
@@ -31,6 +32,8 @@ class GpioImpl(Gpio):
       return self.activeLow
 
    def getRawValue(self):
+      if inSimulation():
+         return 1
       with open(self.path, 'r') as f:
          return int(f.read())
 

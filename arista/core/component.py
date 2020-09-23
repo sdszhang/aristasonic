@@ -203,3 +203,6 @@ class I2cComponent(Component):
    def __str__(self):
       return '%s(addr=%s)' % (self.__class__.__name__, self.addr)
 
+class SlotComponent(Component):
+   def getPresence(self):
+      raise NotImplementedError

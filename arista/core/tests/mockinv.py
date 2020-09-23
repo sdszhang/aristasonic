@@ -2,6 +2,7 @@
 import datetime
 
 from ...inventory.fan import Fan
+from ...inventory.gpio import Gpio
 from ...inventory.interrupt import Interrupt
 from ...inventory.led import Led
 from ...inventory.phy import Phy
@@ -227,3 +228,45 @@ class MockTemp(Temp):
 
    def __eq__(self, value):
       return isinstance(value, MockTemp) and self.diode == value.diode
+
+class MockGpio(Gpio):
+   def __init__(self, name='unknown', addr=0x42, bit=3, ro=False, activeLow=False,
+                value=0):
+      self.name = name
+      self.addr = addr
+      self.bit = bit
+      self.ro = ro
+      self.activeLow = activeLow
+      self.value = value
+      self.path = '/path/%s' % self.name
+
+   def getName(self):
+      return self.name
+
+   def getAddr(self):
+      return self.addr
+
+   def getPath(self):
+      return self.path
+
+   def getBit(self):
+      return self.bit
+
+   def isRo(self):
+      return self.ro
+
+   def isActiveLow(self):
+      return self.activeLow
+
+   def getRawValue(self):
+      return self.value
+
+   def isActive(self):
+      if self.activeLow:
+         return self.value == 0
+      return bool(self.value)
+
+   def setActive(self, value):
+      if self.ro:
+         raise IOError()
+      self.value = value
