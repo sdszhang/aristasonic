@@ -1,12 +1,12 @@
-from ..accessors.psu import MixedPsuImpl
+from ...accessors.psu import MixedPsuImpl
 
-from ..core.component import I2cComponent, Priority
+from ...core.component import I2cComponent, Priority
 
-from ..drivers.i2c import I2cKernelDriver
-from ..drivers.pmbus import PmbusDriver
-from ..drivers.sysfs import TempSysfsDriver
+from ...drivers.i2c import I2cKernelDriver
+from ...drivers.pmbus import PmbusDriver
+from ...drivers.sysfs import TempSysfsDriver
 
-from .mixin import TempComponentMixin
+from ..mixin import TempComponentMixin
 
 class PmbusPsu(I2cComponent, TempComponentMixin):
    def __init__(self, addr=None, waitFile=None, name='pmbus', drivers=None,
