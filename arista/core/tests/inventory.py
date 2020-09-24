@@ -1,236 +1,24 @@
 
 from __future__ import absolute_import, division, print_function
 
-import datetime
-
 from ...tests.testing import unittest
-
-from ...inventory.fan import Fan
-from ...inventory.interrupt import Interrupt
-from ...inventory.led import Led
-from ...inventory.phy import Phy
-from ...inventory.powercycle import PowerCycle
-from ...inventory.psu import Psu
-from ...inventory.reloadcause import ReloadCause
-from ...inventory.reset import Reset
-from ...inventory.slot import Slot
-from ...inventory.temp import Temp
-from ...inventory.watchdog import Watchdog
-from ...inventory.xcvr import Xcvr
 
 from ..inventory import Inventory
 from ..metainventory import MetaInventory, LazyInventory
 
-class TestFan(Fan):
-   def __init__(self, fanId=1, name="fan1", speed=12345, direction='forward'):
-      self.fanId = fanId
-      self.name = name
-      self.speed = speed
-      self.direction = direction
-
-   def getName(self):
-      return self.name
-
-   def getSpeed(self):
-      return self.speed
-
-   def setSpeed(self, speed):
-      self.speed = speed
-
-   def getDirection(self):
-      return self.direction
-
-   def __eq__(self, value):
-      return isinstance(value, TestFan) and self.fanId == value.fanId
-
-class TestPsu(Psu):
-   def __init__(self, psuId=1, name="psu1", presence=True, status=True):
-      self.psuId = psuId
-      self.name = name
-      self.presence = presence
-      self.status = status
-
-   def getName(self):
-      return self.name
-
-   def getPresence(self):
-      return self.presence
-
-   def getStatus(self):
-      return self.status
-
-   def __eq__(self, value):
-      return isinstance(value, TestPsu) and self.psuId == value.psuId
-
-class TestWatchdog(Watchdog):
-   def __init__(self, started=True, remaining=100, timeout=300):
-      self.started = started
-      self.remaining = remaining
-      self.timeout = timeout
-
-   def arm(self, timeout):
-      self.timeout = timeout
-
-   def stop(self):
-      self.started = False
-      self.remaining = 0
-
-   def status(self):
-      return self.started
-
-class TestPowerCycle(PowerCycle):
-   def __init__(self, powered=True):
-      self.powered = powered
-
-   def powerCycle(self):
-      self.powered = not self.powered
-
-   def __eq__(self, value):
-      return isinstance(value, TestPowerCycle) and self.powered == value.powered
-
-class TestReloadCause(ReloadCause):
-   def __init__(self, name='unknown', time=datetime.datetime.now()):
-      self.name = name
-      self.time = time
-
-   def getTime(self):
-      return self.time
-
-   def getCause(self):
-      return self.name
-
-class TestInterrupt(Interrupt):
-   def __init__(self, name='unknown', status=False):
-      self.name = name
-      self.status = status
-      self.path = '/test/path'
-
-   def set(self):
-      self.status = True
-
-   def clear(self):
-      self.status = False
-
-   def getFile(self):
-      return self.path
-
-class TestReset(Reset):
-   def __init__(self, name='unknown', reset=False):
-      self.name = name
-      self.reset = reset
-
-   def read(self):
-      return self.reset
-
-   def resetIn(self):
-      self.reset = True
-
-   def resetOut(self):
-      self.reset = False
-
-   def getName(self):
-      return self.name
-
-class TestPhy(Phy):
-   def __init__(self, phyId=1, reset=False):
-      self.phyId = phyId
-      self.reset = reset
-
-   def getReset(self):
-      return self.reset
-
-   def __eq__(self, value):
-      return isinstance(value, TestPhy) and self.phyId == value.phyId
-
-class TestLed(Led):
-   def __init__(self, name='unknown', color='green', status=True):
-      self.name = name
-      self.color = color
-      self.status = status
-
-   def getColor(self):
-      return self.color
-
-   def setColor(self, color):
-      self.color = color
-
-   def getName(self):
-      return self.name
-
-   def isStatusLed(self):
-      return self.status
-
-   def __eq__(self, value):
-      return isinstance(value, TestLed) and self.name == value.name
-
-class TestSlot(Slot):
-   def __init__(self, name='unknown', present=True):
-      self.name = name
-      self.present = present
-
-   def getPresence(self):
-      return self.present
-
-   def __eq__(self, value):
-      return isinstance(value, TestSlot) and self.name == value.name
-
-class TestXcvr(Xcvr):
-   def __init__(self, portId=0, xcvrType=Xcvr.QSFP, name="unknown",
-                presence=True, lpMode=False, intr=None, reset=None):
-      self.portId = portId
-      self.xcvrId = portId
-      self.xcvrType = xcvrType
-      self.name = name
-      self.presence = presence
-      self.lpMode = lpMode
-      self.intr = intr
-      self.reset = reset or TestReset('xcvr%d' % portId)
-
-   def getName(self):
-      return self.name
-
-   def getPresence(self):
-      return self.presence
-
-   def getLowPowerMode(self):
-      return self.lpMode
-
-   def setLowPowerMode(self, value):
-      self.lpMode = value
-
-   def getInterruptLine(self):
-      return self.intr
-
-   def getReset(self):
-      # TODO: introduce unsupported feature exceptions for inventory
-      # if self.xcvrType == inventory.Xcvr.QSFP:
-      #    raise FeatureNotSupported()
-      return self.reset
-
-class TestTemp(Temp):
-   def __init__(self, diode=1, temperature=30, lowThreshold=10, highThreshold=50):
-      self.diode = diode
-      self.temperature = temperature
-      self.lowThreshold = lowThreshold
-      self.highThreshold = highThreshold
-
-   def getTemperature(self):
-      return self.temperature
-
-   def getLowThreshold(self):
-      return self.lowThreshold
-
-   def setLowThreshold(self, value):
-      self.lowThreshold = value * 1000
-
-   def getHighThreshold(self):
-      return self.highThreshold
-
-   def setHighThreshold(self, value):
-      self.highThreshold = value * 1000
-
-   def __eq__(self, value):
-      return isinstance(value, TestTemp) and self.diode == value.diode
+from .mockinv import (
+   MockFan,
+   MockInterrupt,
+   MockLed,
+   MockPhy,
+   MockPowerCycle,
+   MockPsu,
+   MockReset,
+   MockSlot,
+   MockTemp,
+   MockWatchdog,
+   MockXcvr,
+)
 
 class InventoryTest(unittest.TestCase):
    def _populateTestInventory(self, inv):
@@ -240,49 +28,49 @@ class InventoryTest(unittest.TestCase):
          osfps=list(range(4, 6)),
       )
       xcvrs = [
-         TestXcvr(0, TestXcvr.SFP, "SFP-1G-SX"),
-         TestXcvr(1, TestXcvr.SFP, "CAB-SFP-SFP-1M"),
-         TestXcvr(2, TestXcvr.QSFP, "CAB-Q-Q-100G-1M"),
-         TestXcvr(3, TestXcvr.QSFP, "QSFP-100G-CWDM4"),
-         TestXcvr(4, TestXcvr.OSFP, "AB-O-O-400G-1M"),
-         TestXcvr(5, TestXcvr.OSFP, "AOC-O-O-400G-3M"),
+         MockXcvr(0, MockXcvr.SFP, "SFP-1G-SX"),
+         MockXcvr(1, MockXcvr.SFP, "CAB-SFP-SFP-1M"),
+         MockXcvr(2, MockXcvr.QSFP, "CAB-Q-Q-100G-1M"),
+         MockXcvr(3, MockXcvr.QSFP, "QSFP-100G-CWDM4"),
+         MockXcvr(4, MockXcvr.OSFP, "AB-O-O-400G-1M"),
+         MockXcvr(5, MockXcvr.OSFP, "AOC-O-O-400G-3M"),
       ]
       for xcvr in xcvrs:
-         led = TestLed('%s%d' % (xcvr.typeStr(xcvr.xcvrType), xcvr.portId))
+         led = MockLed('%s%d' % (xcvr.typeStr(xcvr.xcvrType), xcvr.portId))
          inv.addLed(led)
          inv.addXcvr(xcvr)
 
       inv.addStatusLeds([
-         TestLed('status'),
-         TestLed('fans'),
-         TestLed('psu1'),
+         MockLed('status'),
+         MockLed('fans'),
+         MockLed('psu1'),
       ])
       inv.addResets({
-         'internet': TestReset('internet'),
-         'humanity': TestReset('humanity'),
+         'internet': MockReset('internet'),
+         'humanity': MockReset('humanity'),
       })
       inv.addPsus([
-         TestPsu(1, 'psu1'),
-         TestPsu(2, 'psu2'),
+         MockPsu(1, 'psu1'),
+         MockPsu(2, 'psu2'),
       ])
       inv.addFans([
-         TestFan(1, 'fan1'),
-         TestFan(2, 'fan2'),
-         TestFan(3, 'fan3'),
-         TestFan(4, 'fan4'),
+         MockFan(1, 'fan1'),
+         MockFan(2, 'fan2'),
+         MockFan(3, 'fan3'),
+         MockFan(4, 'fan4'),
       ])
-      inv.addPowerCycle(TestPowerCycle())
-      inv.addWatchdog(TestWatchdog())
-      inv.addInterrupt('intr', TestInterrupt())
-      inv.addPhy(TestPhy())
-      inv.addSlot(TestSlot())
-      inv.addTemp(TestTemp(diode=1))
-      inv.addTemp(TestTemp(diode=2))
+      inv.addPowerCycle(MockPowerCycle())
+      inv.addWatchdog(MockWatchdog())
+      inv.addInterrupt('intr', MockInterrupt())
+      inv.addPhy(MockPhy())
+      inv.addSlot(MockSlot())
+      inv.addTemp(MockTemp(diode=1))
+      inv.addTemp(MockTemp(diode=2))
 
    def _populateSmallTestInventory(self, inv):
       inv.addPsus([
-         TestPsu(3, 'psu3'),
-         TestPsu(4, 'psu4'),
+         MockPsu(3, 'psu3'),
+         MockPsu(4, 'psu4'),
       ])
 
    def _getTestInventory(self, populate=True):
