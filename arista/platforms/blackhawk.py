@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.psu import PsuSlot
 from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
@@ -7,14 +8,13 @@ from ..components.asic.xgs.tomahawk3 import Tomahawk3
 from ..components.cpu.rook import TehamaFanCpldComponent
 from ..components.dpm import Ucd90320, UcdGpi
 from ..components.max6581 import Max6581
-from ..components.psu import PmbusPsu
+from ..components.psu.delta import DPS1600AB, DPS1600CB
 from ..components.scd import Scd
 
-from .cpu.rook import RookCpu
-
 from ..descs.gpio import GpioDesc
-from ..descs.psu import PsuDesc
 from ..descs.sensor import Position, SensorDesc
+
+from .cpu.rook import RookCpu
 
 @registerPlatform()
 class BlackhawkO(FixedSystem):
@@ -79,29 +79,6 @@ class BlackhawkO(FixedSystem):
          GpioDesc("psu1_ac_status", 0x5000, 11, ro=True),
       ])
 
-      for psuId in list(range(2, 0, -1)):
-         scd.addPsu(PmbusPsu,
-                    addr=scd.i2cAddr(10 + psuId, 0x58, t=3, datr=2, datw=3),
-                    # PSU 1 is on hwmon7 and PSU 2 is on hwmon6
-                    waitFile="/sys/class/hwmon/hwmon%d" % (8 - psuId),
-                    psus=[
-            PsuDesc(psuId=psuId,
-                    led=scd.inventory.getLed('psu%d' % psuId), sensors=[
-               SensorDesc(diode=0,
-                          name='Power supply %d hotspot sensor' % psuId,
-                          position=Position.OTHER,
-                          target=86, overheat=92, critical=98),
-               SensorDesc(diode=1,
-                          name='Power supply %d inlet temp sensor' % psuId,
-                          position=Position.INLET,
-                          target=52, overheat=60, critical=65),
-               SensorDesc(diode=2,
-                          name='Power supply %d exhaust temp sensor' % psuId,
-                          position=Position.OUTLET,
-                          target=86, overheat=92, critical=98),
-            ]),
-         ])
-
       addr = 0x6100
       for xcvrId in self.osfpRange:
          name = "osfp%d" % xcvrId
@@ -149,6 +126,24 @@ class BlackhawkO(FixedSystem):
       })
       self.cpu = cpu
       self.syscpld = cpu.syscpld
+
+      for psuId in incrange(1, 2):
+         addrFunc=lambda addr, i=psuId: \
+                  scd.i2cAddr(10 + i, addr, t=3, datr=2, datw=3)
+         name = "psu%d" % psuId
+         scd.newComponent(
+            PsuSlot,
+            slotId=psuId,
+            addrFunc=addrFunc,
+            presentGpio=scd.inventory.getGpio("%s_present" % name),
+            inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
+            outputOkGpio=scd.inventory.getGpio("%s_status" % name),
+            led=cpu.leds.inventory.getLed('%s_status' % name),
+            psus=[
+               DPS1600CB,
+               DPS1600AB,
+            ],
+         )
 
 @registerPlatform()
 class BlackhawkDD(BlackhawkO):

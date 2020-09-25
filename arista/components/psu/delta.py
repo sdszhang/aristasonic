@@ -48,7 +48,29 @@ class DPS1500AB(DeltaPsu):
       PsuIdent('DPS-1500AB-7 A', 'PWR-1511-AC-RED', Airflow.FORWARD),
    ]
 
-class DPS1600CB(DeltaPsu):
+class DPS1600AB(DeltaPsu):
+   IDENTIFIERS = [
+      PsuIdent('DPS-1600AB-14 A', 'PWR-1611-DC-RED', Airflow.FORWARD),
+   ]
+
+   DESCRIPTION = PsuDesc(
+      sensors=[
+         SensorDesc(diode=0,
+                    name='Power supply %(psuId)d hotspot sensor',
+                    position=Position.OTHER,
+                    target=86, overheat=92, critical=98),
+         SensorDesc(diode=1,
+                    name='Power supply %(psuId)d inlet temp sensor',
+                    position=Position.INLET,
+                    target=52, overheat=60, critical=65),
+         SensorDesc(diode=2,
+                    name='Power supply %(psuId)d exhaust temp sensor',
+                    position=Position.OUTLET,
+                    target=86, overheat=92, critical=98),
+      ]
+   )
+
+class DPS1600CB(DPS1600AB):
    IDENTIFIERS = [
       PsuIdent('DPS-1600CB P', 'PWR-1611-AC-RED', Airflow.FORWARD),
    ]

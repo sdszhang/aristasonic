@@ -39,22 +39,34 @@ class PsuPmbusDetect(I2cDevDriver):
 
    def revision(self):
       if self.revision_ is None:
-         self.revision_ = self.read_block_data_str(self.MFR_REVISION)
+         try:
+            self.revision_ = self.read_block_data_str(self.MFR_REVISION)
+         except IOError:
+            self.revision_ = "N/A"
       return self.revision_
 
    def location(self):
       if self.location_ is None:
-         self.location_ = self.read_block_data_str(self.MFR_LOCATION)
+         try:
+            self.location_ = self.read_block_data_str(self.MFR_LOCATION)
+         except IOError:
+            self.location_ = "N/A"
       return self.location_
 
    def date(self):
       if self.date_ is None:
-         self.date_ = self.read_block_data_str(self.MFR_DATE)
+         try:
+            self.date_ = self.read_block_data_str(self.MFR_DATE)
+         except IOError:
+            self.date_ = "N/A"
       return self.date_
 
    def serial(self):
       if self.serial_ is None:
-         self.serial_ = self.read_block_data_str(self.MFR_SERIAL)
+         try:
+            self.serial_ = self.read_block_data_str(self.MFR_SERIAL)
+         except IOError:
+            self.serial_ = "N/A"
       return self.serial_
 
    def getMetadata(self):
