@@ -10,11 +10,8 @@ ConditionKernelCommandLine=sonic.mode=supervisor
 Type=oneshot
 RemainAfterExit=true
 
-ExecStart=/bin/true
-
-# This is disabled for now as it increases the risk of sup dead lock
-#ExecStart=/usr/bin/arista --syslog -l /var/log/arista-linecard.log linecard setup --lcpu --on --powerCycleIfOn
-#ExecStop=/usr/bin/arista --syslog -l /var/log/arista-linecard.log linecard clean --lcpu --off
+ExecStart=/usr/bin/arista --syslog -l /var/log/arista-linecard.log linecard setup --lcpu --on --powerCycleIfOn
+ExecStop=/usr/bin/arista --syslog -l /var/log/arista-linecard.log linecard clean --lcpu --off
 
 [Install]
 RequiredBy=platform-arista.target
