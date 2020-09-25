@@ -2,10 +2,12 @@ from ...core.cpu import Cpu
 from ...core.types import PciAddr
 from ...core.utils import incrange
 
-from ...components.scd import Scd
+from ...components.coretemp import Coretemp
+from ...components.cpu.intel.pch import Pch
 from ...components.cpu.rook import RookStatusLeds, RookSysCpld, RookCpldRegisters
 from ...components.lm73 import Lm73
 from ...components.max6658 import Max6658
+from ...components.scd import Scd
 
 from ...descs.fan import FanDesc
 from ...descs.led import LedDesc
@@ -18,6 +20,21 @@ class RookCpu(Cpu):
    def __init__(self, hwmonOffset=3, fanCount=4, fanCpldCls=None, mgmtBus=15,
                 cpldRegisterCls=RookCpldRegisters, **kwargs):
       super(RookCpu, self).__init__(**kwargs)
+
+      self.newComponent(Pch, sensors=[
+         SensorDesc(diode=0, name='PCH temp sensor',
+                    position=Position.OTHER, target=65, overheat=75, critical=85),
+      ])
+
+      self.newComponent(Coretemp, sensors=[
+         SensorDesc(diode=0, name='Physical id 0',
+                    position=Position.OTHER, target=82, overheat=95, critical=105),
+         SensorDesc(diode=1, name='CPU core0 temp sensor',
+                    position=Position.OTHER, target=82, overheat=95, critical=105),
+         SensorDesc(diode=2, name='CPU core1 temp sensor',
+                    position=Position.OTHER, target=82, overheat=95, critical=105),
+      ])
+
       cpld = self.newComponent(Scd, PciAddr(bus=0xff, device=0x0b, func=3))
       self.cpld = cpld
 

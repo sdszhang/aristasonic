@@ -5,8 +5,6 @@ from ..core.utils import incrange
 from ..core.types import PciAddr, ResetGpio
 
 from ..components.asic.xgs.tomahawk2 import Tomahawk2
-from ..components.coretemp import Coretemp
-from ..components.cpu.intel.pch import Pch
 from ..components.cpu.rook import LAFanCpldComponent
 from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi
 from ..components.max6658 import Max6658
@@ -38,20 +36,6 @@ class Gardena(FixedSystem):
       self.scd = scd
 
       scd.createWatchdog()
-
-      self.newComponent(Pch, sensors=[
-         SensorDesc(diode=0, name='PCH temp sensor',
-                    position=Position.OTHER, target=65, overheat=75, critical=85),
-      ])
-
-      self.newComponent(Coretemp, sensors=[
-         SensorDesc(diode=0, name='Physical id 0',
-                    position=Position.OTHER, target=82, overheat=95, critical=105),
-         SensorDesc(diode=1, name='CPU core0 temp sensor',
-                    position=Position.OTHER, target=82, overheat=95, critical=105),
-         SensorDesc(diode=2, name='CPU core1 temp sensor',
-                    position=Position.OTHER, target=82, overheat=95, critical=105),
-      ])
 
       scd.newComponent(Max6658, scd.i2cAddr(0, 0x4c),
                        waitFile='/sys/class/hwmon/hwmon2', sensors=[

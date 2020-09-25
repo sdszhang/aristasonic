@@ -4,8 +4,6 @@ from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk3 import Tomahawk3
-from ..components.coretemp import Coretemp
-from ..components.cpu.intel.pch import Pch
 from ..components.cpu.rook import TehamaFanCpldComponent
 from ..components.dpm import Ucd90320, UcdGpi
 from ..components.max6581 import Max6581
@@ -38,20 +36,6 @@ class BlackhawkO(FixedSystem):
       self.scd = scd
 
       scd.createWatchdog()
-
-      self.newComponent(Pch, sensors=[
-         SensorDesc(diode=0, name='PCH temp sensor',
-                    position=Position.OTHER, target=65, overheat=75, critical=85),
-      ])
-
-      self.newComponent(Coretemp, sensors=[
-         SensorDesc(diode=0, name='Physical id 0',
-                    position=Position.OTHER, target=82, overheat=95, critical=105),
-         SensorDesc(diode=1, name='CPU core0 temp sensor',
-                    position=Position.OTHER, target=82, overheat=95, critical=105),
-         SensorDesc(diode=2, name='CPU core1 temp sensor',
-                    position=Position.OTHER, target=82, overheat=95, critical=105),
-      ])
 
       scd.newComponent(Max6581, addr=scd.i2cAddr(8, 0x4d),
                        waitFile='/sys/class/hwmon/hwmon2', sensors=[
