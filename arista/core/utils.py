@@ -15,7 +15,7 @@ from ..libs.python import isinteger
 logging = getLogger(__name__)
 
 FLASH_MOUNT = '/host'
-TMPFS_MOUNT = '/run'
+TMPFS_MOUNT = '/run/arista'
 
 class HwApi(object):
    def __init__(self, *values):
@@ -339,13 +339,18 @@ class StoredData(object):
       self.name = name
       self.lifespan = lifespan
       if path is None:
-         self.path = os.path.join(TMPFS_MOUNT, name) if lifespan == 'temporary' \
-               else os.path.join(FLASH_MOUNT, name)
+         dirPath = TMPFS_MOUNT if lifespan == 'temporary' else FLASH_MOUNT
+         self.maybeCreatePath(dirPath)
+         self.path = os.path.join(dirPath, name)
       else:
          self.path = path
 
    def __str__(self):
       return '%s(%s)' % (self.__class__.__name__, self.path)
+
+   def maybeCreatePath(self, dirPath):
+      if not os.path.isdir(dirPath) and not inSimulation():
+         os.mkdir(dirPath)
 
    def exist(self):
       return os.path.isfile(self.path)

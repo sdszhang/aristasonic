@@ -78,6 +78,9 @@ def mock_return(self):
 def mock_iterAll(self):
    return []
 
+def mock_maybeCreatePath(self, dirPath):
+   pass
+
 @patch('arista.drivers.scd.i2cBusFromName', mock_i2cBusFromName)
 @patch('arista.core.utils.inSimulation', mock_inSimulation)
 @patch('arista.core.utils.locateHwmonPath', mock_locateHwmonPath)
@@ -92,6 +95,7 @@ def mock_iterAll(self):
 @patch.object(SysfsDriver, 'write', mock_write)
 @patch.object(UpperlakePsuDriver, 'getPsuStatus', mock_getPsuStatus)
 @patch.object(utils.FileWaiter, 'waitFileReady', mock_return)
+@patch.object(utils.StoredData, 'maybeCreatePath', mock_maybeCreatePath)
 class MockTest(unittest.TestCase):
    @classmethod
    def setUpClass(cls):

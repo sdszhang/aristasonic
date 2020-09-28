@@ -86,7 +86,7 @@ class PmbusDriver(Driver):
       with open(path, 'r') as f:
          return int(f.read()), True
 
-   def getStatusSim_(self):
+   def getStatusSim_(self, psu):
       logging.info('reading psu status from hwmon: %s', self.hwmonDir)
       return True
 
