@@ -2,6 +2,7 @@ from ...core.cpu import Cpu
 from ...core.types import PciAddr
 from ...core.utils import incrange
 
+from ...components.cpu.amd.k10temp import K10Temp
 from ...components.fan import ScdFanComponent
 from ...components.max6658 import Max6658
 from ...components.scd import Scd
@@ -15,6 +16,11 @@ class WoodpeckerCpu(Cpu):
 
    def __init__(self, hwmonOffset=2, **kwargs):
       super(WoodpeckerCpu, self).__init__(**kwargs)
+
+      self.newComponent(K10Temp, waitFile='/sys/class/hwmon/hwmon1', sensors=[
+         SensorDesc(diode=0, name='Cpu temp sensor',
+                    position=Position.OTHER, target=70, overheat=95, critical=115),
+      ])
 
       cpld = self.newComponent(Scd, PciAddr(bus=0x00, device=0x09, func=0))
       self.cpld = cpld

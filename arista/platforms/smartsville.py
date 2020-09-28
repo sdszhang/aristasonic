@@ -1,20 +1,20 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.psu import PsuSlot
 from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
 from ..components.common import SwitchChip
-from ..components.cpu.amd.k10temp import K10Temp
 from ..components.dpm import Ucd90160, Ucd90320, UcdGpi
 from ..components.phy.babbage import Babbage
-from ..components.psu import PmbusPsu
+from ..components.psu.delta import DPS1500AB, DPS1600CB, DPS500AB
+from ..components.psu.liteon import PS2102
 from ..components.scd import Scd
 from ..components.tmp468 import Tmp468
 
 from .cpu.woodpecker import WoodpeckerCpu
 
 from ..descs.gpio import GpioDesc
-from ..descs.psu import PsuDesc
 from ..descs.sensor import Position, SensorDesc
 
 @registerPlatform()
@@ -45,11 +45,6 @@ class Smartsville(FixedSystem):
       scd = self.newComponent(Scd, PciAddr(bus=0x02))
 
       scd.createWatchdog()
-
-      self.newComponent(K10Temp, waitFile='/sys/class/hwmon/hwmon1', sensors=[
-         SensorDesc(diode=0, name='Cpu temp sensor',
-                    position=Position.OTHER, target=70, overheat=95, critical=115),
-      ])
 
       scd.newComponent(Tmp468, scd.i2cAddr(0, 0x48),
                        waitFile='/sys/class/hwmon/hwmon4', sensors=[
@@ -86,8 +81,8 @@ class Smartsville(FixedSystem):
          GpioDesc("psu2_present", 0x5000, 1, ro=True),
          GpioDesc("psu1_status", 0x5000, 8, ro=True),
          GpioDesc("psu2_status", 0x5000, 9, ro=True),
-         GpioDesc("psu1_ac_status", 0x5000, 10, ro=True),
-         GpioDesc("psu2_ac_status", 0x5000, 11, ro=True),
+         GpioDesc("psu1_ac_status", 0x5000, 10, ro=True, activeLow=True),
+         GpioDesc("psu2_ac_status", 0x5000, 11, ro=True, activeLow=True),
 
          GpioDesc("psu1_present_changed", 0x5000, 16),
          GpioDesc("psu2_present_changed", 0x5000, 17),
@@ -98,26 +93,23 @@ class Smartsville(FixedSystem):
       ])
 
       for psuId in incrange(1, 2):
-         scd.addPsu(PmbusPsu,
-                    addr=scd.i2cAddr(5 + psuId, 0x58, t=3, datr=3, datw=3),
-                    waitFile="/sys/class/hwmon/hwmon%d" % (4 + psuId),
-                    psus=[
-            PsuDesc(psuId=psuId,
-                    led=scd.inventory.getLed('psu%d' % psuId), sensors=[
-               SensorDesc(diode=0,
-                          name='Power supply %d inlet temp sensor' % psuId,
-                          position=Position.INLET,
-                          target=60, overheat=75, critical=85),
-               SensorDesc(diode=1,
-                          name='Power supply %d secondary hotspot sensor' % psuId,
-                          position=Position.OTHER,
-                          target=70, overheat=105, critical=110),
-               SensorDesc(diode=2,
-                          name='Power supply %d primary hotspot sensor' % psuId,
-                          position=Position.OTHER,
-                          target=70, overheat=95, critical=100),
-            ]),
-         ])
+         addrFunc=lambda addr, i=psuId: scd.i2cAddr(5 + i, addr, t=3, datr=3, datw=3)
+         name = "psu%d" % psuId
+         scd.newComponent(
+            PsuSlot,
+            slotId=psuId,
+            addrFunc=addrFunc,
+            presentGpio=scd.inventory.getGpio("%s_present" % name),
+            inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
+            outputOkGpio=scd.inventory.getGpio("%s_status" % name),
+            led=scd.inventory.getLed('%s' % name),
+            psus=[
+               PS2102,
+               DPS1600CB,
+               DPS1500AB,
+               DPS500AB,
+            ],
+         )
 
       addr = 0x6100
       for xcvrId in self.qsfpRange:

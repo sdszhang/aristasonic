@@ -4,7 +4,7 @@ import os
 
 from collections import OrderedDict, namedtuple
 
-from ..accessors.gpio import GpioImpl
+from ..accessors.gpio import FileGpioImpl
 from ..accessors.led import LedImpl
 from ..accessors.psu import PsuImpl
 from ..accessors.reset import ResetImpl
@@ -370,8 +370,8 @@ class Scd(PciComponent):
       return resetDict
 
    def addGpio(self, gpio):
-      scdGpio = GpioImpl(self.pciSysfs, gpio.name, gpio.addr, gpio.bit, ro=gpio.ro,
-                         activeLow=gpio.activeLow)
+      scdGpio = FileGpioImpl(self.pciSysfs, gpio.name, addr=gpio.addr, bit=gpio.bit,
+                             ro=gpio.ro, activeLow=gpio.activeLow, hwActiveLow=True)
       self.gpios.append(scdGpio)
       self.inventory.addGpio(scdGpio)
       return scdGpio
