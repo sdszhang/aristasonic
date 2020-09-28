@@ -9,6 +9,7 @@ from ..components.cpu.rook import LAFanCpldComponent
 from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi
 from ..components.max6658 import Max6658
 from ..components.psu.delta import DPS750AB, DPS1900AB
+from ..components.psu.emerson import DS750PED
 from ..components.scd import Scd
 
 from ..descs.gpio import GpioDesc
@@ -85,6 +86,7 @@ class Gardena(FixedSystem):
             psus=[
                DPS750AB,
                DPS1900AB,
+               DS750PED,
             ],
          )
 
