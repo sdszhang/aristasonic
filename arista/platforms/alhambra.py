@@ -1,13 +1,15 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
-from ..core.utils import incrange
+from ..core.psu import PsuSlot
 from ..core.types import PciAddr, ResetGpio
+from ..core.utils import incrange
 
 from ..components.asic.bfn.tofino import Tofino
 from ..components.cpu.rook import LAFanCpldComponent
 from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi
 from ..components.max6658 import Max6658
-from ..components.psu import PmbusPsu
+from ..components.psu.delta import DPS750AB, DPS1900AB
+from ..components.psu.emerson import DS750PED
 from ..components.scd import Scd
 
 from .cpu.rook import RookCpu
@@ -37,10 +39,6 @@ class Alhambra(FixedSystem):
 
       scd.newComponent(Max6658, scd.i2cAddr(7, 0x4c),
                        waitFile='/sys/class/hmon/hwmon2')
-      scd.newComponent(PmbusPsu, scd.i2cAddr(6, 0x58, t=3, datr=2, datw=3),
-                       name='dps1900')
-      scd.newComponent(PmbusPsu, scd.i2cAddr(5, 0x58, t=3, datr=2, datw=3),
-                       name='dps1900')
 
       scd.addSmbusMasterRange(0x8000, 9, 0x80)
 
@@ -112,5 +110,21 @@ class Alhambra(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      scd.createPsu(1, led=cpu.leds.inventory.getLed('psu1_status'))
-      scd.createPsu(2, led=cpu.leds.inventory.getLed('psu2_status'))
+      for psuId in incrange(1, 2):
+         addrFunc=lambda addr, i=psuId: \
+               scd.i2cAddr(4 + i, addr, t=3, datr=2, datw=3, block=False)
+         name = "psu%d" % psuId
+         scd.newComponent(
+            PsuSlot,
+            slotId=psuId,
+            addrFunc=addrFunc,
+            presentGpio=scd.inventory.getGpio("%s_present" % name),
+            inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
+            outputOkGpio=scd.inventory.getGpio("%s_status" % name),
+            led=cpu.leds.inventory.getLed('%s_status' % name),
+            psus=[
+               DPS750AB,
+               DPS1900AB,
+               DS750PED,
+            ],
+         )

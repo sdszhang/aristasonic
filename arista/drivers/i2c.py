@@ -139,7 +139,10 @@ class I2cDevDriver(Driver):
       return self.bus.write_byte_data(self.addr.address, reg, data)
 
    def read_block_data(self, reg):
-      return self.bus.read_block_data(self.addr.address, reg)
+      if self.addr.supportSmbusBlock:
+         return self.bus.read_block_data(self.addr.address, reg)
+      data = self.bus.read_i2c_block_data(self.addr.address, reg)
+      return data[1:data[0] + 1]
 
    def read_block_data_str(self, reg):
       return ''.join(chr(c) for c in self.read_block_data(reg))

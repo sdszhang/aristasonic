@@ -15,9 +15,10 @@ class SysfsPath(object):
       raise NotImplementedError
 
 class I2cAddr(SysfsPath):
-   def __init__(self, bus, address):
+   def __init__(self, bus, address, block=True):
       self.bus_ = bus
       self.address_ = address
+      self.block_ = block
 
    @property
    def bus(self):
@@ -26,6 +27,10 @@ class I2cAddr(SysfsPath):
    @property
    def address(self):
       return self.address_
+
+   @property
+   def supportSmbusBlock(self):
+      return self.block_
 
    def __repr__(self):
       return "%s(%d, %#x)" % (

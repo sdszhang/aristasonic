@@ -1,8 +1,8 @@
 from ..core.fixed import FixedSystem
-from ..core.psu import PsuSlot
 from ..core.platform import registerPlatform
-from ..core.utils import incrange
+from ..core.psu import PsuSlot
 from ..core.types import PciAddr, ResetGpio
+from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk2 import Tomahawk2
 from ..components.cpu.rook import LAFanCpldComponent

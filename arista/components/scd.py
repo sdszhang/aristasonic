@@ -38,8 +38,8 @@ logging = getLogger(__name__)
 SYS_UIO_PATH = '/sys/class/uio'
 
 class ScdI2cAddr(I2cAddr):
-   def __init__(self, scd, bus, addr):
-      super(ScdI2cAddr, self).__init__(bus, addr)
+   def __init__(self, scd, bus, addr, **kwargs):
+      super(ScdI2cAddr, self).__init__(bus, addr, **kwargs)
       self.scd_ = scd
 
    @property
@@ -307,8 +307,8 @@ class Scd(PciComponent):
          self.mmapReady = True
       return MmapResource(path)
 
-   def i2cAddr(self, bus, addr, t=1, datr=3, datw=3, ed=0):
-      addr = ScdI2cAddr(self, bus, addr)
+   def i2cAddr(self, bus, addr, t=1, datr=3, datw=3, ed=0, block=True):
+      addr = ScdI2cAddr(self, bus, addr, block=block)
       self.tweaks.append(Scd.BusTweak(addr, t, datr, datw, ed))
       return addr
 
