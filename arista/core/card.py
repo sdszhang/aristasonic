@@ -90,6 +90,10 @@ class CardSlot(Slot):
 
          eeprom = self.getEeprom()
          sku = eeprom.get('SKU')
+         if sku is None:
+            logging.error('Unknown card in slot %d, eeprom is invalid', self.slotId)
+            return
+
          try:
             cls = getPlatformCls(sku)
             # add some Config() for noStandby
