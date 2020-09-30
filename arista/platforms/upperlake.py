@@ -1,21 +1,20 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
-from ..core.types import PciAddr, I2cAddr, ResetGpio
+from ..core.psu import PsuSlot
+from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk import Tomahawk
-from ..components.cpu.amd.k10temp import K10Temp
-from ..components.cpu.crow import CrowSysCpld, CrowFanCpldComponent
+from ..components.cpu.crow import KoiCpldRegisters
 from ..components.dpm import Ucd90120A, UcdGpi
-from ..components.max6658 import Max6658
 from ..components.max6697 import Max6697
-from ..components.psu import UpperlakePsuComponent
+from ..components.psu.delta import DPS495CB, DPS750AB
 from ..components.scd import Scd
 
-from ..descs.fan import FanDesc
 from ..descs.gpio import GpioDesc
-from ..descs.psu import PsuDesc
 from ..descs.sensor import Position, SensorDesc
+
+from .cpu.crow import CrowCpu
 
 @registerPlatform()
 class Upperlake(FixedSystem):
@@ -35,15 +34,15 @@ class Upperlake(FixedSystem):
 
       scd = self.newComponent(Scd, PciAddr(bus=0x02))
 
-      self.newComponent(K10Temp, sensors=[
-         SensorDesc(diode=0, name='Cpu temp sensor',
-                    position=Position.OTHER, target=60, overheat=90, critical=95),
-      ])
+      cpu = self.newComponent(CrowCpu, scd, hwmonBus=1,
+                              registerCls=KoiCpldRegisters)
+      self.cpu = cpu
+      self.syscpld = cpu.syscpld
 
       scd.createWatchdog()
 
       scd.newComponent(Max6697, addr=scd.i2cAddr(0, 0x1a),
-                       waitFile='/sys/class/hwmon/hwmon2', sensors=[
+                       waitFile='/sys/class/hwmon/hwmon4', sensors=[
          SensorDesc(diode=0, name='Board sensor',
                     position=Position.OTHER, target=55, overheat=65, critical=75),
          SensorDesc(diode=1, name='Switch chip left sensor',
@@ -52,18 +51,6 @@ class Upperlake(FixedSystem):
                     position=Position.OTHER, target=55, overheat=95, critical=105),
          SensorDesc(diode=6, name='Front-panel temp sensor',
                     position=Position.INLET, target=55, overheat=65, critical=75),
-      ])
-      scd.newComponent(Max6658, addr=scd.i2cAddr(1, 0x4c),
-                       waitFile='/sys/class/hwmon/hwmon3', sensors=[
-         SensorDesc(diode=0, name='Cpu board temp sensor',
-                    position=Position.OTHER, target=55, overheat=75, critical=80),
-         SensorDesc(diode=1, name='Back-panel temp sensor',
-                    position=Position.OUTLET, target=50, overheat=75, critical=80),
-      ])
-
-      scd.newComponent(CrowFanCpldComponent, addr=scd.i2cAddr(1, 0x60),
-                       waitFile='/sys/class/hwmon/hwmon4', fans=[
-         FanDesc(fanId) for fanId in incrange(1, 4)
       ])
 
       scd.newComponent(Ucd90120A, scd.i2cAddr(1, 0x4e, t=3))
@@ -94,31 +81,30 @@ class Upperlake(FixedSystem):
          GpioDesc("psu2_present", 0x5000, 1, ro=True),
       ])
 
-      self.syscpld = self.newComponent(CrowSysCpld, I2cAddr(1, 0x23))
-      cpld = self.syscpld
-      cpld.createPowerCycle()
+      self.syscpld.addGpios([
+         ('psu1DcOk', 'psu1_status'),
+         ('psu1DcOk', 'psu2_status'),
+         ('psu1AcOk', 'psu1_ac_status'),
+         ('psu2AcOk', 'psu2_ac_status'),
+      ])
 
       for psuId in incrange(1, 2):
-         scd.addPsu(UpperlakePsuComponent,
-                    addr=scd.i2cAddr(2 + psuId, 0x58, t=3, datr=2, datw=3),
-                    waitFile='/sys/class/hwmon/hwmon%d' % (4 + psuId), cpld=cpld,
-                    psus=[
-            PsuDesc(psuId=psuId, led=self.inventory.getLed('psu%s' % psuId),
-                    sensors=[
-               SensorDesc(diode=0,
-                          name='Power supply %d hotspot sensor' % psuId,
-                          position=Position.OTHER,
-                          target=80, overheat=95, critical=100),
-               SensorDesc(diode=1,
-                          name='Power supply %d inlet temp sensor' % psuId,
-                          position=Position.OTHER,
-                          target=55, overheat=70, critical=75),
-               SensorDesc(diode=2,
-                          name='Power supply %d exhaust temp sensor' % psuId,
-                          position=Position.OTHER,
-                          target=80, overheat=108, critical=113),
-            ]),
-         ])
+         addrFunc=lambda addr, i=psuId: \
+                  scd.i2cAddr(2 + i, addr, t=3, datr=2, datw=3)
+         name = "psu%d" % psuId
+         scd.newComponent(
+            PsuSlot,
+            slotId=psuId,
+            addrFunc=addrFunc,
+            presentGpio=scd.inventory.getGpio("%s_present" % name),
+            inputOkGpio=self.syscpld.inventory.getGpio("%s_ac_status" % name),
+            outputOkGpio=self.syscpld.inventory.getGpio("%s_status" % name),
+            led=scd.inventory.getLed(name),
+            psus=[
+               DPS495CB,
+               DPS750AB,
+            ],
+         )
 
       addr = 0x6100
       for xcvrId in self.sfpRange:

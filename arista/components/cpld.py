@@ -57,3 +57,19 @@ class SysCpld(I2cComponent):
    def hasSeuError(self):
       return self.drivers['SysCpldI2cDriver'].regs.scdCrcError()
 
+   def addGpio(self, attr, name=None):
+      name = name or attr
+      drv = self.drivers['SysCpldI2cDriver']
+      gpio = drv.getGpio(attr, name=name)
+      self.inventory.addGpio(gpio)
+      return gpio
+
+   def addGpios(self, infos):
+      gpios = []
+      for info in infos:
+         if isinstance(info, tuple):
+            gpios.append(self.addGpio(*info))
+         else:
+            gpios.append(self.addGpio(info))
+      return gpios
+

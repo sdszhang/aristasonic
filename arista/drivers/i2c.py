@@ -4,6 +4,8 @@ from contextlib import closing
 
 from .sysfs import FanSysfsDriver
 
+from ..accessors.gpio import FuncGpioImpl
+
 from ..core.driver import Driver, KernelDriver
 from ..core import utils
 from ..core.log import getLogger
@@ -155,6 +157,15 @@ class I2cDevDriver(Driver):
 
    def write(self, reg, data):
       return self.write_byte_data(reg, data)
+
+   def getGpio(self, attr, name=None):
+      assert self.regs
+      func = getattr(self.regs, attr)
+      assert func
+      name = name or attr
+      # XXX: could be enhanced to forward all the appropriate info to the Gpio obj
+      #      for now it's enough the way it is.
+      return FuncGpioImpl(func, name)
 
    def __diag__(self, ctx):
       return {

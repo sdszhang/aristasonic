@@ -13,7 +13,6 @@ from ...components.scd import ScdInterruptRegister
 from ...descs.sensor import SensorDesc
 
 from ...drivers.i2c import I2cKernelDriver
-from ...drivers.psu import UpperlakePsuDriver
 from ...drivers.scd.driver import ScdKernelDriver
 from ...drivers.sysfs import SysfsDriver
 
@@ -57,11 +56,6 @@ def mock_write(self, name, value, path=None):
    assert name
    assert value != None
 
-def mock_getPsuStatus(self, psu):
-   assert psu
-   assert isinstance(psu.psuId, int)
-   return True
-
 def mock_readReg(self, reg):
    assert reg
    return None
@@ -93,7 +87,6 @@ def mock_maybeCreatePath(self, dirPath):
 @patch.object(ScdKernelDriver, 'writeComponents', mock_writeComponents)
 @patch.object(SysfsDriver, 'read', mock_read)
 @patch.object(SysfsDriver, 'write', mock_write)
-@patch.object(UpperlakePsuDriver, 'getPsuStatus', mock_getPsuStatus)
 @patch.object(utils.FileWaiter, 'waitFileReady', mock_return)
 @patch.object(utils.StoredData, 'maybeCreatePath', mock_maybeCreatePath)
 class MockTest(unittest.TestCase):

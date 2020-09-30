@@ -30,10 +30,3 @@ class PmbusPsu(I2cComponent, TempComponentMixin):
       self.inventory.addPsu(MixedPsuImpl(psuId=psuId,
          presenceDriver=self.drivers['psuPresenceDriver'],
          statusDriver=self.drivers['psuStatusDriver'], led=led))
-
-class UpperlakePsuComponent(PmbusPsu):
-   def __init__(self, cpld=None, drivers=None, **kwargs):
-      drivers = drivers or []
-      drivers.extend([cpld.drivers['psuStatusDriver']])
-      super(UpperlakePsuComponent, self).__init__(cpld=cpld, drivers=drivers,
-                                                  **kwargs)
