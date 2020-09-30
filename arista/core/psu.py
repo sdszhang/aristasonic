@@ -131,6 +131,8 @@ class PsuSlot(SlotComponent):
       return self.presentGpio.isActive()
 
    def _getGpioActiveOr(self, gpio):
+      if gpio is None:
+         return True
       if isinstance(gpio, list):
          return bool((g for g in gpio if g.isActive()))
       return gpio.isActive()
