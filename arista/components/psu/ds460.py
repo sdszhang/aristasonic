@@ -1,6 +1,7 @@
-from .psu import PmbusPsu
 
-from ..drivers.ds460 import Ds460I2cDriver
+from ...drivers.ds460 import Ds460I2cDriver
+
+from . import PmbusPsu
 
 class Ds460(PmbusPsu):
    def __init__(self, addr=None, name='dps460', drivers=None, **kwargs):

@@ -343,17 +343,6 @@ class SysfsDriver(Driver):
       with open(path, 'w') as f:
          return f.write(value)
 
-class PsuSysfsDriver(SysfsDriver):
-   def getPsuPresence(self, psu):
-      gpio = 'psu%d_%s' % (psu.psuId, 'present')
-      self.computeSysfsPath(gpio)
-      return self.read(gpio) == '1'
-
-   def getPsuStatus(self, psu):
-      gpio = 'psu%d_%s' % (psu.psuId, 'status')
-      self.computeSysfsPath(gpio)
-      return self.read(gpio) == '1'
-
 class XcvrSysfsDriver(SysfsDriver):
    def getXcvrPresence(self, xcvr):
       return self.read('%s_%s' % (xcvr.name, 'present')) == '1'

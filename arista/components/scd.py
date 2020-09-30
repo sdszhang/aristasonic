@@ -6,7 +6,6 @@ from collections import OrderedDict, namedtuple
 
 from ..accessors.gpio import FileGpioImpl
 from ..accessors.led import LedImpl
-from ..accessors.psu import PsuImpl
 from ..accessors.reset import ResetImpl
 from ..accessors.xcvr import XcvrImpl
 
@@ -20,7 +19,6 @@ from ..drivers.i2c import I2cKernelDriver
 from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
 from ..drivers.sysfs import (
    LedSysfsDriver,
-   PsuSysfsDriver,
    ResetSysfsDriver,
    XcvrSysfsDriver,
 )
@@ -250,7 +248,6 @@ class Scd(PciComponent):
          KernelDriver(module='scd'),
          ScdKernelDriver(scd=self, addr=addr, registerCls=registerCls),
          LedSysfsDriver(sysfsPath=os.path.join(self.pciSysfs, 'leds')),
-         PsuSysfsDriver(sysfsPath=self.pciSysfs),
          ResetSysfsDriver(sysfsPath=self.pciSysfs),
          XcvrSysfsDriver(sysfsPath=self.pciSysfs),
       ]
@@ -420,18 +417,6 @@ class Scd(PciComponent):
       self.sfps += [(addr, xcvrId)]
       return self._addXcvr(xcvrId, Xcvr.SFP, bus, interruptLine, leds=leds,
                            drvName='optoe2')
-
-   def addPsu(self, componentCls, drivers=None, **kwargs):
-      drivers = drivers or []
-      drivers.extend([PsuSysfsDriver(driverName='psuPresenceDriver',
-                                     sysfsPath=self.pciSysfs)])
-      self.newComponent(componentCls, drivers=drivers, **kwargs)
-
-   # this is being deprecated
-   def createPsu(self, psuId, driver='PsuSysfsDriver', led=None, **kwargs):
-      psu = PsuImpl(psuId=psuId, driver=self.drivers[driver], led=led, **kwargs)
-      self.inventory.addPsus([psu])
-      return psu
 
    def addFan(self, desc):
       return self.inventory.addFan(self.driver.getFan(desc))

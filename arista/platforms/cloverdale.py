@@ -1,22 +1,22 @@
 from ..core.fan import FanSlot
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.psu import PsuSlot
 from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident2 import Trident2
+from ..components.cpu.amd.k10temp import K10Temp
 from ..components.cpu.raven import RavenFanComplex
 from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi, UcdMon
-from ..components.cpu.amd.k10temp import K10Temp
 from ..components.lm73 import Lm73
 from ..components.max6658 import Max6658
+from ..components.psu.artesyn import DS460
 from ..components.scd import Scd
-from ..components.ds460 import Ds460
 
 from ..descs.fan import FanDesc, FanPosition
 from ..descs.led import LedDesc, LedColor
 from ..descs.gpio import GpioDesc
-from ..descs.psu import PsuDesc
 from ..descs.sensor import Position, SensorDesc
 
 @registerPlatform()
@@ -95,26 +95,25 @@ class Cloverdale(FixedSystem):
          (0x6090, 'beacon'),
       ])
 
-      # PSU
-      for psuId in incrange(1, 2):
-         scd.addPsu(Ds460,
-                    addr=scd.i2cAddr(2 + psuId, 0x58, t=3, datr=3, datw=3, ed=0),
-                    waitFile='/sys/class/hwmon/hwmon%d' % (3 + psuId), psus=[
-            PsuDesc(psuId=psuId, led=scd.inventory.getLed('psu%d' % psuId),
-                    sensors=[
-               SensorDesc(diode=0, name='Power supply %d inlet temp sensor' % psuId,
-                          position=Position.INLET,
-                          target=39, overheat=60, critical=70),
-               SensorDesc(diode=1, name='Power supply %d internal sensor' % psuId,
-                          position=Position.OTHER,
-                          target=55, overheat=80, critical=150),
-            ]),
-         ])
-
       scd.addGpios([
          GpioDesc("psu1_present", 0x5000, 0, ro=True),
          GpioDesc("psu2_present", 0x5000, 1, ro=True),
       ])
+
+      for psuId in incrange(1, 2):
+         addrFunc=lambda addr, i=psuId: \
+                  scd.i2cAddr(2 + i, addr, t=3, datr=3, datw=3, block=False)
+         name = "psu%d" % psuId
+         scd.newComponent(
+            PsuSlot,
+            slotId=psuId,
+            addrFunc=addrFunc,
+            presentGpio=scd.inventory.getGpio("%s_present" % name),
+            led=scd.inventory.getLed(name),
+            psus=[
+               DS460,
+            ],
+         )
 
       scd.addSmbusMasterRange(0x8000, 5)
 
