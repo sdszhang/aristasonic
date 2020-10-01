@@ -34,6 +34,7 @@ class PsuSlot(SlotComponent):
       self.led = led
       self.psus = psus
 
+      self.addrFunc(0x00) # workaround to configure a bus wide parameter
       self.psuInv = self.inventory.addPsu(PsuSlotImpl(self))
       self.load(cacheOnly=True) # no IO in the constructor
 

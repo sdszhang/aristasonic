@@ -35,7 +35,7 @@
    dev_warn(&(_master)->ctx->pdev->dev, "#%d " _fmt " (%s:%d)",   \
             (_master)->id, ##_args, __func__, __LINE__)
 #define master_err(_master, _fmt, _args... )          \
-   dev_err(&(_master)->ctx->pdev->dev, "#%d " _fmt " (%s:%d)",   \
+   dev_warn(&(_master)->ctx->pdev->dev, "#%d " _fmt " (%s:%d)",   \
            (_master)->id, ##_args, __func__, __LINE__)
 
 static int smbus_master_max_retries = MASTER_DEFAULT_MAX_RETRIES;
@@ -141,6 +141,10 @@ static const struct bus_params *get_smbus_params(struct scd_smbus *bus, u16 addr
    struct bus_params *params_tmp;
 
    list_for_each_entry(params_tmp, &bus->params, list) {
+      if (params_tmp->addr == 0x00) {
+         // bus wide params found, we should still look for a more specific one
+         params = params_tmp;
+      }
       if (params_tmp->addr == addr) {
          params = params_tmp;
          break;
