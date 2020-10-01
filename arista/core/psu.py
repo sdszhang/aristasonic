@@ -187,7 +187,7 @@ class PsuModel(object):
    def detectPmbus(cls, addr):
       detector = PsuPmbusDetect(addr)
       try:
-         logging.debug('testing model %s for %s : %s', cls.__name__,
+         logging.debug('testing model %s for %s : "%s"', cls.__name__,
                        detector.id(), detector.model())
          if cls.MANUFACTURER.lower() != detector.id().lower():
             return None

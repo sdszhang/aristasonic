@@ -8,6 +8,7 @@ from ..components.asic.xgs.trident3 import Trident3
 from ..components.dpm import Ucd90120A, UcdGpi
 from ..components.max6658 import Max6658
 from ..components.psu.delta import DPS495CB
+from ..components.psu.artesyn import DS495SPE
 from ..components.scd import Scd
 
 from ..descs.gpio import GpioDesc
@@ -95,6 +96,7 @@ class Lodoga(FixedSystem):
             led=scd.inventory.getLed(name),
             psus=[
                DPS495CB,
+               DS495SPE,
             ],
          )
 
