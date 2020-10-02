@@ -127,9 +127,9 @@ class BlackhawkO(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      for psuId in incrange(1, 2):
-         addrFunc=lambda addr, i=psuId: \
-                  scd.i2cAddr(10 + i, addr, t=3, datr=2, datw=3)
+      for psuId, bus in [(1, 12), (2, 11)]:
+         addrFunc=lambda addr, bus=bus: \
+                  scd.i2cAddr(bus, addr, t=3, datr=2, datw=3)
          name = "psu%d" % psuId
          scd.newComponent(
             PsuSlot,
