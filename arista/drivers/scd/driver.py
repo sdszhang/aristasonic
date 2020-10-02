@@ -170,4 +170,16 @@ class ScdKernelDriver(PciKernelDriver):
       self.reset(False)
 
 class ScdI2cDevDriver(I2cDevDriver):
-   pass
+   def __init__(self, **kwargs):
+      super(ScdI2cDevDriver, self).__init__(**kwargs)
+      self.msgBus_ = None
+
+   @property
+   def msgBus(self):
+      if not self.msgBus_:
+         self.msgBus_ = I2cMsg(self.addr)
+         self.msgBus_.open()
+      return self.msgBus_
+
+   def writeMsg(self, msg):
+      self.msgBus.write_bytes(self.msgBus.addr.address, msg)

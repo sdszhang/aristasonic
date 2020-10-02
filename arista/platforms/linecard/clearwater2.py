@@ -3,7 +3,7 @@ from ...core.platform import registerPlatform
 from ...core.register import RegisterMap, Register, RegBitField, SetClearRegister
 from ...core.utils import incrange
 
-from ...drivers.scd.register import ScdStatusChangedRegister
+from ...drivers.scd.register import ScdStatusChangedRegister, ScdSramRegister
 
 from ..cpu.hedgehog import HedgehogCpu
 
@@ -46,6 +46,7 @@ class ClearwaterCpuScdRegMap(RegisterMap):
       RegBitField(5, name='gmacLowPower', ro=False),
    )
    PROVISION = Register(0x32, name='provision', ro=False)
+   SRAM = ScdSramRegister(0x33, name='sram')
 
 class ClearwaterCpuBase(ClearwaterBase):
    CPU_CLS = HedgehogCpu

@@ -13,6 +13,7 @@ from ...core.register import RegBitField, RegisterMap
 from ...core.types import PciAddr
 from ...drivers.pca9555 import GpioRegister
 from ...drivers.scd.register import ScdResetRegister
+from ...drivers.scd.sram import SramContent
 from ...libs.wait import waitFor
 
 class DenaliLinecard(DenaliCard, Linecard):
@@ -63,12 +64,20 @@ class DenaliLinecard(DenaliCard, Linecard):
          # In Denali fabric card, we should not turn off Ecb fans
          waitFor(lambda: (not self.poweredOn()), "Card failed to be turned off.")
 
+   def populateSramFromPrefdl(self):
+      sramContent = SramContent()
+      prefdlRaw = self.eeprom.read()
+      for addr, byte in enumerate(prefdlRaw):
+         sramContent.write(addr, ord(byte))
+      self.syscpld.sram(sramContent)
+
    def powerLcpuIs(self, on, lcpuCtx):
       if on:
          assert self.syscpld.lcpuInReset(), "LCPU should be in reset"
          self.gpio1.lcpuMode(True)
          self.syscpld.slotId(self.slot.slotId)
          self.syscpld.provision(lcpuCtx.provision)
+         self.populateSramFromPrefdl()
          self.syscpld.gmacLowPower(False)
          self.syscpld.supGmacReset(False)
          self.syscpld.lcpuGmacReset(False)
