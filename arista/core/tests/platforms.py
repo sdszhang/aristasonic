@@ -14,7 +14,7 @@ from ...descs.sensor import SensorDesc
 
 from ...drivers.i2c import I2cKernelDriver
 from ...drivers.psu import UpperlakePsuDriver
-from ...drivers.scd import ScdKernelDriver
+from ...drivers.scd.driver import ScdKernelDriver
 from ...drivers.sysfs import SysfsDriver
 
 from ...inventory.psu import Psu
@@ -81,7 +81,7 @@ def mock_iterAll(self):
 def mock_maybeCreatePath(self, dirPath):
    pass
 
-@patch('arista.drivers.scd.i2cBusFromName', mock_i2cBusFromName)
+@patch('arista.drivers.scd.driver.i2cBusFromName', mock_i2cBusFromName)
 @patch('arista.core.utils.inSimulation', mock_inSimulation)
 @patch('arista.core.utils.locateHwmonPath', mock_locateHwmonPath)
 @patch('arista.core.utils.writeConfig', mock_writeConfig)

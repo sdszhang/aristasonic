@@ -12,7 +12,7 @@ from ...core.provision import ProvisionMode
 from ...core.register import RegBitField, RegisterMap
 from ...core.types import PciAddr
 from ...drivers.pca9555 import GpioRegister
-from ...drivers.scd import ScdResetRegister
+from ...drivers.scd.register import ScdResetRegister
 from ...libs.wait import waitFor
 
 class DenaliLinecard(DenaliCard, Linecard):

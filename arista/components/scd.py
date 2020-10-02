@@ -17,7 +17,7 @@ from ..core.utils import FileWaiter, MmapResource, simulateWith, writeConfig
 from ..core.log import getLogger
 
 from ..drivers.i2c import I2cKernelDriver
-from ..drivers.scd import ScdI2cDevDriver, ScdKernelDriver
+from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
 from ..drivers.sysfs import (
    LedSysfsDriver,
    PsuSysfsDriver,

@@ -3,7 +3,7 @@ from ...core.platform import registerPlatform
 from ...core.register import RegisterMap, Register, RegBitField, SetClearRegister
 from ...core.utils import incrange
 
-from ...drivers.scd import ScdStatusChangedRegister
+from ...drivers.scd.register import ScdStatusChangedRegister
 
 from ..cpu.hedgehog import HedgehogCpu
 
