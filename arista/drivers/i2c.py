@@ -105,7 +105,7 @@ class I2cKernelFanDriver(I2cKernelDriver):
 
 class I2cDevDriver(Driver):
    def __init__(self, name=None, addr=None, registerCls=None, **kwargs):
-      super(I2cDevDriver, self).__init__(*kwargs)
+      super(I2cDevDriver, self).__init__(**kwargs)
       self.bus_ = None
       self.name = name
       self.addr = addr
