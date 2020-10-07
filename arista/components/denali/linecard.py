@@ -71,12 +71,15 @@ class DenaliLinecard(DenaliCard, Linecard):
          sramContent.write(addr, ord(byte))
       self.syscpld.sram(sramContent)
 
+   def provisionIs(self, provisionStatus):
+      self.syscpld.provision(provisionStatus)
+
    def powerLcpuIs(self, on, lcpuCtx):
       if on:
          assert self.syscpld.lcpuInReset(), "LCPU should be in reset"
          self.gpio1.lcpuMode(True)
          self.syscpld.slotId(self.slot.slotId)
-         self.syscpld.provision(lcpuCtx.provision)
+         self.provisionIs(lcpuCtx.provision)
          self.populateSramFromPrefdl()
          self.syscpld.gmacLowPower(False)
          self.syscpld.supGmacReset(False)
