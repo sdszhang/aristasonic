@@ -30,9 +30,12 @@ class ClearwaterBase(DenaliLinecard):
       for qsfpId in qsfpRange:
          name = 'qsfp%d' % qsfpId
 
-         ledAddr = 0x6100 + (qsfpId - 1) * 0x10
-         ledName = "%s_1" % name
-         self.scd.addLedGroup(name, [(ledAddr, ledName)])
+         leds = []
+         for laneId in incrange(1, 4):
+            ledAddr = 0x6100 + (qsfpId - 1) * 4 * 0x10 + (laneId - 1) * 0x10
+            ledName = "%s_%d" % (name, laneId)
+            leds.append((ledAddr, ledName))
+         self.scd.addLedGroup(name, leds)
 
          # IRQ2 -> port 32:1 (bit 31:0)
          # IRQ3 -> port 48:33 (bit 15:0)
