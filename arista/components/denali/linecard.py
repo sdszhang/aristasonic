@@ -8,7 +8,7 @@ from ..asic.jericho2 import Jericho2
 from ..linecard import Linecard
 from ..plx import PlxPex8700
 from ..scd import Scd
-from ...core.provision import ProvisionMode
+from ...core.provision import ProvisionConfig, ProvisionMode
 from ...core.register import RegBitField, RegisterMap
 from ...core.types import PciAddr
 from ...drivers.pca9555 import GpioRegister
@@ -72,6 +72,11 @@ class DenaliLinecard(DenaliCard, Linecard):
       self.syscpld.sram(sramContent)
 
    def provisionIs(self, provisionStatus):
+      config = ProvisionConfig(self.slot.slotId)
+      if provisionStatus is None:
+         provisionStatus = config.loadMode()
+      else:
+         config.writeMode(provisionStatus)
       self.syscpld.provision(provisionStatus)
 
    def powerLcpuIs(self, on, lcpuCtx):
