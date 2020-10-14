@@ -1,6 +1,6 @@
 [Unit]
 Description=Arista fabric support
-Before=database-chassis.service
+Before=syncd@.service
 Before=opennsl-modules.service
 After=platform-arista-pmon.service
 Requires=platform-arista-pmon.service
