@@ -45,6 +45,8 @@ class DenaliSupervisor(Supervisor):
       self.scd.addSmbusMasterRange(0x8000, 3, 0x80)
       self.scd.addUartPortRange(0x7e00, self.linecardCount)
 
+      self.scd.createWatchdog()
+
       self.scd.addGpios([
          GpioDesc("supervisor_want_active", 0x5000, 0),
          GpioDesc("supervisor_active", 0x5000, 1, ro=True),
