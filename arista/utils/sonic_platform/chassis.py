@@ -43,9 +43,9 @@ class Chassis(ChassisBase):
          self._psu_list.append(Psu(psu))
       self._sfp_list = []
       if self._inventory and self._inventory.portEnd:
-         self._sfp_list = [None] * (self._inventory.portEnd + 1)
+         self._sfp_list = [None] * (self._inventory.portEnd)
          for index, sfp in self._inventory.getXcvrs().items():
-            self._sfp_list[index] = Sfp(index, sfp)
+            self._sfp_list[index - 1] = Sfp(index, sfp)
       for thermal in self._inventory.getTemps():
          self._thermal_list.append(Thermal(thermal))
       self._watchdog = Watchdog(self._inventory.getWatchdog())
@@ -76,6 +76,11 @@ class Chassis(ChassisBase):
 
    def get_status(self):
       return True
+
+   def get_sfp(self, index):
+      # NOTE: the platform API specifies _sfp_list to be 0 based as well as get_sfp
+      #       however, in practice the get_sfp is called with 1 based indexes
+      return super(Chassis, self).get_sfp(index - 1)
 
    def get_reboot_cause(self):
       unknown = (ChassisBase.REBOOT_CAUSE_NON_HARDWARE, None)

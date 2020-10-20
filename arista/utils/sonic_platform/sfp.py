@@ -9,6 +9,8 @@ try:
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
 
+EEPROM_PATH = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
+
 class Sfp(SfpBase):
    """
    Platform-specific sfp class
@@ -40,6 +42,7 @@ class Sfp(SfpBase):
       self._index = index
       self._sfp = sfp
       self._sfputil = None
+      self._eepromPath = EEPROM_PATH.format(sfp.addr.bus, sfp.addr.address)
       self.sfp_type = sfp.getType().upper()
 
    def get_id(self):
@@ -111,3 +114,20 @@ class Sfp(SfpBase):
 
    def get_transceiver_threshold_info(self):
       return self._get_sfputil().get_transceiver_dom_threshold_info_dict(self._index)
+
+   def read_eeprom(self, offset, num_bytes):
+      try:
+         with open(self._eepromPath, mode='rb', buffering=0) as f:
+            f.seek(offset)
+            return bytearray(f.read(num_bytes))
+      except (OSError, IOError):
+         return None
+
+   def write_eeprom(self, offset, num_bytes, write_buffer):
+      try:
+         with open(self._eepromPath, mode='r+b', buffering=0) as f:
+            f.seek(offset)
+            f.write(write_buffer[0:num_bytes])
+      except (OSError, IOError):
+         return False
+      return True
