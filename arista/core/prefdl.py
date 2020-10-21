@@ -1,250 +1,239 @@
-#!/usr/bin/env python
-#
-# Copyright (C) 2016 Arista Networks, Inc.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import print_function
 
+from contextlib import closing
+from io import BytesIO
 import re
-import struct
-import sys
 import zlib
+
+from .log import getLogger
+
+logging = getLogger(__name__)
 
 class InvalidPrefdlData( Exception ):
    pass
 
-try:
-   from StringIO import StringIO
-except ImportError:
-   from io import StringIO
-
-def showMac( m ):
-   return ":".join([m[0:2], m[2:4], m[4:6], m[6:8], m[8:10], m[10:12]])
-
-def showHwApi( h ):
-   # Keep only major
-   return h.split('.')[0]
-
-typeMap = {
-   "END" : ( "00", None, None, None, False ),
-   "SKU" : ( "03", None, None, None, False ),
-   "ASY" : ( "04", None, None, None, False ),
-   "MAC" : ( "05", None, showMac, None, False ),
-   "HwApi" : ( "0A", None, showHwApi, None, False ),
-   "SerialNumber" : ( "0E", None, None, None, False ),
-}
-
-idToNameMap = {}
-for k, v in typeMap.items():
-   idToNameMap[ v[0] ] = k
-
-def crc32( data ):
-   return struct.unpack("I",struct.pack("i",zlib.crc32( data )))[0]
-
-def validSerial( x ):
-   x = x.replace( " ", "" )
-   x = x.replace( "-", "" )
-   # All serial numbers are upper case
-   x = x.upper()
-   if re.compile( r"[A-Z]{3}\d{4}[A-Z0-9]{4}$" ).match( x ):
-      return x
-   return None
-
-class PreFdlField( object ):
-   def __init__( self, name, valid, show, optionName, data=None, append=False ):
+class TlvField(object):
+   def __init__(self, code, name, length=None, aliases=None, value=None):
       self.name = name
-      if valid:
-         self.valid = valid
-      else:
-         self.valid = lambda x: x
-      self.show = show
-      self.optionName = optionName
-      self.data = []
-      self.append = append
-      if data:
-         self.dataIs( data )
+      self.code = code
+      self.length = length
+      self.value = value
+      self.aliases = aliases or []
 
-   def dataIs( self, data ):
-      vd = self.valid( data )
-      if not vd:
-         raise InvalidPrefdlData( "Invalid %s: %s" % ( self.name, data ) )
-      if self.append:
-         self.data.append( vd )
-      else:
-         self.data = [ vd ]
+   def __str__(self):
+      return '%s(%#02x, %s)' % (self.__class__.__name__, self.code, self.name)
 
-class TlvField( PreFdlField ):
-   def __init__( self, name ):
-      args = typeMap.get( name )
-      valid = None
-      show = None
-      optionName = None
-      append = False
-      if args:
-         self.id, valid, show, optionName, append = args
-      PreFdlField.__init__( self, name, valid, show, optionName, append=append )
+   def __call__(self, value):
+      return self.__class__(self.code, self.name, self.length, self.aliases, value)
 
-class PreFdl( object ):
-   def __init__( self, fp=None, preFdlStr=None, version="0002" ):
-      # populate the required fields
-      self.requiredFields = []
+   def toStr(self):
+      return self.value
 
-      if version == "0002":
-         preFdlStr, offset = self.initPreFdl2( fp, preFdlStr )
-      elif version == "0003":
-         preFdlStr, offset = self.initPreFdl3( fp, preFdlStr )
-      else:
-         raise NotImplementedError(
-            "Only Prefdl data format version 0002 or 0003 are supported" )
+   def parse(self, value):
+      raise NotImplementedError
 
-      # populate the tlv fileds
-      self.tlvFields = {}
-      for k in typeMap.keys():
-         self.tlvFields[ k ] = TlvField( k )
+   def check(self, value):
+      return True
 
-      # create the map option to field
-      self.optionMap = {}
-      for f in self.requiredFields + self.tlvFields.values():
-         # Do not add the option from TLV if already added by required fields
-         if f.optionName and f.optionName not in self.optionMap:
-            self.optionMap[ f.optionName ] = f
+class TlvStrField(TlvField):
+   def parse(self, value):
+      if isinstance(value, str):
+         return value
+      return value.decode('ascii')
 
-      # save the current tlv fields
-      if fp:
-         while True:
-            tlv = fp.read( 6 )
-            ( id, lengthStr ) = ( tlv[0:2], tlv[2:6] )
-            length = int( lengthStr, base=16 )
-            bytes = fp.read( length )
-            what = None if id not in idToNameMap.keys() else idToNameMap[ id ]
-            if what and what != "END":
-               self.tlvFields[ what ].dataIs( bytes )
-            preFdlStr += tlv + bytes
-            offset += 6 + length
-            if what == "END":
-               # End of the tlv list
-               break
-         self.crc = fp.read( 8 )
-         # Check the CRC
-         computed = crc32( preFdlStr )
-         if int( self.crc, 16 ) != computed:
-            raise Exception( "Invalid CRC -- saw %s expected %8X" %
-                             ( self.crc, computed ) )
+class TlvIntField(TlvField):
+   def parse(self, value):
+      return int(value)
 
-   # Initialize and parse fixed section for prefdl version 2.  Return the offset
-   # to where the TLV section starts.
-   def initPreFdl2( self, fp, preFdlStr ):
-      # if we start with an existing file
-      if fp:
-         # if no preFdlStr is specified, read the fixed section, 30 bytes.
-         # Otherwise, only the 4 byte data version section was written and
-         # read the remaining 26 bytes from the fixed section.
-         if not preFdlStr:
-            preFdlStr = fp.read( 30 ).strip()
-         elif preFdlStr == "0002":
-            preFdlStr += fp.read( 26 ).strip()
-         else:
-            raise ValueError( "preFdlStr arg has invalid data format" )
-         if len( preFdlStr ) < 12:
-            fatal( "prefdl is too short exiting" )
-      data = None if not preFdlStr else preFdlStr[ 16:16 + 11 ]
-      self.requiredFields.append(
-         PreFdlField( "SerialNumber", validSerial, None, None, data ) )
-      return preFdlStr, 30
+   def toStr(self):
+      return str(self.value)
 
-   # Initialize and parse fixed section for prefdl version 3.  Return the offset
-   # to where the TLV section starts.
-   def initPreFdl3( self, fp, preFdlStr ):
-      # if we start with an existing file
-      currPtr = 0
-      if fp and not preFdlStr:
-         preFdlStr = fp.read( 4 ).strip()
-         if len( preFdlStr ) < 4:
-            fatal( "prefdl is too short exiting" )
-      return preFdlStr, 4
+class TlvMacField(TlvStrField):
+   def parse(self, value):
+      v = super(TlvMacField, self).parse(value)
+      if ':' in v:
+         return v
+      return ":".join([v[0:2], v[2:4], v[4:6], v[6:8], v[8:10], v[10:12]])
 
-   def data( self ):
-      res = {}
-      for f in self.requiredFields + self.tlvFields.values():
-         for d in f.data:
-            dStr = d if f.show is None else f.show( d )
-            res[f.name] = dStr
-      return res
+class TlvIntTupleField(TlvStrField):
+   def parse(self, value):
+      value = super(TlvIntTupleField, self).parse(value)
+      return tuple(int(v) for v in value.split('.'))
 
-   def show( self ):
-      for k, v in self.data().items():
-         print("%s: %s" % (k, v))
+   def toStr(self):
+      return '.'.join('%02d' % v for v in self.value)
 
-   def writeToFile(self, f):
-      with open(f, 'w+') as fp:
-         for k, v in self.data().items():
-            fp.write("%s: %s\n" % (k, v))
+class TlvSerialField(TlvStrField):
+   def check(self, value):
+      v = value.replace(" ", "").replace("-", "").upper()
+      if re.match(r"[A-Z]{3}\d{4}[A-Z0-9]{4}$", v):
+         return True
+      return False
 
-   def getField( self, name ):
-      return self.data().get( name, None )
+class PrefdlBase(object):
+   FIELDS = [
+      TlvField(0x00, 'END', length=0),
+      TlvStrField(0x01, 'Deviation'),
+      TlvStrField(0x02, 'MfgTime'),
+      TlvStrField(0x03, 'SKU', aliases=['Sku']),
+      TlvStrField(0x04, 'ASY'),
+      TlvMacField(0x05, 'MAC', aliases=['MacAddrBase', 'Mac']),
+      TlvIntTupleField(0x0a, 'HwApi'),
+      TlvIntTupleField(0x0b, 'HwRev'),
+      TlvStrField(0x0c, 'SID', aliases=['Sid']),
+      TlvStrField(0x0d, 'PCA', length=12),
+      TlvSerialField(0x0e, 'SerialNumber', length=11),
+      TlvStrField(0x0f, 'KVN', length=3),
+   ]
 
-   def getCrc( self ):
-      return self.crc
+   FIELD_CODE = {f.code : f for f in FIELDS}
+   FIELD_NAME = {f.name : f for f in FIELDS}
+   FIELD_NAME.update({a : f for f in FIELDS for a in f.aliases})
 
-   def __str__( self ):
-      return '\n'.join( "{}: {}".format( k, v )  for k, v in self.data().items() )
-
-class PreFdlFromFile():
-   def __init__(self, fp):
+   def __init__(self, f=None, data=None, version=b''):
       self._data = {}
-      for line in fp:
-         words = line.strip().split(': ', 1)
-         if len(words) < 2:
-            continue
-         self._data[words[0]] = words[1]
-      self.crc = self._data.pop('Crc', -1)
+      self._fields = []
+      self._buffer = version
+      self._crc = 0xffffffff
+      self._crcOk = True
+      if data:
+         self.parseData(data)
+      if f:
+         self.parseFile(f)
 
    def data(self):
       return self._data
 
-   def show(self):
-      for key, val in self._data.items():
-         print("%s: %s" % (key, val))
+   def toDict(self):
+      return {field.name: field.toStr() for field in self._fields}
 
    def getField(self, name):
-      return self._data[name]
+      return self._data.get(name)
 
    def getCrc(self):
-      return self.crc
+      return self._crc
 
-   def __str__( self ):
-      return '\n'.join( "{}: {}".format( k, v )  for k, v in self.data().items() )
+   def isCrcValid(self):
+      return self._crcOk
 
-def decode( fp ):
-   data = fp.read( 4 )
-   data = data.strip()
-   # For format 0002 and more recent fdls use the new Prefdl class
-   if data not in ( "0002", "0003" ):
-      raise ValueError
-   return PreFdl( fp, data, data )
+   def show(self):
+      for key, value in sorted(self.toDict().items()):
+         print("%s: %s" % (key, value))
 
-def decodeBuffer( data ):
-   return decode( StringIO( data ) )
+   def preParse(self, f):
+      pass
 
-def main():
-   output = sys.argv[1]
+   def checkCrc(self, f):
+      expected = int(f.read(8), 16)
+      computed = zlib.crc32(self._buffer) & 0xffffffff
+      if expected != computed:
+         logging.error('Eeprom CRC mismatch %#08x vs %#08x', expected, computed)
+         self._crcOk = False
+      self._crc = computed
 
-   if output == "-":
-      fp = sys.stdin
-   else:
-      fp = file( output, "r" )
+   def parseData(self, data):
+      for k, v in data.items():
+         field = self.FIELD_NAME.get(k)
+         if field is None:
+            continue
+         self.addField(field, v)
 
-   decode( fp ).show()
+   def parseFile(self, f):
+      self.preParse(f)
+      while self.parseTlvField(f):
+         pass
+      self.checkCrc(f)
 
-if __name__ == "__main__":
-   main()
+   def addField(self, field, value):
+      v = self._data.get(field.name)
+      if v is not None:
+         logging.warning('Eeprom field %s already set with %s', field.name, v)
+      value = field.parse(value)
+      if not field.check(value):
+         logging.warning('Field value %s does not meet %s expectation', value, field)
+         return
+      self._fields.append(field(value))
+      self._data[field.name] = value
+
+   def readTlv(self, f):
+      code = f.read(2)
+      length = f.read(4)
+      self._buffer += code + length
+      code = int(code, 16)
+      length = int(length, 16)
+      value = f.read(length)
+      self._buffer += value
+      return code, value
+
+   def parseFixedField(self, field, f):
+      value = f.read(field.length)
+      self._buffer += value
+      self.addField(field, value)
+
+   def parseTlvField(self, f):
+      code, value = self.readTlv(f)
+      if code == 0x00:
+         return False
+
+      field = self.FIELD_CODE.get(code)
+      if field:
+         self.addField(field, value)
+      return True
+
+   def writeToFile(self, path):
+      with open(path, 'w') as f:
+         for k, v in self.toDict().items():
+            f.write('%s: %s\n' % (k, v))
+
+class PrefdlV2(PrefdlBase):
+   def preParse(self, f):
+      self.parseFixedField(self.FIELD_NAME['PCA'], f)
+      self.parseFixedField(self.FIELD_NAME['SerialNumber'], f)
+      self.parseFixedField(self.FIELD_NAME['KVN'], f)
+
+class PrefdlV3(PrefdlBase):
+   pass
+
+class UnknownPrefdlVersion(Exception):
+   pass
+
+class Prefdl(object):
+   MAP = {
+      b"0002": PrefdlV2,
+      b"0003": PrefdlV3,
+   }
+
+   @classmethod
+   def getPrefdlCls(cls, version):
+      try:
+         return cls.MAP[version]
+      except KeyError:
+         raise UnknownPrefdlVersion("unknown prefdl verison %s" % version)
+
+   @classmethod
+   def fromBinFile(cls, path, version=None):
+      with open(path, mode='rb') as f:
+         version = version or f.read(4)
+         return cls.getPrefdlCls(version)(f=f, version=version)
+
+   @classmethod
+   def fromBytes(cls, data, version=None):
+      with closing(BytesIO(data)) as f:
+         version = version or f.read(4) # pylint: disable=no-member
+         return cls.getPrefdlCls(version)(f=f, version=version)
+
+   @classmethod
+   def fromDict(cls, data):
+      return PrefdlBase(data=data)
+
+   @classmethod
+   def fromTextFile(cls, path):
+      data = {}
+      with open(path, mode='r') as f:
+         for line in f.readlines():
+            line = line.rstrip()
+            if not line:
+               continue
+            key, value = line.split(': ', 1)
+            data[key] = value
+      return cls.fromDict(data)

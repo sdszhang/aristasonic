@@ -1,7 +1,7 @@
 
 from .common import I2cComponent
 from ..core.log import getLogger
-from ..core.prefdl import decodeBuffer
+from ..core.prefdl import Prefdl
 from ..core.utils import JsonStoredData
 from ..drivers.eeprom import SeepromI2cDevDriver, EepromKernelDriver
 
@@ -61,7 +61,7 @@ class PrefdlBase(object):
 
 class PrefdlEeprom(I2cEeprom, PrefdlBase):
    def decode(self):
-      return decodeBuffer(self.read()).data()
+      return Prefdl.fromBytes(self.read()).data()
 
    def prefdlAddr(self):
       return str(self.addr)
@@ -72,8 +72,7 @@ class PrefdlEeprom(I2cEeprom, PrefdlBase):
 
 class PrefdlSeeprom(I2cSeeprom, PrefdlBase):
    def decode(self):
-      data = self.read()
-      return decodeBuffer(data[8:]).data()
+      return Prefdl.fromBytes(self.read()[8:]).data()
 
    def prefdlAddr(self):
       return str(self.addr)

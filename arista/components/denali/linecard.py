@@ -68,7 +68,7 @@ class DenaliLinecard(DenaliCard, Linecard):
       sramContent = SramContent()
       prefdlRaw = self.eeprom.read()
       for addr, byte in enumerate(prefdlRaw):
-         sramContent.write(addr, ord(byte))
+         sramContent.write(addr, byte)
       self.syscpld.sram(sramContent)
 
    def provisionIs(self, provisionStatus):

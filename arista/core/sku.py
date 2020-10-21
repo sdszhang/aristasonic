@@ -8,18 +8,18 @@ class Sku(Component):
    SID = None
    SKU = None
 
-   DEFAULT_HWAPI = '0'
+   DEFAULT_HWAPI = (0, 0)
 
-   def __init__(self, hwApi=None, *args, **kwargs):
+   def __init__(self, *args, **kwargs):
+      self.hwApi = kwargs.pop('hwApi', None)
       super(Sku, self).__init__(*args, **kwargs)
-      self.hwApi = hwApi
 
    def getEeprom(self):
       return {}
 
    def getHwApi(self):
       if not self.hwApi:
-         self.hwApi = HwApi(self.getEeprom().get('HwApi', self.DEFAULT_HWAPI))
+         self.hwApi = HwApi(*self.getEeprom().get('HwApi', self.DEFAULT_HWAPI))
       return self.hwApi
 
    def genDiag(self, ctx):

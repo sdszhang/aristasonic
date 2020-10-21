@@ -72,7 +72,7 @@ class Chassis(ChassisBase):
       return self.get_serial()
 
    def get_system_eeprom_info(self):
-      return self._prefdl.data()
+      return self._prefdl.toDict()
 
    def get_status(self):
       return True

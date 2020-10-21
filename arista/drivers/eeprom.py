@@ -13,8 +13,8 @@ class EepromKernelDriver(I2cKernelDriver):
 
    def read(self):
       path = os.path.join(self.getSysfsPath(), 'eeprom')
-      with open(path) as f:
-         return f.read()
+      with open(path, 'rb') as f:
+         return bytearray(f.read())
 
 class SeepromI2cDevDriver(Driver):
 
@@ -28,7 +28,7 @@ class SeepromI2cDevDriver(Driver):
 
    def read(self):
       with closing(SMBus(self.addr.bus)) as bus:
-         data = ''
+         data = bytearray()
          bus.write_byte_data(self.addr.address, 0x00, 0)
 
          header = []
@@ -43,9 +43,9 @@ class SeepromI2cDevDriver(Driver):
                    (header[6] << 8) |
                     header[7])
 
-         data += ''.join(map(chr, header))
+         data.extend(header)
 
          # consecutive byte read
          for _ in range(self.offset + self.header_size, length):
-            data += chr(bus.read_byte(self.addr.address))
+            data.append(bus.read_byte(self.addr.address))
          return data
