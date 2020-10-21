@@ -127,10 +127,10 @@ install: install-py2 install-py3 install-drivers install-fs
 test-py: test-py3
 
 test-py2:
-	python2 setup.py test
+	$(PYTHON2) -m pytest
 
 test-py3:
-	python3 setup.py test
+	$(PYTHON3) -m pytest
 
 pylint:
 	# NOTE: for now we only check py2/py3 compatibility.
