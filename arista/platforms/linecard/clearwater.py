@@ -18,6 +18,7 @@ from ...descs.sensor import Position, SensorDesc
 class ClearwaterBase(DenaliLinecard):
    SCD_PCI_OFFSET = 3
    ASIC_PCI_OFFSET = {0 : 2}
+   XCVR_BUS_OFFSET = 0
 
    STANDBY_TEMP_SENSORS_CLS = Lm73
    GPIO1_CLS = Pca9555
@@ -42,7 +43,7 @@ class ClearwaterBase(DenaliLinecard):
          intReg = self.scd.getInterrupt(qsfpId // 32 + 2)
          intr = intReg.getInterruptBit((qsfpId - 1) % 32)
          qsfpAddr = 0xA010 + (qsfpId - 1) * 0x10
-         bus = qsfpId % 8
+         bus = self.XCVR_BUS_OFFSET + qsfpId - 1
          self.inventory.addInterrupt(name, intr)
          self.scd.addQsfp(qsfpAddr, qsfpId, bus, interruptLine=intr,
                           leds=self.inventory.getLedGroup(name))

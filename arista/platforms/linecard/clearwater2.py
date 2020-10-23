@@ -90,6 +90,7 @@ class Clearwater2(ClearwaterCpuBase):
        (1 << 3) |  # j2
        (1 << 5))   # scd
    ]
+   XCVR_BUS_OFFSET = 24
 
 @registerPlatform()
 class Clearwater2Ms(Clearwater2):
