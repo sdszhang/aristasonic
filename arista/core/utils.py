@@ -15,7 +15,7 @@ from ..libs.python import isinteger
 logging = getLogger(__name__)
 
 FLASH_MOUNT = '/host'
-TMPFS_MOUNT = '/run/arista'
+TMPFS_MOUNT = '/var/run/platform_cache/arista'
 
 class HwApi(object):
    def __init__(self, *values):
@@ -350,7 +350,7 @@ class StoredData(object):
 
    def maybeCreatePath(self, dirPath):
       if not os.path.isdir(dirPath) and not inSimulation():
-         os.mkdir(dirPath)
+         os.makedirs(dirPath)
 
    def exist(self):
       return os.path.isfile(self.path)
