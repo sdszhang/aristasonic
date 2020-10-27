@@ -46,8 +46,7 @@ class Clearlake(FixedSystem):
 
       scd.createPowerCycle()
 
-      scd.newComponent(Max6658, scd.i2cAddr(0, 0x4c),
-                       waitFile='/sys/class/hwmon/hwmon4', sensors=[
+      scd.newComponent(Max6658, scd.i2cAddr(0, 0x4c), sensors=[
          SensorDesc(diode=0, name='Board Sensor',
                     position=Position.OTHER, target=36, overheat=55, critical=70),
          SensorDesc(diode=1, name='Front-panel temp sensor',

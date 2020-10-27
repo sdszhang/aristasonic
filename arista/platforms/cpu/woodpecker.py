@@ -14,10 +14,10 @@ class WoodpeckerCpu(Cpu):
 
    PLATFORM = 'woodpecker'
 
-   def __init__(self, hwmonOffset=2, **kwargs):
+   def __init__(self, **kwargs):
       super(WoodpeckerCpu, self).__init__(**kwargs)
 
-      self.newComponent(K10Temp, waitFile='/sys/class/hwmon/hwmon1', sensors=[
+      self.newComponent(K10Temp, sensors=[
          SensorDesc(diode=0, name='Cpu temp sensor',
                     position=Position.OTHER, target=70, overheat=95, critical=115),
       ])
@@ -25,17 +25,13 @@ class WoodpeckerCpu(Cpu):
       cpld = self.newComponent(Scd, PciAddr(bus=0x00, device=0x09, func=0))
       self.cpld = cpld
 
-      waitFile = '/sys/class/hwmon/hwmon%d' % hwmonOffset
-      self.scdFanComponent = cpld.newComponent(ScdFanComponent, waitFile=waitFile,
-                                               fans=[
+      self.scdFanComponent = cpld.newComponent(ScdFanComponent, fans=[
          FanDesc(fanId, ledId=(fanId - 1) / 2 + 1) for fanId in incrange(1, 6)
       ])
       cpld.addFanGroup(0x9000, 3, 3)
 
       cpld.addSmbusMasterRange(0x8000, 2, 0x80, 4)
-      cpld.newComponent(Max6658, cpld.i2cAddr(0, 0x4c),
-                        waitFile='/sys/class/hwmon/hwmon%d' % (hwmonOffset + 1),
-                        sensors=[
+      cpld.newComponent(Max6658, cpld.i2cAddr(0, 0x4c), sensors=[
          SensorDesc(diode=0, name='CPU board temp sensor',
                     position=Position.OTHER, target=55, overheat=75, critical=85),
          SensorDesc(diode=1, name='Back-panel temp sensor',

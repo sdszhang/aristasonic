@@ -37,8 +37,7 @@ class BlackhawkO(FixedSystem):
 
       scd.createWatchdog()
 
-      scd.newComponent(Max6581, addr=scd.i2cAddr(8, 0x4d),
-                       waitFile='/sys/class/hwmon/hwmon2', sensors=[
+      scd.newComponent(Max6581, addr=scd.i2cAddr(8, 0x4d), sensors=[
          SensorDesc(diode=0, name='Board sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=85),
          SensorDesc(diode=1, name='Switch board middle sensor',

@@ -46,8 +46,7 @@ class Smartsville(FixedSystem):
 
       scd.createWatchdog()
 
-      scd.newComponent(Tmp468, scd.i2cAddr(0, 0x48),
-                       waitFile='/sys/class/hwmon/hwmon4', sensors=[
+      scd.newComponent(Tmp468, scd.i2cAddr(0, 0x48), sensors=[
          SensorDesc(diode=0, name='Board Sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=80),
          SensorDesc(diode=1, name='Front Air',

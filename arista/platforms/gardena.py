@@ -38,8 +38,7 @@ class Gardena(FixedSystem):
 
       scd.createWatchdog()
 
-      scd.newComponent(Max6658, scd.i2cAddr(0, 0x4c),
-                       waitFile='/sys/class/hwmon/hwmon2', sensors=[
+      scd.newComponent(Max6658, scd.i2cAddr(0, 0x4c), sensors=[
          SensorDesc(diode=0, name='Board sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=85),
       ])

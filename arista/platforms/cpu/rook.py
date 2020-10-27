@@ -17,7 +17,7 @@ class RookCpu(Cpu):
 
    PLATFORM = 'rook'
 
-   def __init__(self, hwmonOffset=3, fanCount=4, fanCpldCls=None, mgmtBus=15,
+   def __init__(self, fanCount=4, fanCpldCls=None, mgmtBus=15,
                 cpldRegisterCls=RookCpldRegisters, **kwargs):
       super(RookCpu, self).__init__(**kwargs)
 
@@ -39,23 +39,18 @@ class RookCpu(Cpu):
       self.cpld = cpld
 
       cpld.addSmbusMasterRange(0x8000, 4, 0x80, 4)
-      cpld.newComponent(Max6658, cpld.i2cAddr(0, 0x4c),
-                        waitFile='/sys/class/hwmon/hwmon%d' % hwmonOffset, sensors=[
+      cpld.newComponent(Max6658, cpld.i2cAddr(0, 0x4c), sensors=[
          SensorDesc(diode=0, name='CPU board temp sensor',
                     position=Position.OTHER, target=70, overheat=80, critical=85),
          SensorDesc(diode=1, name='Back-panel temp sensor',
                     position=Position.OUTLET, target=55, overheat=65, critical=75),
       ])
 
-      cpld.newComponent(fanCpldCls, cpld.i2cAddr(12, 0x60),
-                        waitFile='/sys/class/hwmon/hwmon%d' % (hwmonOffset + 1),
-                        fans=[
+      cpld.newComponent(fanCpldCls, cpld.i2cAddr(12, 0x60), fans=[
          FanDesc(fanId) for fanId in incrange(1, fanCount)
       ])
 
-      cpld.newComponent(Lm73, cpld.i2cAddr(mgmtBus, 0x48),
-                        waitFile='/sys/class/hwmon/hwmon%d' % (hwmonOffset + 2),
-                        sensors=[
+      cpld.newComponent(Lm73, cpld.i2cAddr(mgmtBus, 0x48), sensors=[
          SensorDesc(diode=0, name='Front-panel temp sensor',
                     position=Position.OTHER, target=55, overheat=75, critical=85),
       ])

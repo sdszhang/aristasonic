@@ -42,8 +42,7 @@ class Lodoga(FixedSystem):
 
       scd.newComponent(Ucd90120A, scd.i2cAddr(0, 0x4e, t=3))
 
-      scd.newComponent(Max6658, scd.i2cAddr(9, 0x4c),
-                       waitFile='/sys/class/hwmon/hwmon4', sensors=[
+      scd.newComponent(Max6658, scd.i2cAddr(9, 0x4c), sensors=[
          SensorDesc(diode=0, name='Board temp sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=85),
          SensorDesc(diode=1, name='Front-panel temp sensor',

@@ -12,9 +12,10 @@ from ..components.psu.delta import DPS750AB, DPS1900AB
 from ..components.psu.emerson import DS750PED
 from ..components.scd import Scd
 
-from .cpu.rook import RookCpu
-
 from ..descs.gpio import GpioDesc
+from ..descs.sensor import Position, SensorDesc
+
+from .cpu.rook import RookCpu
 
 @registerPlatform()
 class Alhambra(FixedSystem):
@@ -37,8 +38,12 @@ class Alhambra(FixedSystem):
 
       scd.createWatchdog()
 
-      scd.newComponent(Max6658, scd.i2cAddr(7, 0x4c),
-                       waitFile='/sys/class/hmon/hwmon2')
+      scd.newComponent(Max6658, scd.i2cAddr(7, 0x4c), sensors=[
+         SensorDesc(diode=0, name='Board sensor',
+                    position=Position.OTHER, target=60, overheat=70, critical=80),
+         SensorDesc(diode=1, name='Switch Chip sensor',
+                    position=Position.OTHER, target=85, overheat=100, critical=110),
+      ])
 
       scd.addSmbusMasterRange(0x8000, 9, 0x80)
 

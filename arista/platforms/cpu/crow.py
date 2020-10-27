@@ -17,8 +17,7 @@ class CrowCpu(Cpu):
 
    PLATFORM = 'crow'
 
-   def __init__(self, scd, registerCls=CrowCpldRegisters, hwmonOffset=2, hwmonBus=0,
-                **kwargs):
+   def __init__(self, scd, registerCls=CrowCpldRegisters, hwmonBus=0, **kwargs):
       super(CrowCpu, self).__init__(**kwargs)
 
       self.newComponent(K10Temp, sensors=[
@@ -26,18 +25,14 @@ class CrowCpu(Cpu):
                     position=Position.OTHER, target=60, overheat=90, critical=95),
       ])
 
-      scd.newComponent(Max6658, scd.i2cAddr(hwmonBus, 0x4c),
-                       waitFile='/sys/class/hwmon/hwmon%d' % hwmonOffset,
-                       sensors=[
+      scd.newComponent(Max6658, scd.i2cAddr(hwmonBus, 0x4c), sensors=[
          SensorDesc(diode=0, name='Cpu board temp sensor',
                     position=Position.OTHER, target=55, overheat=75, critical=80),
          SensorDesc(diode=1, name='Back-panel temp sensor',
                     position=Position.OUTLET, target=50, overheat=75, critical=85),
       ])
 
-      scd.newComponent(CrowFanCpldComponent, addr=scd.i2cAddr(hwmonBus, 0x60),
-                       waitFile='/sys/class/hwmon/hwmon%d' % (hwmonOffset + 1),
-                       fans=[
+      scd.newComponent(CrowFanCpldComponent, addr=scd.i2cAddr(hwmonBus, 0x60), fans=[
          FanDesc(fanId) for fanId in incrange(1, 4)
       ])
 

@@ -34,15 +34,13 @@ class Upperlake(FixedSystem):
 
       scd = self.newComponent(Scd, PciAddr(bus=0x02))
 
-      cpu = self.newComponent(CrowCpu, scd, hwmonBus=1,
-                              registerCls=KoiCpldRegisters)
+      cpu = self.newComponent(CrowCpu, scd, hwmonBus=1, registerCls=KoiCpldRegisters)
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
       scd.createWatchdog()
 
-      scd.newComponent(Max6697, addr=scd.i2cAddr(0, 0x1a),
-                       waitFile='/sys/class/hwmon/hwmon4', sensors=[
+      scd.newComponent(Max6697, addr=scd.i2cAddr(0, 0x1a), sensors=[
          SensorDesc(diode=0, name='Board sensor',
                     position=Position.OTHER, target=55, overheat=65, critical=75),
          SensorDesc(diode=1, name='Switch chip left sensor',
