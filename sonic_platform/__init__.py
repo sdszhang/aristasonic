@@ -8,6 +8,7 @@ __path__ = [
 from . import (
    chassis,
    fan,
+   fan_drawer,
    module,
    platform,
    psu,

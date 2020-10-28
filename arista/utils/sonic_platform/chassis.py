@@ -12,6 +12,7 @@ try:
    from arista.core.config import Config
    from arista.core.platform import readPrefdl
    from arista.utils.sonic_platform.fan import Fan
+   from arista.utils.sonic_platform.fan_drawer import FanDrawer
    from arista.utils.sonic_platform.psu import Psu
    from arista.utils.sonic_platform.sfp import Sfp
    from arista.utils.sonic_platform.thermal import Thermal
@@ -39,6 +40,10 @@ class Chassis(ChassisBase):
       self._inventory = platform.getInventory()
       for fan in self._inventory.getFans():
          self._fan_list.append(Fan(fan))
+      for fan in self._fan_list:
+         # TODO: refactor this code once we support the fan drawer abstraction in
+         #       our platform definition
+         self._fan_drawer_list.append(FanDrawer(fan))
       for psu in self._inventory.getPsus():
          self._psu_list.append(Psu(psu))
       self._sfp_list = []
