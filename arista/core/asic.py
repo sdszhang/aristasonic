@@ -24,7 +24,7 @@ class SwitchChip(PciComponent):
    def isInReset(self):
       return self.resetGpio()
 
-   def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT):
+   def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT, rescan=False):
       begin = time.time()
       end = begin + timeout
       rescanTime = begin + (timeout / 2)
@@ -45,7 +45,7 @@ class SwitchChip(PciComponent):
             time.sleep(ASIC_YIELD_TIME)
             klog('yielding...')
             return True
-         if now > rescanTime:
+         if rescan and now > rescanTime:
             self.pciRescan()
             rescanTime = end
          time.sleep(0.1)

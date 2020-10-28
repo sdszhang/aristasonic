@@ -4,12 +4,17 @@ from ...components.tmp464 import Tmp464
 
 from ...descs.sensor import SensorDesc, Position
 
-from .dragonfly import Dragonfly
+from .eldridge import Eldridge
 
 @registerPlatform()
-class Brooks(Dragonfly):
+class Brooks(Eldridge):
    SID = ['Brooks']
    SKU = ['DCS-7804-FM']
+
+   ASIC_BUSES = [
+      0x02,
+      0x09,
+   ]
 
    def createStandbySensors(self):
       self.pca.newComponent(Tmp464, self.slot.bus.i2cAddr(0x48), sensors=[
