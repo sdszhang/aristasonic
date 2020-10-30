@@ -1,7 +1,7 @@
 
 import time
 
-from ...core.asic import SwitchChip
+from ....core.asic import SwitchChip
 
 DNX_CHIP_SYS_PCIE_RESET_TIME = 0.1
 

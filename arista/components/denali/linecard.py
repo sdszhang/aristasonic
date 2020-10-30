@@ -4,7 +4,7 @@ from __future__ import absolute_import, division, print_function
 import time
 
 from .card import DenaliCard, DenaliCardSlot
-from ..asic.jericho2 import Jericho2
+from ..asic.dnx.jericho2 import Jericho2
 from ..linecard import Linecard
 from ..plx import PlxPex8700
 from ..scd import Scd
@@ -35,7 +35,7 @@ class DenaliLinecard(DenaliCard, Linecard):
    def createAsics(self):
       asicAddr = self.slot.pciAddr(bus=self.ASIC_PCI_OFFSET[0])
       self.asics = [
-         self.main.newComponent(Jericho2, asicAddr,
+         self.main.newComponent(Jericho2, asicAddr, rescan=True,
                                 resetGpio=self.scd.regs.je1Reset,
                                 pcieResetGpio=self.scd.regs.je1PcieReset),
       ]

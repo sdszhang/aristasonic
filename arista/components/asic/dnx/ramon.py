@@ -1,5 +1,5 @@
 
-from .dnx import DnxSwitchChip
+from . import DnxSwitchChip
 
 class Ramon(DnxSwitchChip):
    pass

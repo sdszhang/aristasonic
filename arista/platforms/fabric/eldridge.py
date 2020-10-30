@@ -2,14 +2,14 @@ from ...core.platform import registerPlatform
 from ...core.register import RegBitField, RegisterMap
 from ...core.utils import incrange, HwApi
 
-from ...components.pca9555 import Pca9555
+from ...components.asic.dnx.ramon import Ramon
 from ...components.denali.fabric import DenaliFabric
-from ...components.asic.ramon import Ramon
 from ...components.dpm import Ucd90320
+from ...components.max31790 import Max31790
+from ...components.max6658 import Max6658
+from ...components.pca9555 import Pca9555
 from ...components.tmp464 import Tmp464
 from ...components.tmp468 import Tmp468
-from ...components.max6658 import Max6658
-from ...components.max31790 import Max31790
 
 from ...descs.fan import FanDesc
 from ...descs.sensor import SensorDesc, Position

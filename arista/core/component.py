@@ -139,9 +139,9 @@ class Component(object):
          causes.extend(component.getReloadCauses(clear=clear))
       return causes
 
-   def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT, rescan=False):
+   def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT):
       for component in self.components:
-         component.waitForIt(timeout, rescan=rescan)
+         component.waitForIt(timeout)
 
    def _dumpDrivers(self, depth, prefix):
       if len(self.drivers) == 1:

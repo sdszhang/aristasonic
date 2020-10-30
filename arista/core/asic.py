@@ -12,8 +12,9 @@ logging = getLogger(__name__)
 ASIC_YIELD_TIME = os.getenv( 'ASIC_YIELD_TIME', 2 )
 
 class SwitchChip(PciComponent):
-   def __init__(self, addr, **kwargs):
+   def __init__(self, addr, rescan=False, **kwargs):
       super(SwitchChip, self).__init__(addr=addr, **kwargs)
+      self.rescan = rescan
 
    def __str__(self):
       return '%s(addr=%s)' % (self.__class__.__name__, self.addr)
@@ -24,7 +25,7 @@ class SwitchChip(PciComponent):
    def isInReset(self):
       return self.resetGpio()
 
-   def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT, rescan=False):
+   def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT):
       begin = time.time()
       end = begin + timeout
       rescanTime = begin + (timeout / 2)
@@ -45,7 +46,7 @@ class SwitchChip(PciComponent):
             time.sleep(ASIC_YIELD_TIME)
             klog('yielding...')
             return True
-         if rescan and now > rescanTime:
+         if self.rescan and now > rescanTime:
             self.pciRescan()
             rescanTime = end
          time.sleep(0.1)
