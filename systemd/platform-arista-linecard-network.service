@@ -10,7 +10,7 @@ ConditionKernelCommandLine=sonic.mode=linecard
 Type=oneshot
 RemainAfterExit=true
 
-ExecStart=/usr/bin/arista-chassis-network lo
+ExecStart=-/usr/bin/arista-chassis-network lo
 ExecStart=/usr/bin/lc-interface-config
 
 [Install]
