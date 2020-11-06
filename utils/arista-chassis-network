@@ -13,6 +13,9 @@ setup_mgmt() {
 
    mgmt_mac_addr=$(cat /sys/class/net/eth0/address)
 
+   # Make sure the interface is down before renaming it
+   ip link set dev eth0 down
+
    # Rename real management port to ma1
    ip link set dev eth0 name ma1
 
