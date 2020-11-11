@@ -348,7 +348,7 @@ class PlxPex8700I2cDevDriver(Driver):
    def __diag__(self, ctx):
       return {
          "name": self.name,
-         "addr": self.addr,
+         "addr": repr(self.addr),
          "regs": self.regs.__diag__(ctx) if self.regs else None,
       }
 

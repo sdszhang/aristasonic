@@ -157,7 +157,7 @@ class RegisterMap(object):
          func = getattr(self, attr)
          try:
             value = func() if ctx.performIo else None
-         except IOError:
+         except (IOError, NotImplementedError):
             value = False
          info = {
             'name': str(attr),
