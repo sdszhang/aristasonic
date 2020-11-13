@@ -238,16 +238,17 @@ class ScdSmbus(object):
 
 class Scd(PciComponent):
    BusTweak = namedtuple('BusTweak', 'addr, t, datr, datw, ed')
-   def __init__(self, addr, drivers=None, registerCls=None, **kwargs):
+   def __init__(self, addr, registerCls=None, **kwargs):
       self.pciSysfs = addr.getSysfsPath()
-      drivers = drivers or [KernelDriver(module='scd'),
-                            ScdKernelDriver(scd=self, addr=addr,
-                                            registerCls=registerCls),
-                            LedSysfsDriver(sysfsPath=os.path.join(self.pciSysfs,
-                                                                  'leds')),
-                            PsuSysfsDriver(sysfsPath=self.pciSysfs),
-                            ResetSysfsDriver(sysfsPath=self.pciSysfs),
-                            XcvrSysfsDriver(sysfsPath=self.pciSysfs)]
+      drivers = [
+         KernelDriver(module='scd'),
+         ScdKernelDriver(scd=self, addr=addr, registerCls=registerCls),
+         LedSysfsDriver(sysfsPath=os.path.join(self.pciSysfs, 'leds')),
+         PsuSysfsDriver(sysfsPath=self.pciSysfs),
+         ResetSysfsDriver(sysfsPath=self.pciSysfs),
+         XcvrSysfsDriver(sysfsPath=self.pciSysfs),
+      ]
+      self.driver = drivers[1]
       self.smbusMasters = OrderedDict()
       self.mmapReady = False
       self.interrupts = []
@@ -425,6 +426,12 @@ class Scd(PciComponent):
       psu = PsuImpl(psuId=psuId, driver=self.drivers[driver], led=led, **kwargs)
       self.inventory.addPsus([psu])
       return psu
+
+   def addFan(self, desc):
+      return self.inventory.addFan(self.driver.getFan(desc))
+
+   def addFanLed(self, desc):
+      return self.inventory.addLed(self.driver.getFanLed(desc))
 
    def addMdioMaster(self, addr, masterId, busCount=1, speed=MdioSpeed.S2_5):
       self.mdioMasters[addr] = {

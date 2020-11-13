@@ -208,8 +208,10 @@ class MockTest(unittest.TestCase):
             fan.setSpeed(100)
             assert isinstance(fan.getDirection(), str)
             led = fan.getLed()
-            assert led == fan.led
-            self._testLed(led)
+            if led is not None:
+               assert isinstance(fan.led, LedImpl)
+               assert led == fan.led
+               self._testLed(led)
 
    def testTemps(self):
       for name, platform in getPlatformSkus().items():

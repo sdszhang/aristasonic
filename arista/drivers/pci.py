@@ -151,6 +151,9 @@ class PciKernelDriver(KernelDriver):
    def read(self, addr):
       return self.mmap.read32(addr)
 
+   def getSysfsPath(self):
+      return self.addr.getSysfsPath()
+
    def getHwmonPath(self):
       if self.hwmonPath is None:
          self.hwmonPath = utils.locateHwmonFolder(self.addr.getSysfsPath())

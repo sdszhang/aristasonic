@@ -6,7 +6,10 @@ from ..core.driver import Driver
 from ..core import utils
 from ..core.log import getLogger
 
+from ..descs.led import LedColor
+
 from ..inventory.fan import Fan
+from ..inventory.led import Led
 from ..inventory.xcvr import Xcvr
 
 logging = getLogger(__name__)
@@ -81,6 +84,27 @@ class SysfsEntryBool(SysfsEntry):
    def _writeConversion(self, value):
       return str(int(value))
 
+class SysfsEntryCustomLed(SysfsEntry):
+   def __init__(self, parent, name, value2color=None):
+      self.value2color = value2color or {
+         0 : LedColor.OFF,
+         1 : LedColor.GREEN,
+         2 : LedColor.RED,
+         3 : LedColor.YELLOW,
+      }
+      self.color2value = { v : k for k, v in self.value2color.items() }
+      def getLedPath(n):
+         ledsPath = os.path.join(parent.driver.getSysfsPath(), 'leds')
+         return os.path.join(ledsPath, n, 'brightness')
+      super(SysfsEntryCustomLed, self).__init__(parent, name,
+                                                pathCallback=getLedPath)
+
+   def _readConversion(self, value):
+      return self.value2color[int(value)]
+
+   def _writeConversion(self, value):
+      return str(self.color2value[value])
+
 class FanSysfsImpl(Fan):
 
    MIN_FAN_SPEED = 30
@@ -144,6 +168,25 @@ class FanSysfsImpl(Fan):
 
    def getLed(self):
       return self.led
+
+class LedSysfsImpl(Led):
+   def __init__(self, driver, desc, **kwargs):
+      self.driver = driver
+      self.desc = desc
+      self.brightness = SysfsEntryCustomLed(self, desc.name)
+      self.__dict__.update(kwargs)
+
+   def getName(self):
+      return self.desc.name
+
+   def getColor(self):
+      return self.brightness.read()
+
+   def setColor(self, color):
+      self.brightness.write(color)
+
+   def isStatusLed(self):
+      return 'sfp' in self.desc.name
 
 class SysfsDriver(Driver):
    def __init__(self, sysfsPath=None, addr=None, **kwargs):

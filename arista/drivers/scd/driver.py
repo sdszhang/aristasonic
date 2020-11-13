@@ -2,12 +2,14 @@ import os
 
 from collections import OrderedDict
 
-from ..i2c import I2cDevDriver
-from ..pci import PciKernelDriver
 from ...core import utils
 from ...core.config import Config
 from ...core.i2c_utils import I2cMsg
 from ...core.log import getLogger
+
+from ..i2c import I2cDevDriver
+from ..pci import PciKernelDriver
+from ..sysfs import FanSysfsImpl, LedSysfsImpl
 
 logging = getLogger(__name__)
 
@@ -168,6 +170,12 @@ class ScdKernelDriver(PciKernelDriver):
 
    def resetOut(self):
       self.reset(False)
+
+   def getFan(self, desc):
+      return FanSysfsImpl(self, desc)
+
+   def getFanLed(self, desc):
+      return LedSysfsImpl(self, desc)
 
 class ScdI2cDevDriver(I2cDevDriver):
    def __init__(self, **kwargs):
