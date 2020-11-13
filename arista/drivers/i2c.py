@@ -31,12 +31,21 @@ class I2cKernelDriver(Driver):
          waitFile = (self.getSysfsPath(), 'hwmon', r'hwmon\d')
       self.fileWaiter = utils.FileWaiter(waitFile, waitTimeout)
       super(I2cKernelDriver, self).__init__(**kwargs)
+      self.hwmonPath = None
 
    def getSysfsPath(self):
       return self.addr.getSysfsPath()
 
    def getSysfsBusPath(self):
       return '/sys/bus/i2c/devices/i2c-%d' % self.addr.bus
+
+   def getHwmonPath(self):
+      if self.hwmonPath is None:
+         self.hwmonPath = utils.locateHwmonFolder(self.addr.getSysfsPath())
+      return self.hwmonPath
+
+   def getHwmonEntry(self, entry):
+      return os.path.join(self.getHwmonPath(), entry)
 
    def setup(self):
       if self.kernelDriver:

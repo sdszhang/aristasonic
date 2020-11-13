@@ -477,6 +477,13 @@ def writeConfig(path, data):
       except IOError as e:
          logging.error('%s %s', path, e.strerror)
 
+def locateHwmonFolder(devicePath, index=0):
+   if inSimulation():
+      return os.path.join(devicePath, 'hwmon', 'simulation')
+   hwmonFolder = os.path.join(devicePath, 'hwmon')
+   paths = [p for p in sorted(os.listdir(hwmonFolder)) if p.startswith('hwmon')]
+   return os.path.join(hwmonFolder, paths[index])
+
 # Hwmon directories that need to be navigated
 # Keeps trying to get path to show up, or search in searchPath
 def locateHwmonPath(searchPath, prefix):

@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from ...tests.testing import unittest, patch
 from ...tests.logging import getLogger
 
-from ...accessors.fan import FanImpl
 from ...accessors.led import LedImpl
 from ...accessors.temp import TempImpl
 from ...accessors.xcvr import XcvrImpl
@@ -14,8 +13,9 @@ from ...descs.sensor import SensorDesc
 
 from ...drivers.i2c import I2cKernelDriver
 from ...drivers.scd.driver import ScdKernelDriver
-from ...drivers.sysfs import SysfsDriver
+from ...drivers.sysfs import SysfsDriver, SysfsEntry
 
+from ...inventory.fan import Fan
 from ...inventory.psu import Psu
 from ...inventory.xcvr import Xcvr
 
@@ -35,10 +35,14 @@ def mock_i2cBusFromName(name, idx=0, force=False):
 def mock_inSimulation():
    return False
 
+def mock_locateHwmonFolder(devicePath):
+   assert isinstance(devicePath, str)
+   return '%s/hwmon/mock' % devicePath
+
 def mock_locateHwmonPath(searchPath, prefix):
    assert isinstance(searchPath, str)
    assert isinstance(prefix, str)
-   return 'mock path'
+   return '%s/hwmon/mock/%s' % (searchPath, prefix)
 
 def mock_writeConfig(path, data):
    assert isinstance(path, str)
@@ -48,13 +52,19 @@ def mock_writeComponents(self, components, filename):
    assert components
    assert filename
 
+def mock_sysfsRead(self):
+   return '1'
+
+def mock_sysfsWrite(self, value):
+   assert value is not None
+
 def mock_read(self, name, path=None):
    assert name
    return '1'
 
 def mock_write(self, name, value, path=None):
    assert name
-   assert value != None
+   assert value is not None
 
 def mock_readReg(self, reg):
    assert reg
@@ -77,6 +87,7 @@ def mock_maybeCreatePath(self, dirPath):
 
 @patch('arista.drivers.scd.driver.i2cBusFromName', mock_i2cBusFromName)
 @patch('arista.core.utils.inSimulation', mock_inSimulation)
+@patch('arista.core.utils.locateHwmonFolder', mock_locateHwmonFolder)
 @patch('arista.core.utils.locateHwmonPath', mock_locateHwmonPath)
 @patch('arista.core.utils.writeConfig', mock_writeConfig)
 @patch.object(I2cKernelDriver, 'setup', mock_return)
@@ -85,6 +96,8 @@ def mock_maybeCreatePath(self, dirPath):
 @patch.object(ScdKernelDriver, 'finish', mock_return)
 @patch.object(ScdKernelDriver, 'waitReady', mock_waitReady)
 @patch.object(ScdKernelDriver, 'writeComponents', mock_writeComponents)
+@patch.object(SysfsEntry, '_read', mock_sysfsRead)
+@patch.object(SysfsEntry, '_write', mock_sysfsWrite)
 @patch.object(SysfsDriver, 'read', mock_read)
 @patch.object(SysfsDriver, 'write', mock_write)
 @patch.object(utils.FileWaiter, 'waitFileReady', mock_return)
@@ -184,10 +197,9 @@ class MockTest(unittest.TestCase):
          inventory = platform().getInventory()
          self.logger.info('Testing fans for platform %s', name)
          for fan in inventory.getFans():
-            assert isinstance(fan, FanImpl)
+            assert isinstance(fan, Fan)
             assert isinstance(fan.driver, Driver)
-            assert isinstance(fan.fanId, int)
-            assert isinstance(fan.led, LedImpl)
+            assert isinstance(fan.getId(), int)
             assert isinstance(fan.getPresence(), bool)
             assert isinstance(fan.getStatus(), bool)
             assert isinstance(fan.getName(), str)

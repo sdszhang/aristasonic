@@ -1,3 +1,5 @@
+from ...core.cooling import Airflow
+from ...core.fan import FanSlot
 from ...core.platform import registerPlatform
 from ...core.register import RegBitField, RegisterMap
 from ...core.utils import incrange, HwApi
@@ -11,7 +13,7 @@ from ...components.pca9555 import Pca9555
 from ...components.tmp464 import Tmp464
 from ...components.tmp468 import Tmp468
 
-from ...descs.fan import FanDesc
+from ...descs.fan import FanDesc, FanPosition
 from ...descs.sensor import SensorDesc, Position
 
 from ...drivers.pca9555 import GpioRegister
@@ -77,14 +79,30 @@ class Eldridge(DenaliFabric):
 
    def standbyDomain(self):
       self.pca.newComponent(Ucd90320, self.pca.i2cAddr(0x11))
-      self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2c), fans=[
-         FanDesc(fanId=fanId) for fanId in incrange(5, 8)
-      ])
-      self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d), fans=[
-         FanDesc(fanId=fanId) for fanId in incrange(1, 4)
-      ])
-
+      self.createStandbyFans()
       self.createStandbySensors()
+
+   def createStandbyFanController(self, chip, begin, end):
+      for i, slotId in enumerate(incrange(begin, end)):
+         fanIn = FanDesc(fanId=i * 2 + 1, position=FanPosition.INLET,
+                         airflow=Airflow.EXHAUST)
+         fanOut = FanDesc(fanId=i * 2 + 2, position=FanPosition.OUTLET,
+                          airflow=Airflow.EXHAUST)
+         self.newComponent(
+            FanSlot,
+            slotId=slotId,
+            # TODO: faultGpio=self.inventory.getGpio('fan_fault_%d' % slotId),
+            fans=[
+               chip.addFan(fanIn),
+               chip.addFan(fanOut),
+            ],
+         )
+
+   def createStandbyFans(self):
+      chip1 = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d), variant='8u')
+      chip2 = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2c), variant='8u')
+      self.createStandbyFanController(chip1, 1, 4)
+      self.createStandbyFanController(chip2, 5, 8)
 
    def createOldStandbySensors(self):
       self.pca.newComponent(Tmp468, self.pca.i2cAddr(0x48), sensors=[

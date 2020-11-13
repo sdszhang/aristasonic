@@ -6,9 +6,144 @@ from ..core.driver import Driver
 from ..core import utils
 from ..core.log import getLogger
 
+from ..inventory.fan import Fan
 from ..inventory.xcvr import Xcvr
 
 logging = getLogger(__name__)
+
+class SysfsEntry(object):
+   def __init__(self, parent, name, pathCallback=None):
+      self.parent = parent
+      self.driver = parent.driver
+      self.name = name
+      self.pathCallback = pathCallback or self.driver.getHwmonEntry
+      self.entryPath_ = None
+
+   @property
+   def entryPath(self):
+      if self.entryPath_ is None:
+         self.entryPath_ = self.pathCallback(self.name)
+      return self.entryPath_
+
+   def exists(self):
+      return os.path.exists(self.entryPath)
+
+   def _readConversion(self, value):
+      return str(value)
+
+   def _writeConversion(self, value):
+      return str(value)
+
+   def _read(self):
+      if utils.inSimulation():
+         return '1'
+      with open(self.entryPath, 'r') as f:
+         return f.read()
+
+   def _write(self, value):
+      if utils.inSimulation():
+         return
+      with open(self.entryPath, 'w') as f:
+         f.write(value)
+
+   def read(self):
+      return self._readConversion(self._read().rstrip())
+
+   def write(self, value):
+      self._write(self._writeConversion(value))
+
+class SysfsEntryInt(SysfsEntry):
+   def _readConversion(self, value):
+      return int(value)
+
+class SysfsEntryIntLinear(SysfsEntry):
+   def __init__(self, parent, name, fromRange=None, toRange=None, **kwargs):
+      super(SysfsEntryIntLinear, self).__init__(parent, name, **kwargs)
+      self.fromRange = fromRange
+      self.toRange = toRange
+
+   def _linearConversion(self, value, fromRange, toRange):
+      value -= fromRange[0]
+      value *= toRange[1] - toRange[0]
+      value //= fromRange[1]
+      return value + toRange[0]
+
+   def _readConversion(self, value):
+      return self._linearConversion(int(value), self.fromRange, self.toRange)
+
+   def _writeConversion(self, value):
+      return str(self._linearConversion(int(value), self.toRange, self.fromRange))
+
+class SysfsEntryBool(SysfsEntry):
+   def _readConversion(self, value):
+      return bool(int(value))
+
+   def _writeConversion(self, value):
+      return str(int(value))
+
+class FanSysfsImpl(Fan):
+
+   MIN_FAN_SPEED = 30
+   MAX_FAN_SPEED = 100
+
+   def __init__(self, driver, desc, maxPwm=255, led=None, **kwargs):
+      self.driver = driver
+      self.desc = desc
+      self.fanId = desc.fanId
+      self.maxPwm = maxPwm
+      self.led = led
+      self.lastSpeed = None
+      self.pwm = SysfsEntryIntLinear(self, 'pwm%d' % self.fanId,
+                                     fromRange=(0, maxPwm), toRange=(0, 100))
+      self.input = SysfsEntryInt(self, 'fan%d_input' % self.fanId)
+      self.airflow = SysfsEntry(self, 'fan%d_airflow' % self.fanId)
+      self.fault = SysfsEntryBool(self, 'fan%d_fault' % self.fanId)
+      self.present = SysfsEntryBool(self, 'fan%d_present' % self.fanId)
+      self.__dict__.update(kwargs)
+
+   def getId(self):
+      return self.fanId
+
+   def getName(self):
+      return 'fan%d' % self.fanId
+
+   def getModel(self):
+      return 'N/A'
+
+   def getSpeed(self):
+      return self.pwm.read()
+
+   def getFault(self):
+      if not self.fault.exists():
+         return False
+      return self.fault.read()
+
+   def getStatus(self):
+      return not self.getFault()
+
+   def setSpeed(self, speed):
+      if self.lastSpeed == self.MAX_FAN_SPEED and speed != self.MAX_FAN_SPEED:
+         logging.debug("%s fan speed reduced from max", self.getName())
+      elif self.lastSpeed != self.MAX_FAN_SPEED and speed == self.MAX_FAN_SPEED:
+         logging.warn("%s fan speed set to max", self.getName())
+      self.lastSpeed = speed
+      return self.pwm.write(speed)
+
+   def getPresence(self):
+      if self.present.exists():
+         return self.present.read()
+      return self.input.read() != 0
+
+   def getDirection(self):
+      if self.airflow.exists():
+         return self.airflow.read()
+      return self.desc.airflow
+
+   def getPosition(self):
+      return self.desc.position if self.desc else 'N/A'
+
+   def getLed(self):
+      return self.led
 
 class SysfsDriver(Driver):
    def __init__(self, sysfsPath=None, addr=None, **kwargs):
@@ -103,7 +238,7 @@ class ResetSysfsDriver(SysfsDriver):
       return self.write('%s_%s' % (reset.name, 'reset'), '0')
 
 class FanSysfsDriver(SysfsDriver):
-   def __init__(self, maxPwm=None, addr=None, waitFile=None, waitTimeout=None,
+   def __init__(self, maxPwm=255, addr=None, waitFile=None, waitTimeout=None,
                 **kwargs):
       self.maxPwm = maxPwm
       self.addr = addr

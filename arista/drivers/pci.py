@@ -4,6 +4,7 @@ import os
 from ..core.driver import Driver, KernelDriver
 from ..core.register import RegBitField, RegisterMap
 from ..core.utils import FileResource, FileWaiter, MmapResource
+from ..core import utils
 
 from ..components.pci import PciRegister8, PciRegister16
 
@@ -130,6 +131,7 @@ class PciKernelDriver(KernelDriver):
       self.addr = addr
       self.regs = registerCls(self) if registerCls is not None else None
       self.mmap_ = None
+      self.hwmonPath = None
       super(PciKernelDriver, self).__init__(**kwargs)
 
    @property
@@ -148,3 +150,11 @@ class PciKernelDriver(KernelDriver):
 
    def read(self, addr):
       return self.mmap.read32(addr)
+
+   def getHwmonPath(self):
+      if self.hwmonPath is None:
+         self.hwmonPath = utils.locateHwmonFolder(self.addr.getSysfsPath())
+      return self.hwmonPath
+
+   def getHwmonEntry(self, entry):
+      return os.path.join(self.getHwmonPath(), entry)

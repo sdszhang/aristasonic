@@ -1,6 +1,16 @@
 
-from ..core.component import Component
+from ..drivers.max31790 import Max31790KernelDriver
 
-class Max31790(Component):
-   def __init__(self, addr, fans=None, **kwargs):
-      super(Max31790, self).__init__(addr=addr, fans=fans, **kwargs)
+from .common import I2cComponent
+
+class Max31790(I2cComponent):
+   def __init__(self, addr, variant, fans=None, **kwargs):
+      name = 'amax31790_%s' % variant
+      drivers = [Max31790KernelDriver(addr=addr, name=name)]
+      super(Max31790, self).__init__(addr=addr, drivers=drivers, **kwargs)
+      self.driver = self.drivers['Max31790KernelDriver']
+      for fan in fans or []:
+         self.addFan(fan)
+
+   def addFan(self, desc):
+      return self.inventory.addFan(self.driver.getFan(desc))

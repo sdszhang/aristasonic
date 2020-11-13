@@ -1,5 +1,6 @@
 from ...core.platform import registerPlatform
 
+from ...components.max31790 import Max31790
 from ...components.tmp464 import Tmp464
 
 from ...descs.sensor import SensorDesc, Position
@@ -15,6 +16,10 @@ class Brooks(Eldridge):
       0x02,
       0x09,
    ]
+
+   def createStandbyFans(self):
+      chip = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d), variant='4u')
+      self.createStandbyFanController(chip, 1, 4)
 
    def createStandbySensors(self):
       self.pca.newComponent(Tmp464, self.pca.i2cAddr(0x48), sensors=[
