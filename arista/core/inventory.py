@@ -29,6 +29,8 @@ class Inventory(object):
 
       self.fans = []
 
+      self.fanSlots = []
+
       self.watchdog = Watchdog()
 
       self.powerCycles = []
@@ -140,6 +142,20 @@ class Inventory(object):
    def getNumFans(self):
       return len(self.fans)
 
+   def addFanSlot(self, slot):
+      self.fanSlots.append(slot)
+      return slot
+
+   def addFanSlots(self, slots):
+      self.fanSlots.extend(slots)
+      return slots
+
+   def getFanSlot(self, slotId):
+      return self.fanSlots[slotId]
+
+   def getFanSlots(self):
+      return self.fanSlots
+
    def addWatchdog(self, watchdog):
       self.watchdog = watchdog
       return watchdog
@@ -228,6 +244,7 @@ class Inventory(object):
          "xcvrs": [x.genDiag(ctx) for x in self.xcvrs.values()],
          "psus": [p.genDiag(ctx) for p in self.psus],
          "fans": [f.genDiag(ctx) for f in self.fans],
+         "fanSlots": [s.genDiag(ctx) for s in self.fanSlots],
          "interrupts": [i.genDiag(ctx) for i in self.interrupts.values()],
          "resets" : [r.genDiag(ctx) for r in self.resets.values()],
          "phys" : [p.genDiag(ctx) for p in self.phys],

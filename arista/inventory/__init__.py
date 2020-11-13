@@ -7,9 +7,10 @@ class InventoryInterface(object):
       return {}
 
    def genDiag(self, ctx):
+      desc = getattr(self, 'desc', None)
       return {
          "version": 1,
          "name": self.__class__.__name__,
-         "desc": self.desc.__diag__(ctx) if hasattr(self, 'desc') else {},
+         "desc": desc.__diag__(ctx) if desc else {},
          "data": self.__diag__(ctx),
       }

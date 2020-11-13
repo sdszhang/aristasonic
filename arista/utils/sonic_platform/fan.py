@@ -19,8 +19,11 @@ class Fan(FanBase):
    DEFAULT_TOLERANCE = 100
 
    fanDirectionConversion = {
+      'intake': FanBase.FAN_DIRECTION_INTAKE,
+      'exhaust': FanBase.FAN_DIRECTION_EXHAUST,
       'forward': FanBase.FAN_DIRECTION_INTAKE,
       'reverse': FanBase.FAN_DIRECTION_EXHAUST,
+      'unknown': FanBase.FAN_DIRECTION_NOT_APPLICABLE,
    }
 
    def __init__(self, fan):

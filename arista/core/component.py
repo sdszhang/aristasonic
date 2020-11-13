@@ -9,6 +9,7 @@ DEFAULT_WAIT_TIMEOUT = 15
 class Priority(object):
    DEFAULT = 0
    THERMAL = 0
+   COOLING = 0
    BACKGROUND = 1
    POWER = 1
 
