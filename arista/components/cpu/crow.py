@@ -1,18 +1,12 @@
 
-from __future__ import absolute_import, division, print_function
-
 from ..common import I2cComponent
 from ..cpld import SysCpld, SysCpldCommonRegisters
-
-from ...accessors.fan import FanImpl
-from ...accessors.led import LedImpl
 
 from ...core.log import getLogger
 from ...core.register import Register, RegBitField
 
 from ...drivers.cpld import SysCpldI2cDriver
-from ...drivers.i2c import I2cKernelFanDriver
-from ...drivers.sysfs import LedSysfsDriver
+from ...drivers.crow import CrowFanCpldKernelDriver
 
 logging = getLogger(__name__)
 
@@ -46,24 +40,14 @@ class CrowSysCpld(SysCpld):
       super(CrowSysCpld, self).__init__(addr=addr, drivers=drivers,
                                         registerCls=registerCls, **kwargs)
 
-class CrowFanCpldComponent(I2cComponent):
-   def __init__(self, addr=None, drivers=None, waitFile=None, fans=[], **kwargs):
-      if not drivers:
-         fanSysfsDriver = I2cKernelFanDriver(name='crow_cpld',
-               module='crow-fan-driver', addr=addr, maxPwm=255, waitFile=waitFile)
-         ledSysfsDriver = LedSysfsDriver(sysfsPath='/sys/class/leds')
-         drivers = [fanSysfsDriver, ledSysfsDriver]
-      super(CrowFanCpldComponent, self).__init__(addr=addr, drivers=drivers,
-                                                 **kwargs)
-      for fan in fans:
-         self.createFan(fan.fanId)
+class CrowFanCpld(I2cComponent):
+   def __init__(self, addr=None, **kwargs):
+      drivers = [CrowFanCpldKernelDriver(addr=addr)]
+      self.driver = drivers[0]
+      super(CrowFanCpld, self).__init__(addr=addr, drivers=drivers, **kwargs)
 
-   def createFan(self, fanId, driver='I2cKernelFanDriver',
-                 ledDriver='LedSysfsDriver', **kwargs):
-      logging.debug('creating crow fan %s', fanId)
-      driver = self.drivers[driver]
-      led = LedImpl(name='fan%s' % fanId, driver=self.drivers[ledDriver])
-      fan = FanImpl(fanId=fanId, driver=driver, led=led, **kwargs)
-      self.inventory.addFan(fan)
-      return fan
+   def addFan(self, desc):
+      return self.inventory.addFan(self.driver.getFan(desc))
 
+   def addFanLed(self, desc):
+      return self.inventory.addLed(self.driver.getFanLed(desc))

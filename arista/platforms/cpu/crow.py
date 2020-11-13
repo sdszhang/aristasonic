@@ -1,16 +1,18 @@
 from ...core.cpu import Cpu
+from ...core.fan import FanSlot
 from ...core.types import I2cAddr
 from ...core.utils import incrange
 
 from ...components.cpu.amd.k10temp import K10Temp
 from ...components.cpu.crow import (
    CrowCpldRegisters,
-   CrowFanCpldComponent,
+   CrowFanCpld,
    CrowSysCpld,
 )
 from ...components.max6658 import Max6658
 
-from ...descs.fan import FanDesc
+from ...descs.fan import FanDesc, FanPosition
+from ...descs.led import LedDesc, LedColor
 from ...descs.sensor import Position, SensorDesc
 
 class CrowCpu(Cpu):
@@ -32,9 +34,19 @@ class CrowCpu(Cpu):
                     position=Position.OUTLET, target=50, overheat=75, critical=85),
       ])
 
-      scd.newComponent(CrowFanCpldComponent, addr=scd.i2cAddr(hwmonBus, 0x60), fans=[
-         FanDesc(fanId) for fanId in incrange(1, 4)
-      ])
+      cpld = scd.newComponent(CrowFanCpld, addr=scd.i2cAddr(hwmonBus, 0x60))
+      for slotId in incrange(1, 4):
+         fanDesc = FanDesc(fanId=slotId, position=FanPosition.INLET)
+         ledDesc = LedDesc(name='fan%d' % slotId,
+                           colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF])
+         self.newComponent(
+            FanSlot,
+            slotId=slotId,
+            led=cpld.addFanLed(ledDesc),
+            fans=[
+               cpld.addFan(fanDesc),
+            ]
+         )
 
       self.syscpld = self.newComponent(CrowSysCpld, I2cAddr(1, 0x23),
                                        registerCls=registerCls)
