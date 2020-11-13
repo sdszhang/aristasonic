@@ -21,17 +21,15 @@ class Fan(FanBase):
    fanDirectionConversion = {
       'intake': FanBase.FAN_DIRECTION_INTAKE,
       'exhaust': FanBase.FAN_DIRECTION_EXHAUST,
-      'forward': FanBase.FAN_DIRECTION_INTAKE,
-      'reverse': FanBase.FAN_DIRECTION_EXHAUST,
+      'forward': FanBase.FAN_DIRECTION_EXHAUST,
+      'reverse': FanBase.FAN_DIRECTION_INTAKE,
       'unknown': FanBase.FAN_DIRECTION_NOT_APPLICABLE,
    }
 
-   def __init__(self, fan):
+   def __init__(self, parent, fan):
+      self._parent = parent
       self._target_speed = None
       self._fan = fan
-
-   def get_id(self):
-      return self._fan.getId()
 
    def get_name(self):
       return self._fan.getName()
@@ -59,13 +57,17 @@ class Fan(FanBase):
          return self.DEFAULT_TOLERANCE
 
    def set_status_led(self, color):
+      if self._parent or not self._fan.getLed:
+         return self._parent.set_status_led(color)
       try:
          self._fan.getLed().setColor(color)
          return True
       except (IOError, OSError, ValueError):
          return False
 
-   def get_status_led(self):
+   def get_status_led(self, color=None):
+      if self._parent:
+         return self._parent.get_status_led(color=color)
       return self._fan.getLed().getColor()
 
    def get_status(self):

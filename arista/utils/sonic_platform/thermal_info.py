@@ -24,12 +24,19 @@ class FanInfo(ThermalPolicyInfo):
       self.fans_presence = {}
       self.fans_status = {}
 
-   def collect(self, chassis):
-      for fan in chassis.get_all_fans():
+   def _collect_fans(self, fans):
+      for fan in fans:
          name = fan.get_name()
          self.fans[name] = fan
          self.fans_presence[name] = fan.get_presence()
          self.fans_status[name] = fan.get_status()
+
+   def collect(self, chassis):
+      if chassis.get_num_fan_drawers():
+         for drawer in chassis.get_all_fan_drawers():
+            self._collect_fans(drawer.get_all_fans())
+      else:
+         self._collect_fans(chassis.get_all_fans())
 
 @thermal_json_object("thermal_info")
 class ThermalInfo(ThermalPolicyInfo):
