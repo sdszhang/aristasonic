@@ -40,11 +40,6 @@ class InventoryTest(unittest.TestCase):
          inv.addLed(led)
          inv.addXcvr(xcvr)
 
-      inv.addStatusLeds([
-         MockLed('status'),
-         MockLed('fans'),
-         MockLed('psu1'),
-      ])
       inv.addResets({
          'internet': MockReset('internet'),
          'humanity': MockReset('humanity'),

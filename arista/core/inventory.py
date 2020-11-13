@@ -45,12 +45,6 @@ class Inventory(object):
 
       self.gpios = {}
 
-   def freeze(self):
-      # XXX: compute the range and some basic information from the various
-      #      collections present in the inventory
-      # XXX: try to avoid that actually
-      pass
-
    def addPorts(self, sfps=None, qsfps=None, osfps=None):
       if sfps:
          self.sfpRange = sfps
@@ -69,6 +63,7 @@ class Inventory(object):
       xcvrReset = xcvr.getReset()
       if xcvrReset is not None:
          self.resets[xcvrReset.getName()] = xcvrReset
+      return xcvr
 
    def getXcvrs(self):
       return self.xcvrs
@@ -84,29 +79,20 @@ class Inventory(object):
    def getPortToI2cAdapterMapping(self):
       return {xcvrId : xcvr.addr.bus for xcvrId, xcvr in self.xcvrs.items()}
 
-   # Deprecated
-   def addXcvrLed(self, xcvrId, name):
-      self.xcvrLeds[xcvrId].append(name)
-
-   # Deprecated
-   def addStatusLed(self, name):
-      self.statusLeds.append(name)
-
-   # Deprecated
-   def addStatusLeds(self, names):
-      self.statusLeds.extend(names)
-
    def addLed(self, led):
       self.leds[led.getName()] = led
+      return led
 
    def addLedGroup(self, name, leds):
       self.ledGroups[name] = leds
       for led in leds:
          self.addLed(led)
+      return name, leds
 
    def addLeds(self, leds):
       for led in leds:
          self.addLed(led)
+      return leds
 
    def getLed(self, name):
       return self.leds[name]
@@ -122,9 +108,11 @@ class Inventory(object):
 
    def addPsu(self, psu):
       self.psus.append(psu)
+      return psu
 
    def addPsus(self, psus):
       self.psus.extend(psus)
+      return psus
 
    def getPsus(self):
       return self.psus
@@ -137,9 +125,11 @@ class Inventory(object):
 
    def addFan(self, fan):
       self.fans.append(fan)
+      return fan
 
    def addFans(self, fans):
       self.fans.extend(fans)
+      return fans
 
    def getFan(self, index):
       return self.fans[index]
@@ -152,57 +142,68 @@ class Inventory(object):
 
    def addWatchdog(self, watchdog):
       self.watchdog = watchdog
+      return watchdog
 
    def getWatchdog(self):
       return self.watchdog
 
    def addPowerCycle(self, powerCycle):
       self.powerCycles.append(powerCycle)
+      return powerCycle
 
    def getPowerCycles(self):
       return self.powerCycles
 
    def addInterrupt(self, name, interrupt):
       self.interrupts[name] = interrupt
+      return interrupt
 
    def addInterrupts(self, interrupts):
       self.interrupts.update(interrupts)
+      return interrupts
 
    def getInterrupts(self):
       return self.interrupts
 
    def addReset(self, reset):
       self.resets[reset.getName()] = reset
+      return reset
 
    def addResets(self, resets):
       self.resets.update(resets)
+      return resets
 
    def getResets(self):
       return self.resets
 
    def addPhy(self, phy):
       self.phys.append(phy)
+      return phy
 
    def getPhys(self):
       return self.phys
 
    def addSlot(self, slot):
       self.slots.append(slot)
+      return slot
 
    def getSlots(self):
       return self.slots
 
    def addTemp(self, temp):
       self.temps.append(temp)
+      return temp
 
    def getTemps(self):
       return self.temps
 
    def addGpio(self, gpio):
       self.gpios[gpio.getName()] = gpio
+      return gpio
 
    def addGpios(self, gpios):
       self.gpios.update(gpios)
+      return gpios
 
    def getGpios(self):
       return self.gpios
