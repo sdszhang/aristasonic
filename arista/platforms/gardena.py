@@ -5,7 +5,6 @@ from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk2 import Tomahawk2
-from ..components.cpu.rook import LAFanCpldComponent
 from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi
 from ..components.max6658 import Max6658
 from ..components.psu.delta import DPS750AB, DPS1900AB
@@ -60,7 +59,7 @@ class Gardena(FixedSystem):
          GpioDesc("psu2_ac_status", 0x5000, 11, ro=True),
       ])
 
-      cpu = self.newComponent(RookCpu, fanCpldCls=LAFanCpldComponent)
+      cpu = self.newComponent(RookCpu)
       cpu.cpld.newComponent(Ucd90160, cpu.cpuDpmAddr())
       cpu.cpld.newComponent(Ucd90120A, cpu.switchDpmAddr(0x34), causes={
          'powerloss': UcdGpi(1),

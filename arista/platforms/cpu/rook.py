@@ -1,24 +1,30 @@
 from ...core.cpu import Cpu
+from ...core.fan import FanSlot
 from ...core.types import PciAddr
 from ...core.utils import incrange
 
 from ...components.coretemp import Coretemp
 from ...components.cpu.intel.pch import Pch
-from ...components.cpu.rook import RookStatusLeds, RookSysCpld, RookCpldRegisters
+from ...components.cpu.rook import (
+   RookCpldRegisters,
+   RookFanCpld,
+   RookStatusLeds,
+   RookSysCpld,
+)
 from ...components.lm73 import Lm73
 from ...components.max6658 import Max6658
 from ...components.scd import Scd
 
-from ...descs.fan import FanDesc
-from ...descs.led import LedDesc
+from ...descs.fan import FanDesc, FanPosition
+from ...descs.led import LedDesc, LedColor
 from ...descs.sensor import Position, SensorDesc
 
 class RookCpu(Cpu):
 
    PLATFORM = 'rook'
 
-   def __init__(self, fanCount=4, fanCpldCls=None, mgmtBus=15,
-                cpldRegisterCls=RookCpldRegisters, **kwargs):
+   def __init__(self, variant='la', mgmtBus=15, cpldRegisterCls=RookCpldRegisters,
+                **kwargs):
       super(RookCpu, self).__init__(**kwargs)
 
       self.newComponent(Pch, sensors=[
@@ -46,9 +52,20 @@ class RookCpu(Cpu):
                     position=Position.OUTLET, target=55, overheat=65, critical=75),
       ])
 
-      cpld.newComponent(fanCpldCls, cpld.i2cAddr(12, 0x60), fans=[
-         FanDesc(fanId) for fanId in incrange(1, fanCount)
-      ])
+      fanCpld = cpld.newComponent(RookFanCpld, cpld.i2cAddr(12, 0x60),
+                                  variant=variant)
+      for slotId in incrange(1, fanCpld.getFanCount()):
+         fanDesc = FanDesc(fanId=slotId, position=FanPosition.INLET)
+         ledDesc = LedDesc(name='fan%d' % slotId,
+                           colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF])
+         self.newComponent(
+            FanSlot,
+            slotId=slotId,
+            led=fanCpld.addFanLed(ledDesc),
+            fans=[
+               fanCpld.addFan(fanDesc),
+            ]
+         )
 
       cpld.newComponent(Lm73, cpld.i2cAddr(mgmtBus, 0x48), sensors=[
          SensorDesc(diode=0, name='Front-panel temp sensor',

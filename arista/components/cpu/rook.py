@@ -1,15 +1,17 @@
-from ..common import I2cComponent
-from ..cpld import SysCpld, SysCpldCommonRegisters
 
-from ...accessors.fan import FanImpl
 from ...accessors.led import LedImpl
 
 from ...core.log import getLogger
 from ...core.register import Register, RegBitField
 
-from ...drivers.i2c import I2cKernelFanDriver
-from ...drivers.rook import RookLedSysfsDriver, RookStatusLedKernelDriver
-from ...drivers.sysfs import LedSysfsDriver
+from ...drivers.rook import (
+   RookLedSysfsDriver,
+   RookFanCpldKernelDriver,
+   RookStatusLedKernelDriver,
+)
+
+from ..common import I2cComponent
+from ..cpld import SysCpld, SysCpldCommonRegisters
 
 logging = getLogger(__name__)
 
@@ -47,45 +49,18 @@ class RookStatusLeds(I2cComponent):
       self.inventory.addLed(led)
       return led
 
-class LAFanCpldComponent(I2cComponent):
-   def __init__(self, addr=None, drivers=None, waitFile=None, fans=[], **kwargs):
-      if not drivers:
-         fanSysfsDriver = I2cKernelFanDriver(name='la_cpld',
-               module='rook-fan-cpld', addr=addr, maxPwm=255, waitFile=waitFile)
-         ledSysfsDriver = LedSysfsDriver(sysfsPath='/sys/class/leds')
-         drivers = [fanSysfsDriver, ledSysfsDriver]
-      super(LAFanCpldComponent, self).__init__(addr=addr, drivers=drivers,
-                                               **kwargs)
-      for fan in fans:
-         self.createFan(fan.fanId)
+class RookFanCpld(I2cComponent):
+   def __init__(self, addr=None, variant=None, **kwargs):
+      self.fanCount = {'la': 4, 'tehama': 5}[variant]
+      drivers = [RookFanCpldKernelDriver(name='%s_cpld' % variant, addr=addr)]
+      self.driver = drivers[0]
+      super(RookFanCpld, self).__init__(addr=addr, drivers=drivers, **kwargs)
 
-   def createFan(self, fanId, driver='I2cKernelFanDriver',
-                 ledDriver='LedSysfsDriver', **kwargs):
-      logging.debug('creating LA fan %s', fanId)
-      driver = self.drivers[driver]
-      led = LedImpl(name='fan%s' % fanId, driver=self.drivers[ledDriver])
-      fan = FanImpl(fanId=fanId, driver=driver, led=led, **kwargs)
-      self.inventory.addFan(fan)
-      return fan
+   def getFanCount(self):
+      return self.fanCount
 
-class TehamaFanCpldComponent(I2cComponent):
-   def __init__(self, addr=None, drivers=None, waitFile=None, fans=[], **kwargs):
-      if not drivers:
-         fanSysfsDriver = I2cKernelFanDriver(name='tehama_cpld',
-               module='rook-fan-cpld', addr=addr, maxPwm=255, waitFile=waitFile)
-         ledSysfsDriver = LedSysfsDriver(sysfsPath='/sys/class/leds')
-         drivers = [fanSysfsDriver, ledSysfsDriver]
-      super(TehamaFanCpldComponent, self).__init__(addr=addr, drivers=drivers,
-                                                   **kwargs)
-      for fan in fans:
-         self.createFan(fan.fanId)
+   def addFan(self, desc):
+      return self.inventory.addFan(self.driver.getFan(desc))
 
-   def createFan(self, fanId, driver='I2cKernelFanDriver',
-                 ledDriver='LedSysfsDriver', **kwargs):
-      logging.debug('creating Tehama fan %s', fanId)
-      driver = self.drivers[driver]
-      led = LedImpl(name='fan%s' % fanId, driver=self.drivers[ledDriver])
-      fan = FanImpl(fanId=fanId, driver=driver, led=led, **kwargs)
-      self.inventory.addFan(fan)
-      return fan
-
+   def addFanLed(self, desc):
+      return self.inventory.addLed(self.driver.getFanLed(desc))

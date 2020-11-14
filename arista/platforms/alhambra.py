@@ -5,7 +5,6 @@ from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
 from ..components.asic.bfn.tofino import Tofino
-from ..components.cpu.rook import LAFanCpldComponent
 from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi
 from ..components.max6658 import Max6658
 from ..components.psu.delta import DPS750AB, DPS1900AB
@@ -104,7 +103,7 @@ class Alhambra(FixedSystem):
          addr += 0x10
          bus += 1
 
-      cpu = self.newComponent(RookCpu, fanCpldCls=LAFanCpldComponent)
+      cpu = self.newComponent(RookCpu)
       cpu.cpld.newComponent(Ucd90160, cpu.cpuDpmAddr())
       cpu.cpld.newComponent(Ucd90120A, cpu.switchDpmAddr(), causes={
          'powerloss': UcdGpi(1),

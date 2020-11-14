@@ -1,7 +1,7 @@
 import os
 
 from .i2c import I2cKernelDriver
-from .sysfs import LedSysfsDriver
+from .sysfs import FanSysfsImpl, LedSysfsDriver, LedSysfsImpl
 
 class RookLedSysfsDriver(LedSysfsDriver):
    def getLedColor(self, led):
@@ -25,3 +25,14 @@ class RookStatusLedKernelDriver(I2cKernelDriver):
    def __init__(self, name='rook_leds', module='rook-led-driver', **kwargs):
       super(RookStatusLedKernelDriver, self).__init__(name=name, module=module,
                                                       **kwargs)
+
+class RookFanCpldKernelDriver(I2cKernelDriver):
+   def __init__(self, name=None, module='rook-fan-cpld', **kwargs):
+      super(RookFanCpldKernelDriver, self).__init__(name=name, module=module,
+                                                    **kwargs)
+
+   def getFan(self, desc):
+      return FanSysfsImpl(self, desc)
+
+   def getFanLed(self, desc):
+      return LedSysfsImpl(self, desc)
