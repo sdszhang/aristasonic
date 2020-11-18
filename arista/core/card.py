@@ -15,6 +15,7 @@ FC_BASE_SLOTID = 51
 class Card(Sku):
 
    CPU_CLS = None
+   ABSOLUTE_CARD_OFFSET = 0
 
    def __init__(self, slot=None, standbyOnly=False, noStandby=False, **kwargs):
       self.slot = slot
@@ -29,6 +30,15 @@ class Card(Sku):
             self.loadMainDomain()
       else:
          self.loadCpuDomain()
+
+   def getSlotId(self):
+      return self.slot.slotId
+
+   def getRelativeSlotId(self):
+      return self.slot.slotId - self.ABSOLUTE_CARD_OFFSET
+
+   def getPresence(self):
+      return self.slot.getPresence()
 
    def loadStandbyDomain(self):
       raise NotImplementedError

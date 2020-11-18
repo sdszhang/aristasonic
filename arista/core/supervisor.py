@@ -30,6 +30,10 @@ class Supervisor(FixedSystem):
             logging.warn('failed to read chassis eeprom %s', eeprom)
       return None
 
+   def getPresence(self):
+      # TODO: deal with peer supervisor
+      return True
+
    def getChassis(self):
       if self.chassis:
          return self.chassis

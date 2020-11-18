@@ -9,10 +9,17 @@ import time
 try:
    from sonic_platform_base.chassis_base import ChassisBase
    from arista.core import cause, thermal_control
+   from arista.core.card import Card
    from arista.core.config import Config
    from arista.core.platform import readPrefdl
+   from arista.core.supervisor import Supervisor
    from arista.utils.sonic_platform.fan import Fan
    from arista.utils.sonic_platform.fan_drawer import FanDrawer, FanDrawerLegacy
+   from arista.utils.sonic_platform.module import (
+      SupervisorModule,
+      FabricModule,
+      LinecardModule,
+   )
    from arista.utils.sonic_platform.psu import Psu
    from arista.utils.sonic_platform.sfp import Sfp
    from arista.utils.sonic_platform.thermal import Thermal
@@ -38,6 +45,18 @@ class Chassis(ChassisBase):
       self._platform = platform
       self._prefdl = readPrefdl()
       self._inventory = platform.getInventory()
+      if isinstance(platform, Supervisor):
+         chassis = platform.getChassis()
+         for supervisor in chassis.iterSupervisors(presentOnly=False):
+            if supervisor is not None:
+               self._module_list.append(SupervisorModule(supervisor))
+         chassis.loadFabrics()
+         for fabric in chassis.iterFabrics(presentOnly=False):
+            self._module_list.append(FabricModule(fabric))
+         chassis.loadLinecards()
+         for fabric in chassis.iterLinecards(presentOnly=False):
+            self._module_list.append(LinecardModule(fabric))
+
       if self._inventory.getFanSlots():
          for slot in self._inventory.getFanSlots():
             self._fan_drawer_list.append(FanDrawer(self, slot))
@@ -102,6 +121,18 @@ class Chassis(ChassisBase):
             retDesc = str(item)
             return (retCause, retDesc)
       return unknown
+
+   def get_supervisor_slot(self):
+      if isinstance(self._platform, Supervisor):
+         return self.getSlotId()
+      # FIXME: Linecards need to compute the slot id of the supervisor
+      return 1
+
+   def get_my_slot(self):
+      return self._platform.getSlotId()
+
+   def is_modular_chassis(self):
+      return isinstance(self._platform, (Supervisor, Card))
 
    def _get_interrupts_for_components(self):
       interrupt_dict = {

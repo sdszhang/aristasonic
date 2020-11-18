@@ -17,6 +17,12 @@ class Sku(Component):
    def getEeprom(self):
       return {}
 
+   def getPresence(self):
+      return True
+
+   def poweredOn(self):
+      return True
+
    def getHwApi(self):
       if not self.hwApi:
          self.hwApi = HwApi(*self.getEeprom().get('HwApi', self.DEFAULT_HWAPI))

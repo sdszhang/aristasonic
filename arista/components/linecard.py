@@ -7,4 +7,4 @@ class LCpuCtx(object):
       self.provision = provision
 
 class Linecard(Card): # pylint: disable=abstract-method
-   pass
+   ABSOLUTE_CARD_OFFSET = 3
