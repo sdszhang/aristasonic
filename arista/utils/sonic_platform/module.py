@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 try:
+   from arista.core.onie import OnieEeprom
    from arista.utils.sonic_platform.fan_drawer import FanDrawer
    from arista.utils.sonic_platform.thermal import Thermal
    from sonic_platform_base.module_base import ModuleBase
@@ -56,8 +57,7 @@ class Module(ModuleBase):
       return mac
 
    def get_system_eeprom_info(self):
-      # TODO: prefdl to ONIE converter
-      raise NotImplementedError
+      return OnieEeprom(self._eeprom).data(filterOut=[0x28])
 
    def get_description(self):
       name = self._sku.getEeprom().get('SKU')

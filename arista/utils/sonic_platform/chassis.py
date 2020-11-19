@@ -11,6 +11,7 @@ try:
    from arista.core import cause, thermal_control
    from arista.core.card import Card
    from arista.core.config import Config
+   from arista.core.onie import OnieEeprom
    from arista.core.platform import readPrefdl
    from arista.core.supervisor import Supervisor
    from arista.utils.sonic_platform.fan import Fan
@@ -99,7 +100,7 @@ class Chassis(ChassisBase):
       return self.get_serial()
 
    def get_system_eeprom_info(self):
-      return self._prefdl.toDict()
+      return OnieEeprom(self._prefdl.data()).data()
 
    def get_status(self):
       return True

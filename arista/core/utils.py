@@ -433,6 +433,25 @@ def getCmdlineDict():
    cmdlineDict = data
    return data
 
+machineConfigDict = {}
+def getMachineConfigDict(path='/host/machine.conf'):
+   global machineConfigDict
+
+   if machineConfigDict:
+      return machineConfigDict
+
+   data = {}
+   with open(path) as f:
+      for line in f.readlines():
+         line = line.rstrip()
+         if not line or line.startswith('#'):
+            continue
+         fk, v = line.split('=', 1)
+         _, k = fk.split('_', 1)
+         data[k] = v
+   machineConfigDict = data
+   return data
+
 # debug flag, if enabled should use the most tracing possible
 debug = False
 
