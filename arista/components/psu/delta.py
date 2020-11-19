@@ -34,6 +34,8 @@ class DPS495CB(DeltaPsu):
    IDENTIFIERS = [
       PsuIdent('DPS-495CB A',   'PWR-500AC-F', Airflow.FORWARD),
       PsuIdent('DPS-495CB-1 A', 'PWR-500AC-R', Airflow.REVERSE),
+      PsuIdent('DPS-495CB C',   'PWR-500AC-F', Airflow.FORWARD),
+      PsuIdent('DPS-495CB-1 C', 'PWR-500AC-R', Airflow.REVERSE),
    ]
 
 class DPS500AB(DeltaPsu):
