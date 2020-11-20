@@ -128,12 +128,12 @@ beacon:
 
 qsfp:
   1 => green
-  2 => yellow
+  2 => orange
 
 fan:
   1 => green
   2 => red
-  3 => yellow
+  3 => orange
 ```
 
 Given that this repository is primarily aimed at running on SONiC, an

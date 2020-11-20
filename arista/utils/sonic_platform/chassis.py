@@ -105,6 +105,14 @@ class Chassis(ChassisBase):
    def get_status(self):
       return True
 
+   def set_status_led(self, color):
+      # FIXME: add support for blinking
+      color = color.replace('_blink', '')
+      self._inventory.getLed('status').setColor(color)
+
+   def get_status_led(self):
+      return self._inventory.getLed('status').getColor()
+
    def get_sfp(self, index):
       # NOTE: the platform API specifies _sfp_list to be 0 based as well as get_sfp
       #       however, in practice the get_sfp is called with 1 based indexes

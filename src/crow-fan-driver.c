@@ -57,7 +57,7 @@
 #define FAN_LED_OFF 0
 #define FAN_LED_GREEN 1
 #define FAN_LED_RED 2
-#define FAN_LED_YELLOW 3
+#define FAN_LED_ORANGE 3
 
 #define FAN_MAX_PWM 255
 
@@ -157,7 +157,7 @@ static s32 read_led_color(struct device *dev, int index, u8 *color)
     } else if (read_value_g && (!read_value_r)) {
        *color = FAN_LED_RED;
     } else if((!read_value_g) && (!read_value_r)) {
-       *color = FAN_LED_YELLOW;
+       *color = FAN_LED_ORANGE;
     }
 
     return 0;
@@ -195,7 +195,7 @@ static s32 write_led_color(struct device *dev, u8 value, int index)
         green_led = 0;
         red_led = 1;
         break;
-    case FAN_LED_YELLOW:
+    case FAN_LED_ORANGE:
         green_led = 1;
         red_led = 1;
         break;

@@ -9,6 +9,7 @@ from ...accessors.xcvr import XcvrImpl
 
 from ...components.scd import ScdInterruptRegister
 
+from ...descs.led import LedColor
 from ...descs.sensor import SensorDesc
 
 from ...drivers.i2c import I2cKernelDriver
@@ -106,7 +107,12 @@ class MockTest(unittest.TestCase):
    @classmethod
    def setUpClass(cls):
       cls.logger = getLogger(cls.__name__)
-      cls.ledColors = ['off', 'green', 'red', 'yellow']
+      cls.ledColors = [
+         LedColor.OFF,
+         LedColor.GREEN,
+         LedColor.RED,
+         LedColor.ORANGE,
+      ]
 
    def _testLed(self, led):
       assert isinstance(led, LedImpl)

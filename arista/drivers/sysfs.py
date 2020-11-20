@@ -90,7 +90,7 @@ class SysfsEntryCustomLed(SysfsEntry):
          0 : LedColor.OFF,
          1 : LedColor.GREEN,
          2 : LedColor.RED,
-         3 : LedColor.YELLOW,
+         3 : LedColor.ORANGE,
       }
       self.color2value = { v : k for k, v in self.value2color.items() }
       def getLedPath(n):
@@ -326,10 +326,10 @@ class FanSysfsDriver(SysfsDriver):
 class LedSysfsDriver(SysfsDriver):
    def __init__(self, colorDict=None, **kwargs):
       self.colorDict = colorDict or {
-            '0': 'off',
-            '1': 'green',
-            '2': 'red',
-            '3': 'yellow',
+         '0': LedColor.OFF,
+         '1': LedColor.GREEN,
+         '2': LedColor.RED,
+         '3': LedColor.ORANGE,
       }
       self.inverseColorDict = {v: k for k, v in self.colorDict.items()}
       super(LedSysfsDriver, self).__init__(**kwargs)

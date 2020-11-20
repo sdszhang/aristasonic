@@ -4,7 +4,7 @@ from ..core.desc import HwDesc
 class LedColor(object):
    GREEN = 'green'
    RED = 'red'
-   YELLOW = 'yellow'
+   ORANGE = 'orange'
    OFF = 'off'
 
 class LedDesc(HwDesc):
