@@ -24,7 +24,7 @@ class SprucefishCpu(Cpu):
          (0x6070, 'fan_status'),
          (0x6080, 'fabric_status'),
          (0x6090, 'psu_status'),
-         (0x60A0, 'linecard'),
+         (0x60A0, 'linecard_status'),
          (0x60B0, 'beacon'),
       ])
 
