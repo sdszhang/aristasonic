@@ -133,7 +133,7 @@ class GpioRegisterMap(RegisterMap):
    BANK1 = GpioRegister(0x1,
       RegBitField(0, 'cpEcbOn', ro=False),
       RegBitField(1, 'dpEcbOn', ro=False),
-      RegBitField(2, 'statusGrn', ro=False, flip=True),
+      RegBitField(2, 'statusGreen', ro=False, flip=True),
       RegBitField(3, 'statusRed', ro=False, flip=True),
       RegBitField(4, 'pcieUpstream', ro=False),
       RegBitField(5, 'lcpuMode', ro=False),

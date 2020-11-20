@@ -97,9 +97,13 @@ class DenaliCard(Card):
          self.gpio1.pcieReset(False)
          waitFor(self.plx.smbusPing, "Can't take Plx out of reset.")
          self.setupPlx()
+         self.gpio1.statusRed(False)
+         self.gpio1.statusGreen(True)
       else:
          self.gpio1.pcieReset(True)
          self.setPlxPcieUpstreamLink(False)
+         self.gpio1.statusRed(False)
+         self.gpio1.statusGreen(False)
 
    def powerMainPowerDomainIs(self, on):
       if on:
