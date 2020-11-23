@@ -5,6 +5,12 @@ class Psu(InventoryInterface):
    def getName(self):
       raise NotImplementedError()
 
+   def getModel(self):
+      raise NotImplementedError()
+
+   def getSerial(self):
+      raise NotImplementedError()
+
    def getPresence(self):
       raise NotImplementedError()
 

@@ -13,6 +13,12 @@ class PsuImpl(Psu):
    def getName(self):
       return 'psu%s' % self.psuId
 
+   def getModel(self):
+      return "N/A"
+
+   def getSerial(self):
+      return "N/A"
+
    def getPresence(self):
       return self.driver.getPsuPresence(self)
 
@@ -37,6 +43,12 @@ class MixedPsuImpl(Psu):
    def getName(self):
       return 'psu%s' % self.psuId
 
+   def getModel(self):
+      return "N/A"
+
+   def getSerial(self):
+      return "N/A"
+
    def getPresence(self):
       return self.presenceDriver.getPsuPresence(self)
 
@@ -59,6 +71,16 @@ class PsuSlotImpl(Psu):
 
    def getName(self):
       return 'psu%s' % self.slot.slotId
+
+   def getModel(self):
+      if not self.getPresence():
+         return "N/A"
+      return self.slot.identifier.aristaName
+
+   def getSerial(self):
+      if not self.getPresence():
+         return "N/A"
+      return self.slot.identifier.metadata['serial']
 
    def getPresence(self):
       return self.slot.getPresence()
