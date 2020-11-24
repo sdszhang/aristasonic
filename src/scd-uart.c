@@ -28,6 +28,7 @@
  */
 
 #define scd_invalid_reg(_reg) ((_reg).reg ==  0xffffffff)
+#define scd_invalid_default_ctl_reg(_reg) ((_reg).reg == 0x00000000)
 
 static inline struct scd_uart_port *to_scd_uart_port(struct uart_port *port)
 {
@@ -219,11 +220,6 @@ static void scd_uart_break_ctl(struct uart_port *port, int ctl)
 {
 }
 
-static void scd_uart_port_do_work(struct scd_uart_port *sp)
-{
-   queue_work(sp->workqueue, &sp->work);
-}
-
 #define UART_AVG_BITS_PER_BYTE 10
 static ktime_t scd_uart_poll_interval(struct scd_uart_port *port)
 {
@@ -236,35 +232,21 @@ static enum hrtimer_restart scd_uart_port_timer_callback(struct hrtimer *timer)
 {
    struct scd_uart_port *sp = container_of(timer, struct scd_uart_port, timer);
    uart_dbg(&sp->port, "timer callback interval=%lld\n", sp->poll_interval);
-   scd_uart_port_do_work(sp);
+   scd_uart_receive_chars(&sp->port);
    hrtimer_forward(timer, timer->base->get_time(), scd_uart_poll_interval(sp));
    return HRTIMER_RESTART;
-}
-
-static void scd_uart_port_work_callback(struct work_struct *work)
-{
-   struct scd_uart_port *sp = container_of(work, struct scd_uart_port, work);
-   scd_uart_receive_chars(&sp->port);
 }
 
 static int scd_uart_startup(struct uart_port *port)
 {
    struct scd_uart_port *sp = to_scd_uart_port(port);
-   char buffer[16];
 
    uart_dbg(port, "startup\n");
-   if (sp->workqueue) {
-      uart_warn(port, "workqueue already in use\n");
-      return -EBUSY;
-   }
 
-   sprintf(buffer, "scd-uart-%u", sp->id);
-   sp->workqueue = create_freezable_workqueue(buffer);
-   if (!sp->workqueue) {
-      uart_err(port, "failed to create workqueue");
-      return -EBUSY;
+   if (scd_invalid_default_ctl_reg(scd_read_rx_ctl(sp))) {
+      uart_warn(port, "uart unsupported on this platform\n");
+      return -ENOPROTOOPT;
    }
-   INIT_WORK(&sp->work, scd_uart_port_work_callback);
 
    hrtimer_init(&sp->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
    hrtimer_start(&sp->timer, sp->poll_interval, HRTIMER_MODE_REL);
@@ -279,11 +261,6 @@ static void scd_uart_shutdown(struct uart_port *port)
 
    uart_dbg(port, "shutdown\n");
 
-   if (sp->workqueue) {
-      flush_workqueue(sp->workqueue);
-      destroy_workqueue(sp->workqueue);
-      sp->workqueue = NULL;
-   }
    hrtimer_cancel(&sp->timer);
 }
 

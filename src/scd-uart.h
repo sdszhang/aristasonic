@@ -37,9 +37,6 @@ struct scd_uart_port {
 
    struct uart_port port;
 
-   // XXX: primitive replacement of irqs
-   struct workqueue_struct *workqueue;
-   struct work_struct work;
    struct hrtimer timer;
    ktime_t poll_interval;
 
