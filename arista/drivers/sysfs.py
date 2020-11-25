@@ -110,7 +110,7 @@ class FanSysfsImpl(Fan):
    MIN_FAN_SPEED = 30
    MAX_FAN_SPEED = 100
 
-   def __init__(self, driver, desc, maxPwm=255, led=None, **kwargs):
+   def __init__(self, driver, desc, maxPwm=255, led=None, faultGpio=None, **kwargs):
       self.driver = driver
       self.desc = desc
       self.fanId = desc.fanId
@@ -123,6 +123,7 @@ class FanSysfsImpl(Fan):
       self.airflow = SysfsEntry(self, 'fan%d_airflow' % self.fanId)
       self.fault = SysfsEntryBool(self, 'fan%d_fault' % self.fanId)
       self.present = SysfsEntryBool(self, 'fan%d_present' % self.fanId)
+      self.faultGpio = faultGpio
       self.__dict__.update(kwargs)
 
    def getId(self):
@@ -138,6 +139,9 @@ class FanSysfsImpl(Fan):
       return self.pwm.read()
 
    def getFault(self):
+      if self.faultGpio is not None:
+         if self.faultGpio.isActive():
+            return True
       if not self.fault.exists():
          return False
       return self.fault.read()

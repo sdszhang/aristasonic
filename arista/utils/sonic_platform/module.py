@@ -4,7 +4,7 @@ from __future__ import print_function
 
 try:
    from arista.core.onie import OnieEeprom
-   from arista.utils.sonic_platform.fan_drawer import FanDrawer
+   from arista.utils.sonic_platform.fan import Fan
    from arista.utils.sonic_platform.thermal import Thermal
    from sonic_platform_base.module_base import ModuleBase
 except ImportError as e:
@@ -17,18 +17,12 @@ class Module(ModuleBase):
    """
    def __init__(self, sku):
       ModuleBase.__init__(self)
-      self._fan_drawer_list = []
       self._sku = sku
       self._inventory = sku.getInventory()
       self._eeprom = sku.getEeprom()
 
-      # Fan drawer APIs are missing for modules
-      # Still add the FanDrawer object but also add the individual fans
-      for slot in self._inventory.getFanSlots():
-         self._fan_drawer_list.append(FanDrawer(self, slot))
-      for drawer in self._fan_drawer_list:
-         for fan in drawer.get_all_fans():
-            self._fan_list.append(fan)
+      for fan in self._inventory.getFans():
+         self._fan_list.append(Fan(None, fan))
 
       for thermal in self._inventory.getTemps():
          self._thermal_list.append(Thermal(thermal))

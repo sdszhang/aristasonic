@@ -12,5 +12,5 @@ class Max31790(I2cComponent):
       for fan in fans or []:
          self.addFan(fan)
 
-   def addFan(self, desc):
-      return self.inventory.addFan(self.driver.getFan(desc))
+   def addFan(self, desc, **kwargs):
+      return self.inventory.addFan(self.driver.getFan(desc, **kwargs))

@@ -19,7 +19,7 @@ class Brooks(Eldridge):
 
    def createStandbyFans(self):
       chip = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d), variant='4u')
-      self.createStandbyFanController(chip, 1, 4)
+      self.createStandbyFansForChip(chip, 1, 4)
 
    def createStandbySensors(self):
       self.pca.newComponent(Tmp464, self.pca.i2cAddr(0x48), sensors=[

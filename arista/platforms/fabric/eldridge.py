@@ -52,18 +52,17 @@ class Eldridge(DenaliFabric):
    ]
 
    def createGpio2(self):
-      if not hasattr(self, 'gpio2') or not self.gpio2:
-         self.gpio2 = self.main.newComponent(Pca9555, self.pca.i2cAddr(0x21),
+      self.gpio2 = self.standby.newComponent(Pca9555, self.pca.i2cAddr(0x21),
                                              registerCls=Gpio2Registers)
-         # FIXME: IO should not happen in the constructor. Move this to setup.
-         # Always enable 2 pins to access Ramon and Pol via Smbus
-         self.gpio2.ramonSmbusEnable(True)
-         self.gpio2.polSmbusEnable(True)
 
    def createAsics(self):
       asicAddrs = [self.slot.pciAddr(bus=bus) for bus in self.ASIC_BUSES]
 
-      self.createGpio2()
+      # FIXME: IO should not happen in the constructor. Move this to setup.
+      # Always enable 2 pins to access Ramon and Pol via Smbus
+      self.gpio2.ramonSmbusEnable(True)
+      self.gpio2.polSmbusEnable(True)
+
       asicResetGpios = {
          0 : (self.gpio2.ramon0SysReset, self.gpio2.ramon0PcieReset),
          1 : (self.gpio2.ramon1SysReset, self.gpio2.ramon1PcieReset),
@@ -78,31 +77,24 @@ class Eldridge(DenaliFabric):
                            pcieResetGpio=asicResetGpios[i][1]))
 
    def standbyDomain(self):
+      self.createGpio2()
       self.pca.newComponent(Ucd90320, self.pca.i2cAddr(0x11))
       self.createStandbyFans()
       self.createStandbySensors()
 
-   def createStandbyFanController(self, chip, begin, end):
+   def createStandbyFansForChip(self, chip, begin, end):
       for i, slotId in enumerate(incrange(begin, end)):
-         fanIn = FanDesc(fanId=i * 2 + 1, position=FanPosition.INLET,
-                         airflow=Airflow.EXHAUST)
-         fanOut = FanDesc(fanId=i * 2 + 2, position=FanPosition.OUTLET,
-                          airflow=Airflow.EXHAUST)
-         self.newComponent(
-            FanSlot,
-            slotId=slotId,
-            # TODO: faultGpio=self.inventory.getGpio('fan_fault_%d' % slotId),
-            fans=[
-               chip.addFan(fanIn),
-               chip.addFan(fanOut),
-            ],
-         )
+         led = self.gpio2.addGpioLed('fanFault%d' % slotId)
+         chip.addFan(FanDesc(fanId=i * 2 + 1, position=FanPosition.INLET,
+                             airflow=Airflow.EXHAUST), led=led)
+         chip.addFan(FanDesc(fanId=i * 2 + 2, position=FanPosition.OUTLET,
+                             airflow=Airflow.EXHAUST), led=led)
 
    def createStandbyFans(self):
       chip1 = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d), variant='8u')
       chip2 = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2c), variant='8u')
-      self.createStandbyFanController(chip1, 1, 4)
-      self.createStandbyFanController(chip2, 5, 8)
+      self.createStandbyFansForChip(chip1, 1, 4)
+      self.createStandbyFansForChip(chip2, 5, 8)
 
    def createOldStandbySensors(self):
       self.pca.newComponent(Tmp468, self.pca.i2cAddr(0x48), sensors=[
