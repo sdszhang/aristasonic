@@ -11,7 +11,6 @@ Type=oneshot
 RemainAfterExit=true
 
 ExecStart=/usr/bin/arista-chassis-network start
-ExecStop=-/usr/bin/arista-chassis-network stop
 
 [Install]
 RequiredBy=platform-arista.target

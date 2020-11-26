@@ -11,6 +11,11 @@ config_lo() {
 setup_mgmt() {
    echo "Setting up management bridge"
 
+   if [ -d /sys/class/net/eth0 ] && [ -d /sys/class/net/ma1 ]; then
+      echo "eth0 and ma1 already exist, doing nothing..."
+      return
+   fi
+
    mgmt_mac_addr=$(cat /sys/class/net/eth0/address)
 
    # Make sure the interface is down before renaming it
@@ -46,7 +51,9 @@ start_chassis_network() {
 stop_chassis_network() {
    ip link del dev br1
    ip link del dev eth0
+   ip link set dev ma1 down
    ip link set dev ma1 name eth0
+   ip link set dev eth0 up
 }
 
 case "$1" in
