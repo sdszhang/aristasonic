@@ -44,4 +44,3 @@ class OnieEeprom(object):
       filterOut = filterOut or []
       return {'0x%02x' % k : v for k, v in self.fields.items()
               if v and k not in filterOut}
-

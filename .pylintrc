@@ -14,7 +14,9 @@ disable=invalid-name,
         no-absolute-import,
         too-many-arguments,
         too-many-statements,
-        too-many-locals
+        too-many-locals,
+        too-many-instance-attributes,
+        too-many-branches
 
 [BASIC]
 bad-functions=apply,input

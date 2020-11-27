@@ -45,6 +45,9 @@ class Chassis(ChassisBase):
       ChassisBase.__init__(self)
       self._platform = platform
       self._prefdl = readPrefdl()
+      # Because of syseepromd, self._eeprom has to be populated correctly or
+      # not at all
+      #self._eeprom = Eeprom(self._prefdl)
       self._inventory = platform.getInventory()
       if isinstance(platform, Supervisor):
          chassis = platform.getChassis()
@@ -272,3 +275,9 @@ class Chassis(ChassisBase):
 
    def getThermalControl(self):
       return thermal_control
+
+   def get_position_in_parent(self):
+      return -1
+
+   def is_replaceable(self):
+      return False
