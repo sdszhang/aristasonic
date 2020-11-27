@@ -16,7 +16,7 @@ def modprobe(name, args=None):
       args = []
    args = ['modprobe', name.replace('-', '_')] + args
    if inDebug():
-      args += [ 'dyndbg=+pf' ]
+      args += ['dyndbg=+pf']
    if inSimulation():
       logging.debug('exec: %s', ' '.join(args))
    else:
@@ -83,14 +83,14 @@ class Driver(object):
    def resetOut(self):
       pass
 
-   def getReloadCauses(self, clear=False):
+   def getReloadCauses(self, clear=False): # pylint: disable=unused-argument
       return []
 
    def dump(self, depth=0, prefix=' - '):
       spacer = ' ' * (depth * 3)
       print('%s%s%s' % (spacer, prefix, self))
 
-   def __diag__(self, ctx):
+   def __diag__(self, ctx): # pylint: disable=unused-argument
       return {}
 
    def genDiag(self, ctx):
