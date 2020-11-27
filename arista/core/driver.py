@@ -22,6 +22,28 @@ def modprobe(name, args=None):
    else:
       subprocess.check_call(args)
 
+def deviceListForModule(name):
+   devices = []
+   moduleDriversPath = '/sys/module/%s/drivers/' % name.replace('-', '_')
+
+   if not os.path.exists(moduleDriversPath):
+      return []
+
+   for drv in os.listdir(moduleDriversPath):
+      moduleDevicesPath = os.path.join(moduleDriversPath, drv)
+      for device in os.listdir(moduleDevicesPath):
+         deviceLinkPath = os.path.join(moduleDevicesPath, device)
+         try:
+            deviceLinkValue = os.readlink(deviceLinkPath)
+            deviceAbsPath = os.path.abspath(os.path.join(moduleDevicesPath,
+                                                         deviceLinkValue))
+            if deviceAbsPath.startswith('/sys/devices'):
+               devices += [deviceAbsPath]
+         except OSError:
+            continue
+
+   return devices
+
 def rmmod(name):
    logging.debug('unloading module %s', name)
    args = ['modprobe', '-r', name.replace('-', '_')]
@@ -119,13 +141,20 @@ class KernelDriver(Driver):
       self.fileWaiter.waitFileReady()
 
    def clean(self):
-      if self.loaded():
-         try:
-            rmmod(self.module)
-         except Exception as e:
-            logging.error('Failed to unload %s: %s', self.module, e)
-      else:
+      if not self.loaded():
          logging.debug('Module %s is not loaded', self.module)
+         return
+
+      devices = deviceListForModule(self.module)
+      if devices:
+         logging.debug('Module %s is still in use by other devices: %s',
+                       self.module, devices)
+         return
+
+      try:
+         rmmod(self.module)
+      except Exception as e: # pylint: disable=broad-except
+         logging.error('Failed to unload %s: %s', self.module, e)
 
    def loaded(self):
       return isModuleLoaded(self.module)
