@@ -36,6 +36,12 @@ setup_mgmt() {
 
 setup_br1() {
    echo "Setting up br1"
+
+   if [ -d /sys/class/net/br1 ]; then
+      echo "br1 already exists, doing nothing..."
+      return
+   fi
+
    ip link add name br1 type bridge
    ip link set dev br1 up
    echo 1 > /proc/sys/net/ipv4/conf/br1/route_localnet
