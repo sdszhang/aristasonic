@@ -284,49 +284,6 @@ class ResetSysfsDriver(SysfsDriver):
       logging.debug('putting %s out of reset', reset.name)
       return self.write('%s_%s' % (reset.name, 'reset'), '0')
 
-class FanSysfsDriver(SysfsDriver):
-   def __init__(self, maxPwm=255, addr=None, waitFile=None, waitTimeout=None,
-                **kwargs):
-      self.maxPwm = maxPwm
-      self.addr = addr
-      if waitFile == utils.WAITFILE_HWMON:
-         waitFile = (self.addr.getSysfsPath(), 'hwmon', r'hwmon\d')
-      self.fileWaiter = utils.FileWaiter(waitFile, waitTimeout)
-      super(FanSysfsDriver, self).__init__(addr=addr, **kwargs)
-
-   def setup(self):
-      super(FanSysfsDriver, self).setup()
-      self.fileWaiter.waitFileReady()
-
-   # Fan speeds are a percentage
-   def getFanSpeed(self, fan):
-      self.computeSysfsPath('pwm%s' % fan.fanId)
-      return int(float(self.read('pwm%s' % fan.fanId)) / self.maxPwm * 100)
-
-   def setFanSpeed(self, fan, speed):
-      self.computeSysfsPath('pwm%s' % fan.fanId)
-      if not int(speed) in range(101):
-         logging.error('invalid speed setting %s for fan %s', speed, fan.fanId)
-         return None
-      logging.debug('setting fan %s speed to %s', fan.fanId, speed)
-      return self.write('pwm%s' % fan.fanId,
-                        str(int(int(speed) * 0.01 * self.maxPwm)))
-
-   def getFanDirection(self, fan):
-      self.computeSysfsPath('pwm%s' % fan.fanId)
-      return self.read('fan%s_airflow' % fan.fanId)
-
-   def getFanPresence(self, fan):
-      self.computeSysfsPath('pwm%s' % fan.fanId)
-      return bool(int(self.read('fan%s_present' % fan.fanId)))
-
-   def getFanStatus(self, fan):
-      self.computeSysfsPath('pwm%s' % fan.fanId)
-      try:
-         return not bool(int(self.read('fan%s_fault' % fan.fanId)))
-      except IOError:
-         return self.getFanPresence(fan)
-
 class LedSysfsDriver(SysfsDriver):
    def __init__(self, colorDict=None, **kwargs):
       self.colorDict = colorDict or {

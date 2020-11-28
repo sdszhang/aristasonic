@@ -1,10 +1,11 @@
+from ..core.fan import FanSlot
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident2 import Trident2
-from ..components.cpu.raven import RavenFanCpldComponent
+from ..components.cpu.raven import RavenFanComplex
 from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi, UcdMon
 from ..components.cpu.amd.k10temp import K10Temp
 from ..components.lm73 import Lm73
@@ -12,7 +13,8 @@ from ..components.max6658 import Max6658
 from ..components.scd import Scd
 from ..components.ds460 import Ds460
 
-from ..descs.fan import FanDesc
+from ..descs.fan import FanDesc, FanPosition
+from ..descs.led import LedDesc, LedColor
 from ..descs.gpio import GpioDesc
 from ..descs.psu import PsuDesc
 from ..descs.sensor import Position, SensorDesc
@@ -48,10 +50,19 @@ class Cloverdale(FixedSystem):
                     position=Position.OTHER, target=62, overheat=95, critical=100),
       ])
 
-      scd.newComponent(RavenFanCpldComponent, waitFile='/sys/class/hwmon/hwmon1',
-                       fans=[
-         FanDesc(fanId) for fanId in incrange(1, 4)
-      ])
+      fanComplex = self.newComponent(RavenFanComplex)
+      for slotId in incrange(1, 4):
+         fanDesc = FanDesc(fanId=slotId, position=FanPosition.INLET)
+         ledDesc = LedDesc(name='fan%d' % slotId,
+                           colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF])
+         self.newComponent(
+            FanSlot,
+            slotId=slotId,
+            led=fanComplex.addFanLed(ledDesc),
+            fans=[
+               fanComplex.addFan(fanDesc),
+            ],
+         )
 
       scd.newComponent(Max6658, scd.i2cAddr(0, 0x4c),
                        waitFile='/sys/class/hwmon/hwmon2', sensors=[

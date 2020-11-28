@@ -2,8 +2,6 @@ import os
 
 from contextlib import closing
 
-from .sysfs import FanSysfsDriver
-
 from ..accessors.gpio import FuncGpioImpl
 
 from ..core.driver import Driver, KernelDriver
@@ -88,35 +86,6 @@ class I2cKernelDriver(Driver):
          "module": self.module,
          "sysfs": self.getSysfsPath(),
       }
-
-class I2cKernelFanDriver(I2cKernelDriver):
-   def __init__(self, maxPwm=255, addr=None, waitFile=None, **kwargs):
-      self.sysfsDriver = FanSysfsDriver(maxPwm=maxPwm, addr=addr, **kwargs)
-      super(I2cKernelFanDriver, self).__init__(addr=addr, waitFile=waitFile,
-                                               **kwargs)
-
-   def setup(self):
-      super(I2cKernelFanDriver, self).setup()
-      self.sysfsDriver.setup()
-
-   def clean(self):
-      self.sysfsDriver.clean()
-      super(I2cKernelFanDriver, self).clean()
-
-   def getFanSpeed(self, fan):
-      return self.sysfsDriver.getFanSpeed(fan)
-
-   def setFanSpeed(self, fan, speed):
-      return self.sysfsDriver.setFanSpeed(fan, speed)
-
-   def getFanPresence(self, fan):
-      return self.sysfsDriver.getFanPresence(fan)
-
-   def getFanStatus(self, fan):
-      return self.sysfsDriver.getFanStatus(fan)
-
-   def getFanDirection(self, fan):
-      return self.sysfsDriver.getFanDirection(fan)
 
 class I2cDevDriver(Driver):
    def __init__(self, name=None, addr=None, registerCls=None, **kwargs):

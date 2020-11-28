@@ -5,6 +5,7 @@ import subprocess
 
 from collections import OrderedDict
 
+from . import utils
 from .utils import FileWaiter, inDebug, inSimulation
 from .log import getLogger
 
@@ -131,6 +132,7 @@ class KernelDriver(Driver):
       self.args = args if args is not None else []
       self.fileWaiter = FileWaiter(waitFile, waitTimeout)
       self.module = self.driverName = kwargs.get('module')
+      self.hwmonPath = None
       super(KernelDriver, self).__init__(**kwargs)
 
    def __str__(self):
@@ -158,3 +160,14 @@ class KernelDriver(Driver):
 
    def loaded(self):
       return isModuleLoaded(self.module)
+
+   def getSysfsPath(self):
+      raise NotImplementedError
+
+   def getHwmonPath(self):
+      if self.hwmonPath is None:
+         self.hwmonPath = utils.locateHwmonFolder(self.getSysfsPath())
+      return self.hwmonPath
+
+   def getHwmonEntry(self, entry):
+      return os.path.join(self.getHwmonPath(), entry)
