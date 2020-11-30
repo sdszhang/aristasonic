@@ -11,8 +11,17 @@ class TempImpl(Temp):
    def getName(self):
       return self.name
 
+   def getDesc(self):
+      return self.sensor
+
    def getPresence(self):
       return self.driver.getPresence(self.sensor)
+
+   def getModel(self):
+      return "N/A"
+
+   def getStatus(self):
+      return True
 
    def getTemperature(self):
       return self.driver.getTemperature(self.sensor)
@@ -30,21 +39,8 @@ class TempImpl(Temp):
       self.sensor.critical = value
       return self.driver.setHighThreshold(self.sensor, value)
 
-   def getTargetTemp(self):
-      return self.sensor.target
-
-   def getOverheatTemp(self):
-      return self.sensor.overheat
-
-   def getCriticalTemp(self):
+   def getHighCriticalThreshold(self):
       return self.sensor.critical
 
-   def isSensorOverheat(self):
-      if self.getPresence():
-         return self.getTemperature() >= self.sensor.overheat
-      return False
-
-   def isSensorCritical(self):
-      if self.getPresence():
-         return self.getTemperature() >= self.sensor.critical
-      return False
+   def getLowCriticalThreshold(self):
+      return self.getLowThreshold()

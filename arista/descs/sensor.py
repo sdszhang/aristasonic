@@ -9,7 +9,8 @@ class Position(object):
    OTHER = 'other'
 
 class SensorDesc(HwDesc):
-   def __init__(self, diode, name, position, target, overheat, critical, **kwargs):
+   def __init__(self, diode, name, position, target, overheat, critical,
+                low=-10.0, lcritical=-20.0, **kwargs):
       super(SensorDesc, self).__init__(**kwargs)
       self.diode = diode
       self.name = name
@@ -17,6 +18,8 @@ class SensorDesc(HwDesc):
       self.target = float(target)
       self.overheat = float(overheat)
       self.critical = float(critical)
+      self.low = float(low)
+      self.lcritical = float(lcritical)
 
    def renderName(self, **kwargs):
       self.name = self.name % kwargs

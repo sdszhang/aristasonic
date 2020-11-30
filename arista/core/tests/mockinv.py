@@ -1,6 +1,8 @@
 
 import datetime
 
+from ...descs.sensor import SensorDesc, Position
+
 from ...inventory.fan import Fan
 from ...inventory.gpio import Gpio
 from ...inventory.interrupt import Interrupt
@@ -206,25 +208,54 @@ class MockXcvr(Xcvr):
 
 class MockTemp(Temp):
    def __init__(self, diode=1, temperature=30, lowThreshold=10, highThreshold=50):
+      self.desc = SensorDesc(
+         diode=diode,
+         name='N/A',
+         position=Position.OTHER,
+         target=temperature,
+         overheat=highThreshold,
+         critical=highThreshold + 10,
+         low=lowThreshold,
+         lcritical=lowThreshold - 10,
+      )
       self.diode = diode
       self.temperature = temperature
-      self.lowThreshold = lowThreshold
-      self.highThreshold = highThreshold
+
+   def getName(self):
+      return self.desc.name
+
+   def getDesc(self):
+      return self.desc
+
+   def getStatus(self):
+      return True
+
+   def getPresence(self):
+      return True
+
+   def getModel(self):
+      return "N/A"
 
    def getTemperature(self):
       return self.temperature
 
    def getLowThreshold(self):
-      return self.lowThreshold
+      return self.desc.low
 
    def setLowThreshold(self, value):
-      self.lowThreshold = value * 1000
+      self.desc.min = value
+
+   def getLowCriticalThreshold(self):
+      return self.desc.lcritical
 
    def getHighThreshold(self):
-      return self.highThreshold
+      return self.desc.overheat
 
    def setHighThreshold(self, value):
-      self.highThreshold = value * 1000
+      self.desc.overheat = value
+
+   def getHighCriticalThreshold(self):
+      return self.desc.critical
 
    def __eq__(self, value):
       return isinstance(value, MockTemp) and self.diode == value.diode

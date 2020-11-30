@@ -14,6 +14,8 @@ class Thermal(ThermalBase):
 
    def __init__(self, temp):
       self._temp = temp
+      self._minimum = None
+      self._maximum = None
 
    def get_name(self):
       return self._temp.getName()
@@ -21,11 +23,28 @@ class Thermal(ThermalBase):
    def get_presence(self):
       return self._temp.getPresence()
 
+   def get_model(self):
+      return self._temp.getModel()
+
+   def get_serial(self):
+      return "N/A"
+
+   def get_status(self):
+      return True
+
+   def is_replaceable(self):
+      return False
+
    def get_interrupt_file(self):
       return None
 
    def get_temperature(self):
-      return self._temp.getTemperature()
+      value = self._temp.getTemperature()
+      if self._minimum is None or self._minimum > value:
+         self._minimum = value
+      if self._maximum is None or self._maximum < value:
+         self._maximum = value
+      return value
 
    def get_low_threshold(self):
       try:
@@ -41,6 +60,9 @@ class Thermal(ThermalBase):
       except (IOError, OSError, ValueError):
          return False
 
+   def get_low_critical_threshold(self):
+      return self._temp.getLowCriticalThreshold()
+
    def get_high_threshold(self):
       try:
          return self._temp.getHighThreshold()
@@ -55,17 +77,18 @@ class Thermal(ThermalBase):
       except (IOError, OSError, ValueError):
          return False
 
-   def get_target_temp(self):
-      return self._temp.getTargetTemp()
+   def get_high_critical_threshold(self):
+      return self._temp.getHighCriticalThreshold()
 
-   def get_overheat_temp(self):
-      return self._temp.getOverheatTemp()
+   def get_minimum_recorded(self):
+      if self._minimum is None:
+         self.get_temperature()
+      return self._minimum
 
-   def get_critical_temp(self):
-      return self._temp.getCriticalTemp()
+   def get_maximum_recorded(self):
+      if self._maximum is None:
+         self.get_temperature()
+      return self._maximum
 
-   def sensor_overheat(self):
-      return self._temp.isSensorOverheat()
-
-   def sensor_critical(self):
-      return self._temp.isSensorCritical()
+   def get_inventory_object(self):
+      return self._temp

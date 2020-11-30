@@ -18,6 +18,7 @@ from ...drivers.sysfs import SysfsDriver, SysfsEntry
 
 from ...inventory.fan import Fan
 from ...inventory.psu import Psu
+from ...inventory.temp import Temp
 from ...inventory.xcvr import Xcvr
 
 from .. import utils
@@ -219,6 +220,53 @@ class MockTest(unittest.TestCase):
                assert led == fan.led
                self._testLed(led)
 
+   def _testTempImpl(self, temp):
+      # XXX: to be deprecated
+      assert isinstance(temp, TempImpl)
+      assert isinstance(temp.driver, Driver)
+      assert isinstance(temp.sensor, SensorDesc)
+      assert isinstance(temp.sensor.target, float)
+      assert isinstance(temp.sensor.overheat, float)
+      assert isinstance(temp.sensor.critical, float)
+      assert isinstance(temp.name, str)
+      assert isinstance(temp.getTemperature(), float)
+      assert ((not temp.getTemperature() < 0) and
+              (not temp.getTemperature() > 200))
+      assert isinstance(temp.getLowThreshold(), float)
+      assert ((not temp.getLowThreshold() < 0) and
+              (not temp.getLowThreshold() > 200))
+      temp.setLowThreshold(10)
+      assert isinstance(temp.getHighThreshold(), float)
+      assert ((not temp.getTemperature() < 0) and
+              (not temp.getTemperature() > 200))
+      temp.setHighThreshold(50)
+
+   def _testTemp(self, temp):
+      self.assertIsInstance(temp, Temp)
+      self.assertIsInstance(temp.driver, Driver)
+      desc = temp.getDesc()
+      self.assertIsInstance(desc, SensorDesc)
+      self.assertIsInstance(desc.target, float)
+      self.assertIsInstance(desc.overheat, float)
+      self.assertIsInstance(desc.critical, float)
+      self.assertTrue(desc.target <= desc.overheat <= desc.critical)
+      self.assertIsInstance(temp.getName(), str)
+      self.assertIsInstance(temp.getPresence(), bool)
+      self.assertIsInstance(temp.getStatus(), bool)
+      self.assertIsInstance(temp.getModel(), str)
+      self.assertIsInstance(temp.getTemperature(), float)
+      self.assertTrue(0 <= temp.getTemperature() < 200)
+      self.assertIsInstance(temp.getLowThreshold(), float)
+      self.assertTrue(-200 <= temp.getLowThreshold() < 200)
+      temp.setLowThreshold(10)
+      self.assertIsInstance(temp.getLowCriticalThreshold(), float)
+      self.assertTrue(-200 <= temp.getLowCriticalThreshold() < 200)
+      self.assertIsInstance(temp.getHighThreshold(), float)
+      self.assertTrue(0 <= temp.getHighThreshold() < 200)
+      temp.setHighThreshold(50)
+      self.assertIsInstance(temp.getHighCriticalThreshold(), float)
+      self.assertTrue(0 <= temp.getHighCriticalThreshold() < 200)
+
    def testTemps(self):
       for name, platform in getPlatformSkus().items():
          if not issubclass(platform, FixedSystem):
@@ -226,24 +274,10 @@ class MockTest(unittest.TestCase):
          inventory = platform().getInventory()
          self.logger.info('Testing fans for platform %s', name)
          for temp in inventory.getTemps():
-            assert isinstance(temp, TempImpl)
-            assert isinstance(temp.driver, Driver)
-            assert isinstance(temp.sensor, SensorDesc)
-            assert isinstance(temp.sensor.target, float)
-            assert isinstance(temp.sensor.overheat, float)
-            assert isinstance(temp.sensor.critical, float)
-            assert isinstance(temp.name, str)
-            assert isinstance(temp.getTemperature(), float)
-            assert ((not temp.getTemperature() < 0) and
-                    (not temp.getTemperature() > 200))
-            assert isinstance(temp.getLowThreshold(), float)
-            assert ((not temp.getLowThreshold() < 0) and
-                    (not temp.getLowThreshold() > 200))
-            temp.setLowThreshold(10)
-            assert isinstance(temp.getHighThreshold(), float)
-            assert ((not temp.getTemperature() < 0) and
-                    (not temp.getTemperature() > 200))
-            temp.setHighThreshold(50)
+            if isinstance(temp, TempImpl):
+               self._testTempImpl(temp)
+            else:
+               self._testTemp(temp)
 
    def testComponents(self):
       def _testSubcomponentPriority(component):

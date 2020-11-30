@@ -3,29 +3,34 @@ from __future__ import absolute_import, division, print_function
 from ...tests.testing import unittest
 
 from .. import thermal_control
+from ...descs.sensor import SensorDesc, Position
+
+class MockInvTemp(object):
+   def __init__(self, desc):
+      self.desc = desc
+
+   def getDesc(self):
+      return self.desc
 
 class MockSensor(object):
    def __init__(self, presence, temp, target, overheat, critical):
+      self.desc = SensorDesc(diode=0, name="N/A", position=Position.OTHER,
+                             target=target, overheat=overheat, critical=critical)
+      self.inv = MockInvTemp(self.desc)
       self.presence = presence
       self.temp = temp
-      self.target = target
-      self.overheat = overheat
-      self.critical = critical
 
    def get_presence(self):
       return self.presence
 
+   def get_status(self):
+      return self.get_presence()
+
    def get_temperature(self):
       return self.temp
 
-   def get_target_temp(self):
-      return self.target
-
-   def get_overheat_temp(self):
-      return self.overheat
-
-   def get_critical_temp(self):
-      return self.critical
+   def get_inventory_object(self):
+      return self.inv
 
 class ThermalControlTest(unittest.TestCase):
    def setUp(self):

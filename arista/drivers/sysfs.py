@@ -10,6 +10,7 @@ from ..descs.led import LedColor
 
 from ..inventory.fan import Fan
 from ..inventory.led import Led
+from ..inventory.temp import Temp
 from ..inventory.xcvr import Xcvr
 
 logging = getLogger(__name__)
@@ -76,6 +77,17 @@ class SysfsEntryIntLinear(SysfsEntry):
 
    def _writeConversion(self, value):
       return str(self._linearConversion(int(value), self.toRange, self.fromRange))
+
+class SysfsEntryFloat(SysfsEntry):
+   def __init__(self, parent, name, scale=1000., **kwargs):
+      super(SysfsEntryFloat, self).__init__(parent, name, **kwargs)
+      self.scale = scale
+
+   def _readConversion(self, value):
+      return float(value) / self.scale
+
+   def _writeConversion(self, value):
+      return str(int(value * self.scale))
 
 class SysfsEntryBool(SysfsEntry):
    def _readConversion(self, value):
@@ -191,6 +203,75 @@ class LedSysfsImpl(Led):
 
    def isStatusLed(self):
       return 'sfp' in self.desc.name
+
+class TempSysfsImpl(Temp):
+   def __init__(self, driver, desc, **kwargs):
+      self.tempId = desc.diode + 1
+      self.driver = driver
+      self.desc = desc
+      self.__dict__.update(**kwargs)
+      self.input = SysfsEntryFloat(self, 'temp%d_input' % self.tempId)
+      self.max = SysfsEntryFloat(self, 'temp%d_max' % self.tempId)
+      self.crit = SysfsEntryFloat(self, 'temp%d_crit' % self.tempId)
+      self.min = SysfsEntryFloat(self, 'temp%d_min' % self.tempId)
+      self.lcrit = SysfsEntryFloat(self, 'temp%d_lcrit' % self.tempId)
+      self.fault = SysfsEntryBool(self, 'temp%d_fault' % self.tempId)
+      # XXX: override the label ?
+
+   def getName(self):
+      return self.desc.name
+
+   def getDesc(self):
+      return self.desc
+
+   def getPresence(self):
+      return True
+
+   def getModel(self):
+      return "N/A"
+
+   def getStatus(self):
+      if self.fault.exists():
+         if self.fault.read():
+            return False
+      # TODO: maintain some state to report failed sensors
+      #       e.g: sensor misreporting a few times
+      return True
+
+   def getTemperature(self):
+      return self.input.read()
+
+   def getLowThreshold(self):
+      if self.min.exists():
+         return self.min.read()
+      return self.desc.low
+
+   def setLowThreshold(self, value):
+      if self.min.exists():
+         self.min.write(value)
+         return True
+      return False
+
+   def getHighThreshold(self):
+      if self.max.exists():
+         return self.max.read()
+      return self.desc.overheat
+
+   def setHighThreshold(self, value):
+      if self.max.exists():
+         self.max.write(value)
+         return True
+      return False
+
+   def getHighCriticalThreshold(self):
+      if self.crit.exists():
+         return self.crit.read()
+      return self.desc.critical
+
+   def getLowCriticalThreshold(self):
+      if self.lcrit.exists():
+         return self.lcrit.read()
+      return self.desc.lcritical
 
 class SysfsDriver(Driver):
    def __init__(self, sysfsPath=None, addr=None, **kwargs):

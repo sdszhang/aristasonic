@@ -47,10 +47,13 @@ class ThermalInfo(ThermalPolicyInfo):
 
    def collect(self, chassis):
       for thermal in chassis.get_all_thermals():
+         desc = thermal.get_inventory_object().getDesc()
          name = thermal.get_name()
+         value = thermal.get_temperature()
+         status = thermal.get_status()
          self.thermals[name] = thermal
-         self.thermals_overheat[name] = thermal.sensor_overheat()
-         self.thermals_critical[name] = thermal.sensor_critical()
+         self.thermals_overheat[name] = value > desc.overheat if status else False
+         self.thermals_critical[name] = value > desc.critical if status else False
 
 @thermal_json_object("control_info")
 class ControlInfo(ThermalPolicyInfo):

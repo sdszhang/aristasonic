@@ -8,11 +8,11 @@ def sensorsToFanSpeed(sensors):
    for sensor in sensors:
       if not sensor.get_presence():
          continue
-      targetTemp = sensor.get_target_temp()
-      maxTemp = min(sensor.get_overheat_temp(), sensor.get_critical_temp())
-      if not int(targetTemp) or not int(maxTemp):
+      desc = sensor.get_inventory_object().getDesc()
+      maxTemp = min(desc.overheat, desc.critical)
+      if not int(desc.target) or not int(maxTemp):
          continue
-      halfwayTemp = (targetTemp + maxTemp) / 2
+      halfwayTemp = (desc.target + maxTemp) / 2
       temp = sensor.get_temperature()
       if temp < halfwayTemp:
          continue
