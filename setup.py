@@ -18,6 +18,7 @@ tests_require = []
 
 py_install_requires = [
    'pyyaml',
+   'bottle',
 ]
 
 if sys.version_info.major == 2:

@@ -1,0 +1,65 @@
+#! /usr/bin/env python3
+
+import os
+import yaml
+
+from bottle import abort, Bottle, request, static_file
+
+CONFIG_PATH = '/etc/sonic/arista-provision-config.yaml'
+
+class ProvisionDaemon(object):
+   def __init__(self):
+      self.app_ = Bottle()
+      self.config_ = {
+         'root_dir' : '/host/provision',
+         'provision_address' : '127.100.1.1',
+         'provision_port' : 12321,
+      }
+
+      self._setupRoutes()
+
+   def _setupRoutes(self):
+      self.app_.route('/provision/<path:path>', callback=self.handleProvision)
+
+   def loadConf(self, confPath):
+      with open(confPath) as c:
+         conf = yaml.safe_load(c)
+         self.config_.update(conf)
+
+   def _generateProvisionManifest(self, fromDir):
+      manifest = ''
+
+      for pathDir, _, files in os.walk(fromDir):
+         for f in files:
+            filePath = os.path.join(pathDir, f)
+            filePath = filePath[len(fromDir) + 1:]
+            fileUrl = os.path.join('provision', filePath)
+            fileTargetPath = os.path.join('/mnt/flash', filePath)
+            manifest += '%s:%s\n' % (fileUrl, fileTargetPath)
+
+      return manifest
+
+   def handleProvision(self, path):
+      slotId = request.params.get('slotId')
+      if slotId is None:
+         abort(404)
+      try:
+         slotId = int(slotId)
+      except ValueError:
+         abort(404)
+
+      queryDiskDir = os.path.join(self.config_['root_dir'], str(slotId))
+      if path == 'manifest':
+         return self._generateProvisionManifest(queryDiskDir)
+
+      return static_file(path, root=queryDiskDir)
+
+   def run(self):
+      self.app_.run(host=self.config_['provision_address'],
+                    port=self.config_['provision_port'])
+
+if __name__ == '__main__':
+   d = ProvisionDaemon()
+   if os.path.exists(CONFIG_PATH):
+      d.loadConf(CONFIG_PATH)
+   d.run()
