@@ -234,6 +234,10 @@ class Prefdl(object):
             line = line.rstrip()
             if not line:
                continue
-            key, value = line.split(': ', 1)
+            try:
+               key, value = line.split(': ', 1)
+            except ValueError:
+               logging.warning('Failed to parse field "%s"', line)
+               continue
             data[key] = value
       return cls.fromDict(data)
