@@ -194,7 +194,7 @@ class PsuModel(object):
          if cls.MANUFACTURER.lower() != detector.id().lower():
             return None
          for ident in cls.IDENTIFIERS:
-            if ident.partName == detector.model():
+            if ident.partName.rstrip() == detector.model().rstrip():
                ident = copy.deepcopy(ident)
                ident.metadata = detector.getMetadata()
                return ident
