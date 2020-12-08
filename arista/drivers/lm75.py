@@ -1,6 +1,9 @@
 
-from .i2c import I2cKernelDriver
+from .kernel import I2cKernelDriver
 
 class Lm75KernelDriver(I2cKernelDriver):
-   def __init__(self, name='lm75', module='lm75', **kwargs):
-      super(Lm75KernelDriver, self).__init__(name=name, module=module, **kwargs)
+   MODULE = 'lm75'
+   NAME = 'lm75'
+
+class Tmp75KernelDriver(Lm75KernelDriver):
+   NAME = 'tmp75'
