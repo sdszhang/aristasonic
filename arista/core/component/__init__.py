@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from collections import OrderedDict
 
-from .driver import KernelDriver
+from ..driver import KernelDriver
 
 DEFAULT_WAIT_TIMEOUT = 15
 
@@ -194,10 +194,12 @@ class Component(object):
       return output
 
 class PciComponent(Component):
+   # XXX: Legacy, use component.pci.PciComponent instead
    def __init__(self, **kwargs):
       super(PciComponent, self).__init__(**kwargs)
 
 class I2cComponent(Component):
+   # XXX: Legacy, use component.i2c.I2cComponent instead
    def __init__(self, **kwargs):
       super(I2cComponent, self).__init__(**kwargs)
 
