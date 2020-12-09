@@ -316,50 +316,78 @@ out_unlock:
 EXPORT_SYMBOL(scd_register_ardma_ops);
 EXPORT_SYMBOL(scd_unregister_ardma_ops);
 
-// registered extention callbacks
-static struct scd_ext_ops *scd_ext_ops = NULL;
+// list of registered extentions
+static LIST_HEAD(scd_extensions);
 
-int scd_register_ext_ops(struct scd_ext_ops *ops) {
+static bool is_scd_extension_registered(struct scd_extension *ext) {
+   struct scd_extension *tmp;
+
+   list_for_each_entry(tmp, &scd_extensions, list) {
+      if (tmp == ext) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+int scd_register_extension(struct scd_extension *ext) {
    struct scd_dev_priv *priv;
 
+   printk(KERN_INFO "%s: loading extension %s", SCD_MODULE_NAME, ext->name);
+
    scd_lock();
-   ASSERT(scd_ext_ops == NULL);
-   scd_ext_ops = ops;
+   if (is_scd_extension_registered(ext)) {
+      scd_unlock();
+      printk(KERN_WARNING "%s: extension %s already loaded", SCD_MODULE_NAME,
+             ext->name);
+      return -EEXIST;
+   }
+
+   list_add_tail(&ext->list, &scd_extensions);
 
    // call probe() for any existing scd
    list_for_each_entry(priv, &scd_list, list) {
-      if (scd_ext_ops->probe) {
-         scd_ext_ops->probe(priv->pdev, priv->mem_len);
+      if (ext->ops->probe) {
+         ext->ops->probe(priv->pdev, priv->mem_len);
       }
-      if (priv->initialized && scd_ext_ops->finish_init) {
-         scd_ext_ops->finish_init(priv->pdev);
+      if (priv->initialized && ext->ops->finish_init) {
+         ext->ops->finish_init(priv->pdev);
       }
    }
    scd_unlock();
+
    return 0;
 }
 
-void scd_unregister_ext_ops() {
+void scd_unregister_extension(struct scd_extension *ext) {
    struct scd_dev_priv *priv;
 
+   printk(KERN_INFO "%s: unloading extension %s", SCD_MODULE_NAME, ext->name);
+
    scd_lock();
-   if (!scd_ext_ops) {
+
+   if (!is_scd_extension_registered(ext)) {
       scd_unlock();
+      printk(KERN_WARNING "%s: extension %s already unloaded", SCD_MODULE_NAME,
+             ext->name);
       return;
    }
 
    // call remove() for any existing scd
    list_for_each_entry(priv, &scd_list, list) {
-      if (scd_ext_ops->remove) {
-         scd_ext_ops->remove(priv->pdev);
+      if (ext->ops->remove) {
+         ext->ops->remove(priv->pdev);
       }
    }
-   scd_ext_ops = NULL;
+
+   list_del(&ext->list);
+
    scd_unlock();
 }
 
-EXPORT_SYMBOL(scd_register_ext_ops);
-EXPORT_SYMBOL(scd_unregister_ext_ops);
+EXPORT_SYMBOL(scd_register_extension);
+EXPORT_SYMBOL(scd_unregister_extension);
 
 static irqreturn_t scd_interrupt(int irq, void *dev_id)
 {
@@ -669,6 +697,7 @@ out:
 static int scd_finish_init(struct device *dev)
 {
    struct scd_dev_priv *priv = dev_get_drvdata(dev);
+   struct scd_extension *ext;
    int err;
    int i;
    unsigned int irq;
@@ -775,14 +804,15 @@ static int scd_finish_init(struct device *dev)
          priv->irq_info[0].interrupt_mask_clear_offset);
    }
 
-   // scd_ext init_trigger
-   if (scd_ext_ops && scd_ext_ops->init_trigger) {
-      scd_ext_ops->init_trigger(priv->pdev);
-   }
-
-   // scd_ext finish_init
-   if (scd_ext_ops && scd_ext_ops->finish_init) {
-      scd_ext_ops->finish_init(priv->pdev);
+   list_for_each_entry(ext, &scd_extensions, list) {
+      // scd_extension init_trigger
+      if (ext->ops->init_trigger) {
+         ext->ops->init_trigger(priv->pdev);
+      }
+      // scd_extension finish_init
+      if (ext->ops->finish_init) {
+         ext->ops->finish_init(priv->pdev);
+      }
    }
 
    // interrupt polling
@@ -1313,6 +1343,7 @@ static const struct scd_driver_cb scd_lpc_cb;
 static int scd_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
    struct scd_dev_priv *priv;
+   struct scd_extension *ext;
    u32 fpga_rev, board_rev;
    int err;
    const struct scd_driver_cb *scd_cb;
@@ -1399,8 +1430,10 @@ static int scd_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
    // add to our list
    scd_lock();
    list_add_tail(&priv->list, &scd_list);
-   if (scd_ext_ops && scd_ext_ops->probe) {
-      scd_ext_ops->probe(priv->pdev, priv->mem_len);
+   list_for_each_entry(ext, &scd_extensions, list) {
+      if (ext->ops->probe) {
+         ext->ops->probe(priv->pdev, priv->mem_len);
+      }
    }
    scd_unlock();
 
@@ -1441,6 +1474,7 @@ static void scd_interrupt_poll(struct timer_list *t)
 static void scd_remove(struct pci_dev *pdev)
 {
    struct scd_dev_priv *priv = pci_get_drvdata(pdev);
+   struct scd_extension *ext;
    unsigned int irq;
    int i;
    u32 irq_reg;
@@ -1471,9 +1505,11 @@ static void scd_remove(struct pci_dev *pdev)
       scd_ardma_ops->remove(pdev);
    }
 
-   // call scd_sonic remove callback
-   if (scd_ext_ops && scd_ext_ops->remove) {
-      scd_ext_ops->remove(pdev);
+   // call scd_extension remove callback
+   list_for_each_entry(ext, &scd_extensions, list) {
+      if (ext->ops->remove) {
+         ext->ops->remove(priv->pdev);
+      }
    }
 
    //stop interrupt polling if we've initialized it

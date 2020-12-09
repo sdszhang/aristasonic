@@ -47,13 +47,18 @@ struct scd_ext_ops {
    int (*finish_init)(struct pci_dev *pdev);
 };
 
+struct scd_extension {
+   const char *name;
+   struct list_head list;
+   struct scd_ext_ops *ops;
+};
+
 int scd_register_ardma_ops(struct scd_ardma_ops *ops);
 void scd_unregister_ardma_ops(void);
 int scd_register_em_ops(struct scd_em_ops *ops);
 void scd_unregister_em_ops(void);
-int scd_register_ext_ops(struct scd_ext_ops *ops);
-void scd_unregister_ext_ops(void);
-struct pci_dev *scd_get_pdev(const char *name);
+int scd_register_extension(struct scd_extension *ext);
+void scd_unregister_extension(struct scd_extension *ext);
 u32 scd_read_register(struct pci_dev *pdev, u32 offset);
 void scd_write_register(struct pci_dev *pdev, u32 offset, u32 val);
 u64 scd_ptp_timestamp(void);

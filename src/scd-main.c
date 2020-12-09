@@ -752,6 +752,11 @@ static struct scd_ext_ops scd_hwmon_ops = {
    .init_trigger = scd_ext_hwmon_init_trigger,
 };
 
+static struct scd_extension scd_hwmon_ext = {
+   .name = SCD_MODULE_NAME,
+   .ops = &scd_hwmon_ops,
+};
+
 static int __init scd_hwmon_init(void)
 {
    int err = 0;
@@ -760,9 +765,9 @@ static int __init scd_hwmon_init(void)
    mutex_init(&scd_hwmon_mutex);
    INIT_LIST_HEAD(&scd_list);
 
-   err = scd_register_ext_ops(&scd_hwmon_ops);
+   err = scd_register_extension(&scd_hwmon_ext);
    if (err) {
-      pr_warn("scd-hwmon: scd_register_ext_ops failed\n");
+      pr_warn("scd-hwmon: scd_register_extension failed\n");
       return err;
    }
 
@@ -772,7 +777,7 @@ static int __init scd_hwmon_init(void)
 static void __exit scd_hwmon_exit(void)
 {
    pr_info("scd-hwmon: unloading scd hwmon driver\n");
-   scd_unregister_ext_ops();
+   scd_unregister_extension(&scd_hwmon_ext);
 }
 
 module_init(scd_hwmon_init);
