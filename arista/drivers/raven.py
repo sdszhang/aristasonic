@@ -1,17 +1,6 @@
 
-from ..core.driver import KernelDriver
-
-from .sysfs import FanSysfsImpl, LedSysfsImpl
+from .kernel import KernelDriver
 
 class RavenFanKernelDriver(KernelDriver):
-   def __init__(self, module='raven-fan-driver', **kwargs):
-      super(RavenFanKernelDriver, self).__init__(module=module, **kwargs)
-
-   def getSysfsPath(self):
-      return '/sys/devices/platform/sb800-fans'
-
-   def getFan(self, desc):
-      return FanSysfsImpl(self, desc)
-
-   def getFanLed(self, desc):
-      return LedSysfsImpl(self, desc)
+   MODULE = 'raven-fan-driver'
+   PATH = '/sys/devices/platform/sb800-fans'

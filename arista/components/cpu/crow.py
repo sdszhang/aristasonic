@@ -1,12 +1,13 @@
 
-from ..common import I2cComponent
-from ..cpld import SysCpld, SysCpldCommonRegisters
-
+from ...core.component import Priority
+from ...core.component.i2c import I2cComponent
 from ...core.log import getLogger
 from ...core.register import Register, RegBitField
 
 from ...drivers.cpld import SysCpldI2cDriver
 from ...drivers.crow import CrowFanCpldKernelDriver
+
+from ..cpld import SysCpld, SysCpldCommonRegisters
 
 logging = getLogger(__name__)
 
@@ -41,13 +42,5 @@ class CrowSysCpld(SysCpld):
                                         registerCls=registerCls, **kwargs)
 
 class CrowFanCpld(I2cComponent):
-   def __init__(self, addr=None, **kwargs):
-      drivers = [CrowFanCpldKernelDriver(addr=addr)]
-      self.driver = drivers[0]
-      super(CrowFanCpld, self).__init__(addr=addr, drivers=drivers, **kwargs)
-
-   def addFan(self, desc):
-      return self.inventory.addFan(self.driver.getFan(desc))
-
-   def addFanLed(self, desc):
-      return self.inventory.addLed(self.driver.getFanLed(desc))
+   DRIVER = CrowFanCpldKernelDriver
+   PRIORITY = Priority.THERMAL

@@ -1,5 +1,4 @@
 from ...core.cooling import Airflow
-from ...core.fan import FanSlot
 from ...core.platform import registerPlatform
 from ...core.register import RegBitField, RegisterMap
 from ...core.utils import incrange, HwApi
@@ -91,8 +90,10 @@ class Eldridge(DenaliFabric):
                              airflow=Airflow.EXHAUST), led=led)
 
    def createStandbyFans(self):
-      chip1 = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d), variant='8u')
-      chip2 = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2c), variant='8u')
+      chip1 = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d),
+                                    name='amax31790_8u')
+      chip2 = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2c),
+                                    name='amax31790_8u')
       self.createStandbyFansForChip(chip1, 1, 4)
       self.createStandbyFansForChip(chip2, 5, 8)
 
