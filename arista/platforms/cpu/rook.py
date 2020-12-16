@@ -3,8 +3,8 @@ from ...core.fan import FanSlot
 from ...core.types import PciAddr
 from ...core.utils import incrange
 
-from ...components.coretemp import Coretemp
-from ...components.cpu.intel.pch import Pch
+from ...components.cpu.intel.coretemp import Coretemp
+from ...components.cpu.intel.pch import PchTemp
 from ...components.cpu.rook import (
    RookCpldRegisters,
    RookFanCpld,
@@ -27,7 +27,7 @@ class RookCpu(Cpu):
                 **kwargs):
       super(RookCpu, self).__init__(**kwargs)
 
-      self.newComponent(Pch, sensors=[
+      self.newComponent(PchTemp, addr=PciAddr(device=0x1f, func=6), sensors=[
          SensorDesc(diode=0, name='PCH temp sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=85),
       ])

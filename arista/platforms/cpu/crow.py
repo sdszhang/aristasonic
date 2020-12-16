@@ -1,6 +1,6 @@
 from ...core.cpu import Cpu
 from ...core.fan import FanSlot
-from ...core.types import I2cAddr
+from ...core.types import I2cAddr, PciAddr
 from ...core.utils import incrange
 
 from ...components.cpu.amd.k10temp import K10Temp
@@ -22,7 +22,7 @@ class CrowCpu(Cpu):
    def __init__(self, scd, registerCls=CrowCpldRegisters, hwmonBus=0, **kwargs):
       super(CrowCpu, self).__init__(**kwargs)
 
-      self.newComponent(K10Temp, sensors=[
+      self.newComponent(K10Temp, addr=PciAddr(device=0x18, func=3), sensors=[
          SensorDesc(diode=0, name='Cpu temp sensor',
                     position=Position.OTHER, target=60, overheat=90, critical=95),
       ])

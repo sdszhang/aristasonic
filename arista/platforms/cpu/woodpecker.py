@@ -18,7 +18,7 @@ class WoodpeckerCpu(Cpu):
    def __init__(self, **kwargs):
       super(WoodpeckerCpu, self).__init__(**kwargs)
 
-      self.newComponent(K10Temp, sensors=[
+      self.newComponent(K10Temp, addr=PciAddr(device=0x18, func=3), sensors=[
          SensorDesc(diode=0, name='Cpu temp sensor',
                     position=Position.OTHER, target=70, overheat=95, critical=115),
       ])

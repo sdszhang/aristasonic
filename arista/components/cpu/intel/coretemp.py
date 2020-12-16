@@ -2,8 +2,8 @@
 from ....core.component import Priority
 from ....core.component.pci import PciComponent
 
-from ....drivers.pch import PchTempKernelDriver
+from ....drivers.coretemp import CoretempKernelDriver
 
-class PchTemp(PciComponent):
-   DRIVER = PchTempKernelDriver
+class Coretemp(PciComponent):
+   DRIVER = CoretempKernelDriver
    PRIORITY = Priority.THERMAL
