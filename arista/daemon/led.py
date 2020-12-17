@@ -47,7 +47,7 @@ class StatusLedFeature(PollDaemonFeature):
       name = led.getName()
       ledPolicies = {
          'active': self.getActive,
-         'status': self.getStatus,
+         'status': None, # SONiC now has a system-health service
          'fan_status': self.getAllFansStatus,
          'psu_status': self.getAllPsusStatus,
          'fabric_status': self.getAllFabricsStatus,

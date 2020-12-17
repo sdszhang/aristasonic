@@ -12,6 +12,7 @@ class Priority(object):
    COOLING = 0
    BACKGROUND = 1
    POWER = 1
+   LED = 1
 
    def priorityFilter(*priorities):
       return staticmethod(lambda component: component.priority in priorities)

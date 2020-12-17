@@ -4,6 +4,7 @@ from ..core.psu import PsuSlot
 from ..core.types import PciAddr, ResetGpio
 from ..core.utils import incrange
 
+from ..components.cpu.rook import TehamaFanCpld
 from ..components.asic.xgs.tomahawk3 import Tomahawk3
 from ..components.dpm import Ucd90320, UcdGpi
 from ..components.max6581 import Max6581
@@ -114,7 +115,7 @@ class BlackhawkO(FixedSystem):
          addr += 0x10
          bus += 1
 
-      cpu = self.newComponent(RookCpu, variant='tehama', mgmtBus=14)
+      cpu = self.newComponent(RookCpu, fanCpldCls=TehamaFanCpld, mgmtBus=14)
       cpu.cpld.newComponent(Ucd90320, cpu.switchDpmAddr(0x11), causes={
          'overtemp': UcdGpi(1),
          'powerloss': UcdGpi(3),

@@ -96,7 +96,15 @@ class SysfsEntryBool(SysfsEntry):
    def _writeConversion(self, value):
       return str(int(value))
 
-class SysfsEntryCustomLed(SysfsEntry):
+class SysfsEntryIntLed(SysfsEntryInt):
+   def __init__(self, parent, name, **kwargs):
+      def getLedPath(n):
+         ledsPath = os.path.join(parent.driver.getSysfsPath(), 'leds')
+         return os.path.join(ledsPath, n, 'brightness')
+      super(SysfsEntryIntLed, self).__init__(parent, name, pathCallback=getLedPath,
+                                             **kwargs)
+
+class SysfsEntryCustomLed(SysfsEntryIntLed):
    def __init__(self, parent, name, value2color=None):
       self.value2color = value2color or {
          0 : LedColor.OFF,
@@ -105,11 +113,7 @@ class SysfsEntryCustomLed(SysfsEntry):
          3 : LedColor.ORANGE,
       }
       self.color2value = { v : k for k, v in self.value2color.items() }
-      def getLedPath(n):
-         ledsPath = os.path.join(parent.driver.getSysfsPath(), 'leds')
-         return os.path.join(ledsPath, n, 'brightness')
-      super(SysfsEntryCustomLed, self).__init__(parent, name,
-                                                pathCallback=getLedPath)
+      super(SysfsEntryCustomLed, self).__init__(parent, name)
 
    def _readConversion(self, value):
       return self.value2color[int(value)]
@@ -200,6 +204,39 @@ class LedSysfsImpl(Led):
 
    def setColor(self, color):
       self.brightness.write(color)
+
+   def isStatusLed(self):
+      return 'sfp' in self.desc.name
+
+class LedRgbSysfsImpl(Led):
+   def __init__(self, driver, desc, prefix, **kwargs):
+      self.driver = driver
+      self.desc = desc
+      self.red = SysfsEntryIntLed(self, '%s:red:%s' % (prefix, desc.name))
+      self.green = SysfsEntryIntLed(self, '%s:green:%s' % (prefix, desc.name))
+      self.blue = SysfsEntryIntLed(self, '%s:blue:%s' % (prefix, desc.name))
+      self.leds = [self.red, self.green, self.blue]
+      self.color2values = {
+         LedColor.OFF: (0, 0, 0),
+         LedColor.RED: (1, 0, 0),
+         LedColor.GREEN: (0, 1, 0),
+         LedColor.BLUE: (0, 0, 1),
+         LedColor.ORANGE: (1, 1, 0),
+      }
+      self.values2color = {v : c for c, v in self.color2values.items()}
+
+   def getName(self):
+      return self.desc.name
+
+   def getColor(self):
+      values = tuple(led.read() if led.exists() else 0 for led in self.leds)
+      return self.values2color.get(values)
+
+   def setColor(self, color):
+      values = self.color2values.get(color, (0, 0, 0))
+      for led, value in zip(self.leds, values):
+         if led.exists():
+            led.write(value)
 
    def isStatusLed(self):
       return 'sfp' in self.desc.name

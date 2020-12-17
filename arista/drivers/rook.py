@@ -1,38 +1,19 @@
-import os
 
-from .i2c import I2cKernelDriver
-from .sysfs import FanSysfsImpl, LedSysfsDriver, LedSysfsImpl
-
-class RookLedSysfsDriver(LedSysfsDriver):
-   def getLedColor(self, led):
-      onColors = []
-      for color in led.colors:
-         ledName = "rook_leds:%s:%s" % (color, led.name)
-         path = os.path.join(self.sysfsPath, ledName, 'brightness')
-         if self.read(ledName, path=path) == '1':
-            onColors.append(color)
-      return ', '.join(onColors) or 'off'
-
-   def setLedColor(self, led, value):
-      if value not in led.colors:
-         return # raise ValueError ?
-      for color in led.colors:
-         ledName = "rook_leds:%s:%s" % (color, led.name)
-         path = os.path.join(self.sysfsPath, ledName, 'brightness')
-         self.write(ledName, '1' if value == color else '0', path=path)
+from .kernel import I2cKernelDriver
+from .sysfs import LedRgbSysfsImpl
 
 class RookStatusLedKernelDriver(I2cKernelDriver):
-   def __init__(self, name='rook_leds', module='rook-led-driver', **kwargs):
-      super(RookStatusLedKernelDriver, self).__init__(name=name, module=module,
-                                                      **kwargs)
+   MODULE = 'rook-led-driver'
+   NAME = 'rook_leds'
+
+   def getLed(self, desc, **kwargs):
+      return LedRgbSysfsImpl(self, desc, prefix=self.NAME, **kwargs)
 
 class RookFanCpldKernelDriver(I2cKernelDriver):
-   def __init__(self, name=None, module='rook-fan-cpld', **kwargs):
-      super(RookFanCpldKernelDriver, self).__init__(name=name, module=module,
-                                                    **kwargs)
+   MODULE = 'rook-fan-cpld'
 
-   def getFan(self, desc):
-      return FanSysfsImpl(self, desc)
+class LaFanCpldKernelDriver(RookFanCpldKernelDriver):
+   NAME = 'la_cpld'
 
-   def getFanLed(self, desc):
-      return LedSysfsImpl(self, desc)
+class TehamaFanCpldKernelDriver(RookFanCpldKernelDriver):
+   NAME = 'tehama_cpld'

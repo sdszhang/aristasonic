@@ -5,6 +5,7 @@ class LedColor(object):
    GREEN = 'green'
    RED = 'red'
    ORANGE = 'orange'
+   BLUE = 'blue'
    OFF = 'off'
 
 class LedDesc(HwDesc):

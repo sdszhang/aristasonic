@@ -7,7 +7,7 @@ from ...components.cpu.intel.coretemp import Coretemp
 from ...components.cpu.intel.pch import PchTemp
 from ...components.cpu.rook import (
    RookCpldRegisters,
-   RookFanCpld,
+   LaFanCpld,
    RookStatusLeds,
    RookSysCpld,
 )
@@ -23,8 +23,8 @@ class RookCpu(Cpu):
 
    PLATFORM = 'rook'
 
-   def __init__(self, variant='la', mgmtBus=15, cpldRegisterCls=RookCpldRegisters,
-                **kwargs):
+   def __init__(self, mgmtBus=15, fanCpldCls=LaFanCpld,
+                cpldRegisterCls=RookCpldRegisters, **kwargs):
       super(RookCpu, self).__init__(**kwargs)
 
       self.newComponent(PchTemp, addr=PciAddr(device=0x1f, func=6), sensors=[
@@ -52,9 +52,8 @@ class RookCpu(Cpu):
                     position=Position.OUTLET, target=55, overheat=65, critical=75),
       ])
 
-      fanCpld = cpld.newComponent(RookFanCpld, cpld.i2cAddr(12, 0x60),
-                                  variant=variant)
-      for slotId in incrange(1, fanCpld.getFanCount()):
+      fanCpld = cpld.newComponent(fanCpldCls, cpld.i2cAddr(12, 0x60))
+      for slotId in incrange(1, fanCpld.FAN_COUNT):
          fanDesc = FanDesc(fanId=slotId, position=FanPosition.INLET)
          ledDesc = LedDesc(name='fan%d' % slotId,
                            colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF])
