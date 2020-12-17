@@ -110,10 +110,9 @@ class PsuSlot(SlotComponent):
          self.model.PMBUS_CLS,
          name=self.model.DRIVER,
          addr=self.addrFunc(self.model.PMBUS_ADDR),
-         # TODO: waitfile, though it's not important anymore
       )
       psu.addTempSensors(desc.sensors)
-      # TODO: psu.addFans(desc.fans)
+      psu.addFans(desc.fans)
 
    def load(self, cacheOnly=False):
       if not cacheOnly and not self.getPresence():

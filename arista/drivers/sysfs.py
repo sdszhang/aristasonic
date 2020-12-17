@@ -146,7 +146,9 @@ class FanSysfsImpl(Fan):
       return self.fanId
 
    def getName(self):
-      return 'fan%d' % self.fanId
+      if self.desc.name is None:
+         self.desc.renderName()
+      return self.desc.name
 
    def getModel(self):
       return 'N/A'
@@ -310,6 +312,10 @@ class TempSysfsImpl(Temp):
          return self.lcrit.read()
       return self.desc.lcritical
 
+#
+# NOTE: do not use classes below, they are being deprecated
+#
+
 class SysfsDriver(Driver):
    def __init__(self, sysfsPath=None, addr=None, **kwargs):
       self.sysfsPath = sysfsPath
@@ -411,61 +417,3 @@ class LedSysfsDriver(SysfsDriver):
       if value in self.inverseColorDict:
          value = self.inverseColorDict[value]
       self.write(led.name, str(value), path=path)
-
-class TempSysfsDriver(SysfsDriver):
-   DEFAULT_MIN_VALUE = -20.0
-   DEFAULT_MAX_VALUE = 120.0
-
-   def __init__(self, waitFile=None, waitTimeout=None, **kwargs):
-      self.fileWaiter = utils.FileWaiter(waitFile, waitTimeout)
-      super(TempSysfsDriver, self).__init__(**kwargs)
-
-   def readTemp(self, temp, name):
-      # sysfs starts at one, mfg at 0
-      gpio = 'temp%s_%s' % (temp.diode + 1, name)
-      self.computeSysfsPath(gpio)
-      return self.read(gpio)
-
-   def writeTemp(self, temp, name, value):
-      # sysfs starts at one, mfg at 0
-      gpio = 'temp%s_%s' % (temp.diode + 1, name)
-      self.computeSysfsPath(gpio)
-      return self.write(gpio, str(value))
-
-   def getTemperature(self, temp):
-      return float(self.readTemp(temp, 'input')) / 1000
-
-   def getPresence(self, temp):
-      # Currently just rely on a valid temp reading
-      try:
-         return self.getTemperature(temp) > 0.0
-      except AttributeError:
-         return False
-
-   def getLowThreshold(self, temp):
-      try:
-         return float(self.readTemp(temp, 'min')) / 1000
-      except IOError:
-         logging.debug('no temp%d_min' % (temp.diode + 1))
-         return self.DEFAULT_MIN_VALUE
-
-   def setLowThreshold(self, temp, value):
-      try:
-         return self.writeTemp(temp, 'min', int(value * 1000))
-      except IOError:
-         logging.debug('no temp%d_min' % (temp.diode + 1))
-         return 0
-
-   def getHighThreshold(self, temp):
-      try:
-         return float(self.readTemp(temp, 'max')) / 1000
-      except IOError:
-         logging.debug('no temp%d_crit' % (temp.diode + 1))
-         return self.DEFAULT_MAX_VALUE
-
-   def setHighThreshold(self, temp, value):
-      try:
-         return self.writeTemp(temp, 'max', int(value * 1000))
-      except IOError:
-         logging.debug('no temp%d_crit' % (temp.diode + 1))
-         return 0

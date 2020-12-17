@@ -13,6 +13,7 @@ class SensorDesc(HwDesc):
                 low=-10.0, lcritical=-20.0, **kwargs):
       super(SensorDesc, self).__init__(**kwargs)
       self.diode = diode
+      self.fmt = name
       self.name = name
       self.position = position
       self.target = float(target)
@@ -22,4 +23,6 @@ class SensorDesc(HwDesc):
       self.lcritical = float(lcritical)
 
    def renderName(self, **kwargs):
-      self.name = self.name % kwargs
+      values = kwargs.copy()
+      values.update(self.__dict__)
+      self.name = self.fmt % values

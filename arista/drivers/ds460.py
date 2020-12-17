@@ -1,16 +1,15 @@
 from contextlib import closing
 
-from ..core.driver import Driver
 from ..core import utils
 from ..core.log import getLogger
 
+from .pmbus import PmbusKernelDriver
+
 logging = getLogger(__name__)
 
-class Ds460I2cDriver(Driver):
-   def __init__(self, name=None, addr=None, **kwargs):
-      self.name = name
-      self.addr = addr
-      super(Ds460I2cDriver, self).__init__(*kwargs)
+class Ds460KernelDriver(PmbusKernelDriver):
+
+   NAME = 'dps460'
 
    def setup(self):
       addr = self.addr.address
@@ -38,4 +37,4 @@ class Ds460I2cDriver(Driver):
          except IOError:
             logging.debug('%s: failed to initialize', self.name)
 
-      super(Ds460I2cDriver, self).setup()
+      super(Ds460KernelDriver, self).setup()

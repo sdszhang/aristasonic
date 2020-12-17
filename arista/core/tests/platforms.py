@@ -4,7 +4,6 @@ from ...tests.testing import unittest, patch
 from ...tests.logging import getLogger
 
 from ...accessors.led import LedImpl
-from ...accessors.temp import TempImpl
 from ...accessors.xcvr import XcvrImpl
 
 from ...components.scd import ScdInterruptRegister
@@ -221,27 +220,6 @@ class MockPlatformTest(unittest.TestCase):
                assert led == fan.led
                self._testLed(led)
 
-   def _testTempImpl(self, temp):
-      # XXX: to be deprecated
-      assert isinstance(temp, TempImpl)
-      assert isinstance(temp.driver, Driver)
-      assert isinstance(temp.sensor, SensorDesc)
-      assert isinstance(temp.sensor.target, float)
-      assert isinstance(temp.sensor.overheat, float)
-      assert isinstance(temp.sensor.critical, float)
-      assert isinstance(temp.name, str)
-      assert isinstance(temp.getTemperature(), float)
-      assert ((not temp.getTemperature() < 0) and
-              (not temp.getTemperature() > 200))
-      assert isinstance(temp.getLowThreshold(), float)
-      assert ((not temp.getLowThreshold() < 0) and
-              (not temp.getLowThreshold() > 200))
-      temp.setLowThreshold(10)
-      assert isinstance(temp.getHighThreshold(), float)
-      assert ((not temp.getTemperature() < 0) and
-              (not temp.getTemperature() > 200))
-      temp.setHighThreshold(50)
-
    def _testTemp(self, temp):
       self.assertIsInstance(temp, Temp)
       self.assertIsInstance(temp.driver, Driver)
@@ -275,10 +253,7 @@ class MockPlatformTest(unittest.TestCase):
          inventory = platform().getInventory()
          self.logger.info('Testing fans for platform %s', name)
          for temp in inventory.getTemps():
-            if isinstance(temp, TempImpl):
-               self._testTempImpl(temp)
-            else:
-               self._testTemp(temp)
+            self._testTemp(temp)
 
    def testComponents(self):
       def _testSubcomponentPriority(component):

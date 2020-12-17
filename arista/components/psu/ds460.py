@@ -1,10 +1,7 @@
 
-from ...drivers.ds460 import Ds460I2cDriver
+from ...drivers.ds460 import Ds460KernelDriver
 
 from . import PmbusPsu
 
 class Ds460(PmbusPsu):
-   def __init__(self, addr=None, name='dps460', drivers=None, **kwargs):
-      drivers = drivers or []
-      drivers.extend([Ds460I2cDriver(name=name, addr=addr)])
-      super(Ds460, self).__init__(addr=addr, name=name, drivers=drivers, **kwargs)
+   DRIVER = Ds460KernelDriver

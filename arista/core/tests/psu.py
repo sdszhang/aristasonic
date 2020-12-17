@@ -1,6 +1,7 @@
 
 from ...tests.testing import unittest
 
+from ...descs.fan import FanDesc, FanPosition
 from ...descs.psu import PsuDesc
 from ...descs.sensor import Position, SensorDesc
 
@@ -20,6 +21,8 @@ from .mockinv import (
 class MockPmbus(Component):
    def addTempSensors(self, sensors):
       pass
+   def addFans(self, fans):
+      pass
 
 class MockPsuModel(PsuModel):
    PMBUS_CLS = MockPmbus
@@ -31,7 +34,11 @@ class PsuVendor1(MockPsuModel):
       sensors=[
          SensorDesc(diode=0, name='Power supply %(psuId)d', position=Position.OTHER,
                     target=80, overheat=95, critical=100),
-      ]
+      ],
+      fans=[
+         FanDesc(fanId=1, name='FanP%(psuId)d/%(fanId)d',
+                 position=FanPosition.OUTLET),
+      ],
    )
 
 class PsuModel1(PsuVendor1):
