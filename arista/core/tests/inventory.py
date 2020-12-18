@@ -56,7 +56,7 @@ class InventoryTest(unittest.TestCase):
       ])
       inv.addPowerCycle(MockPowerCycle())
       inv.addWatchdog(MockWatchdog())
-      inv.addInterrupt('intr', MockInterrupt())
+      inv.addInterrupt(MockInterrupt('intr'))
       inv.addPhy(MockPhy())
       inv.addSlot(MockSlot())
       inv.addTemp(MockTemp(diode=1))

@@ -22,6 +22,7 @@ from ...inventory.temp import Temp
 from ...inventory.xcvr import Xcvr
 
 from .. import utils
+from ..config import Config
 from ..driver import Driver
 from ..fixed import FixedSystem
 from ..platform import getPlatformSkus
@@ -104,7 +105,7 @@ def mock_maybeCreatePath(self, dirPath):
 @patch.object(SysfsDriver, 'write', mock_write)
 @patch.object(utils.FileWaiter, 'waitFileReady', mock_return)
 @patch.object(utils.StoredData, 'maybeCreatePath', mock_maybeCreatePath)
-class MockTest(unittest.TestCase):
+class MockPlatformTest(unittest.TestCase):
    @classmethod
    def setUpClass(cls):
       cls.logger = getLogger(cls.__name__)
@@ -291,6 +292,13 @@ class MockTest(unittest.TestCase):
          self.logger.info('Testing components priority for platform %s', name)
          for component in platform().iterComponents():
             _testSubcomponentPriority(component)
+
+class MockPlatformMetaTest(MockPlatformTest):
+   def setUp(self):
+      Config().use_metainventory = True
+
+   def tearDown(self):
+      Config().use_metainventory = False
 
 if __name__ == '__main__':
    unittest.main()

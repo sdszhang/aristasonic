@@ -37,12 +37,11 @@ class ClearwaterBase(DenaliLinecard):
          # IRQ2 -> port 32:1 (bit 31:0)
          # IRQ3 -> port 48:33 (bit 15:0)
          intReg = self.scd.getInterrupt(qsfpId // 32 + 2)
-         intr = intReg.getInterruptBit((qsfpId - 1) % 32)
+         intr = intReg.getInterruptBit(name, (qsfpId - 1) % 32)
          qsfpAddr = 0xA010 + (qsfpId - 1) * 0x10
          bus = self.XCVR_BUS_OFFSET + qsfpId - 1
-         self.inventory.addInterrupt(name, intr)
          self.scd.addQsfp(qsfpAddr, qsfpId, bus, interruptLine=intr,
-                          leds=self.inventory.getLedGroup(name))
+                          leds=self.scd.inventory.getLedGroup(name))
 
       self.scd.addMdioMasterRange(0x9000, 12, speed=MdioSpeed.S10)
 

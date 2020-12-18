@@ -2,7 +2,9 @@ from __future__ import print_function
 
 from collections import OrderedDict
 
+from ..config import Config
 from ..driver import KernelDriver
+from ..inventory import Inventory
 
 DEFAULT_WAIT_TIMEOUT = 15
 
@@ -44,18 +46,17 @@ class Component(object):
       for component in components:
          component.priority = max(component.priority, self.priority)
          self.components.append(component)
-         component.inventory = self.inventory
       return self
 
    def addComponent(self, component):
       assert isinstance(component, Component)
       component.priority = max(component.priority, self.priority)
       self.components.append(component)
-      component.inventory = self.inventory
       return self
 
    def newComponent(self, cls, *args, **kwargs):
-      component = cls(inventory=self.inventory, *args, parent=self, **kwargs)
+      inventory = Inventory() if Config().use_metainventory else self.inventory
+      component = cls(inventory=inventory, *args, parent=self, **kwargs)
       self.addComponent(component)
       return component
 

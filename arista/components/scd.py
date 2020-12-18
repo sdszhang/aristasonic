@@ -150,7 +150,8 @@ class ScdPowerCycle(PowerCycle):
          return False
 
 class ScdInterrupt(Interrupt):
-   def __init__(self, reg, bit):
+   def __init__(self, name, reg, bit):
+      self.name = name
       self.reg = reg
       self.bit = bit
 
@@ -159,6 +160,9 @@ class ScdInterrupt(Interrupt):
 
    def clear(self):
       self.reg.clearMask(self.bit)
+
+   def getName(self):
+      return self.name
 
    def getFile(self):
       return self.reg.scd.getUio(self.reg.num, self.bit)
@@ -214,8 +218,10 @@ class ScdInterruptRegister(object):
          ('interrupt_mask%s' % self.num, str(self.mask)),
       ]))
 
-   def getInterruptBit(self, bit):
-      return ScdInterrupt(self, bit) if Config().init_irq else None
+   def getInterruptBit(self, name, bit):
+      if Config().init_irq:
+         return None
+      return self.scd.inventory.addInterrupt(ScdInterrupt(self, name, bit))
 
 class ScdMdio(object):
    def __init__(self, scd, master, bus, devIdx, port, device, clause, name):

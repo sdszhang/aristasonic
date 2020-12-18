@@ -170,8 +170,8 @@ class Inventory(object):
    def getPowerCycles(self):
       return self.powerCycles
 
-   def addInterrupt(self, name, interrupt):
-      self.interrupts[name] = interrupt
+   def addInterrupt(self, interrupt):
+      self.interrupts[interrupt.getName()] = interrupt
       return interrupt
 
    def addInterrupts(self, interrupts):

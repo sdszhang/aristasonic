@@ -107,6 +107,9 @@ class MockInterrupt(Interrupt):
    def clear(self):
       self.status = False
 
+   def getName(self):
+      return self.name
+
    def getFile(self):
       return self.path
 

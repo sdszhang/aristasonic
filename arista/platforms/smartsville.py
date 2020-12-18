@@ -134,19 +134,17 @@ class Smartsville(FixedSystem):
       addr = 0xA010
       bus = 8
       for index, xcvrId in enumerate(self.qsfpRange):
-         intr = intrRegs[1].getInterruptBit(index)
          name = 'qsfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[1].getInterruptBit(name, index)
          scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=self.inventory.getLedGroup(name))
+                     leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1
       for index, xcvrId in enumerate(self.osfpRange):
-         intr = intrRegs[2].getInterruptBit(index)
          name = 'osfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[2].getInterruptBit(name, index)
          scd.addOsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=self.inventory.getLedGroup(name))
+                     leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1
 

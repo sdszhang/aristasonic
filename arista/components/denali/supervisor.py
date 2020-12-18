@@ -97,7 +97,7 @@ class DenaliSupervisor(Supervisor):
          ])
          bus = self.scd.getSmbus(self.linecardSmbus[lcId])
          pci = PciAddr(bus=0x47 + 0xb * lcId)
-         presenceGpio = self.inventory.getGpio("%s_present" % name)
+         presenceGpio = self.scd.inventory.getGpio("%s_present" % name)
          self.linecardSlots.append(DenaliCardSlot(self, slotId, pci, bus,
                                                   presenceGpio=presenceGpio))
 
@@ -114,7 +114,7 @@ class DenaliSupervisor(Supervisor):
          ])
          bus = self.scd.getSmbus(self.fabricSmbus[fcId])
          pci = PciAddr(bus=0x07 + 0xa * fcId)
-         presenceGpio = self.inventory.getGpio("%s_present" % name)
+         presenceGpio = self.scd.inventory.getGpio("%s_present" % name)
          self.fabricSlots.append(DenaliCardSlot(self, slotId, pci, bus,
                                                 presenceGpio=presenceGpio))
 

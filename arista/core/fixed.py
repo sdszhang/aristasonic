@@ -1,7 +1,9 @@
 from .cause import ReloadCauseDataStore
 from .component import Priority
+from .config import Config
 from .driver import KernelDriver
 from .inventory import Inventory
+from .metainventory import MetaInventory
 from .platform import getSysEeprom
 from .sku import Sku
 from .utils import inSimulation
@@ -17,6 +19,11 @@ class FixedSystem(Sku):
 
    def getEeprom(self):
       return getSysEeprom()
+
+   def getInventory(self):
+      if Config().use_metainventory:
+         return MetaInventory(self.iterInventory())
+      return self.inventory
 
    def setup(self, filters=Priority.defaultFilter):
       super(FixedSystem, self).setup()

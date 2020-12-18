@@ -99,11 +99,10 @@ class BlackhawkO(FixedSystem):
       addr = 0xA010
       bus = 16
       for xcvrId in sorted(self.osfpRange):
-         intr = intrRegs[1].getInterruptBit(xcvrId - 1)
          name = 'osfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[1].getInterruptBit(name, xcvrId - 1)
          scd.addOsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=self.inventory.getLedGroup(name))
+                     leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1
 
@@ -111,7 +110,7 @@ class BlackhawkO(FixedSystem):
       bus = 48
       for xcvrId in sorted(self.sfpRange):
          scd.addSfp(addr, xcvrId, bus,
-                    leds=self.inventory.getLedGroup('sfp%d' % xcvrId))
+                    leds=scd.inventory.getLedGroup('sfp%d' % xcvrId))
          addr += 0x10
          bus += 1
 

@@ -122,21 +122,19 @@ class Lodoga(FixedSystem):
       addr = 0xa010
       bus = 16
       for xcvrId in self.sfpRange:
-         intr = intrRegs[0].getInterruptBit(28 + xcvrId - 33)
          name = 'sfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[0].getInterruptBit(name, 28 + xcvrId - 33)
          scd.addSfp(addr, xcvrId, bus, interruptLine=intr,
-                    leds=self.inventory.getLedGroup(name))
+                    leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1
 
       addr = 0xa050
       bus = 24
       for xcvrId in self.qsfp100gRange:
-         intr = intrRegs[1].getInterruptBit(xcvrId - 1)
          name = 'qsfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[1].getInterruptBit(name, xcvrId - 1)
          scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=self.inventory.getLedGroup(name))
+                     leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1

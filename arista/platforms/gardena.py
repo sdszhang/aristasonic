@@ -112,11 +112,10 @@ class Gardena(FixedSystem):
       addr = 0xA010
       bus = 8
       for xcvrId in sorted(self.qsfpRange):
-         intr = intrRegs[xcvrId // 33 + 1].getInterruptBit((xcvrId - 1) % 32)
          name = 'qsfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[xcvrId // 33 + 1].getInterruptBit(name, (xcvrId - 1) % 32)
          scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=self.inventory.getLedGroup(name))
+                     leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1
 
@@ -124,6 +123,6 @@ class Gardena(FixedSystem):
       bus = 6
       for xcvrId in sorted(self.sfpRange):
          scd.addSfp(addr, xcvrId, bus,
-                    leds=self.inventory.getLedGroup('sfp%d' % xcvrId))
+                    leds=scd.inventory.getLedGroup('sfp%d' % xcvrId))
          addr += 0x10
          bus += 1

@@ -100,7 +100,7 @@ class Cloverdale(FixedSystem):
          scd.addPsu(Ds460,
                     addr=scd.i2cAddr(2 + psuId, 0x58, t=3, datr=3, datw=3, ed=0),
                     waitFile='/sys/class/hwmon/hwmon%d' % (3 + psuId), psus=[
-            PsuDesc(psuId=psuId, led=self.inventory.getLed('psu%d' % psuId),
+            PsuDesc(psuId=psuId, led=scd.inventory.getLed('psu%d' % psuId),
                     sensors=[
                SensorDesc(diode=0, name='Power supply %d inlet temp sensor' % psuId,
                           position=Position.INLET,
@@ -149,10 +149,9 @@ class Cloverdale(FixedSystem):
       addr = 0x5010
       bus = 8
       for xcvrId in self.allQsfps:
-         intr = intrRegs[1].getInterruptBit(xcvrId - 1)
          name = 'qsfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[1].getInterruptBit(name, xcvrId - 1)
          scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=self.inventory.getLedGroup(name))
+                     leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1

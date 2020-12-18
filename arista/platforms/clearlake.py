@@ -124,11 +124,10 @@ class Clearlake(FixedSystem):
       addr = 0x5010
       bus = 8
       for xcvrId in self.allQsfps:
-         intr = intrRegs[1].getInterruptBit(xcvrId - 5)
          name = 'qsfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[1].getInterruptBit(name, xcvrId - 5)
          scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=self.inventory.getLedGroup(name))
+                     leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1
 
@@ -136,7 +135,7 @@ class Clearlake(FixedSystem):
       bus = 40
       for xcvrId in sorted(self.sfpRange):
          scd.addSfp(addr, xcvrId, bus,
-                    leds=self.inventory.getLedGroup('sfp%d' % xcvrId))
+                    leds=scd.inventory.getLedGroup('sfp%d' % xcvrId))
          addr += 0x10
          bus += 1
 

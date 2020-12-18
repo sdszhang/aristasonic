@@ -123,7 +123,7 @@ class Upperlake(FixedSystem):
       bus = 8
       for xcvrId in self.sfpRange:
          scd.addSfp(addr, xcvrId, bus,
-                    leds=self.inventory.getLedGroup('sfp%d' % xcvrId))
+                    leds=scd.inventory.getLedGroup('sfp%d' % xcvrId))
          addr += 0x10
          bus += 1
 
@@ -135,11 +135,10 @@ class Upperlake(FixedSystem):
       addr = 0x5050
       bus = 16
       for xcvrId in self.qsfp100gRange:
-         intr = intrRegs[1].getInterruptBit(xcvrId - 1)
          name = 'qsfp%d' % xcvrId
-         self.inventory.addInterrupt(name, intr)
+         intr = intrRegs[1].getInterruptBit(name, xcvrId - 1)
          scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=self.inventory.getLedGroup(name))
+                     leds=scd.inventory.getLedGroup(name))
          addr += 0x10
          bus += 1
 
