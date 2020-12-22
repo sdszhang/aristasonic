@@ -75,12 +75,12 @@ class PsuSlotImpl(Psu):
    def getModel(self):
       if not self.getPresence():
          return "N/A"
-      return self.slot.identifier.aristaName
+      return self.slot.model.identifier.aristaName
 
    def getSerial(self):
       if not self.getPresence():
          return "N/A"
-      return self.slot.identifier.metadata['serial']
+      return self.slot.model.identifier.metadata['serial']
 
    def getPresence(self):
       return self.slot.getPresence()

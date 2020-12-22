@@ -1,12 +1,8 @@
 
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class Slot(InventoryInterface):
+   @diagmethod('present', io=True)
    def getPresence(self):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      return {
-         # TODO: name ?
-         "present": self.getPresence() if ctx.performIo else None,
-      }
+      raise NotImplementedError

@@ -1,11 +1,8 @@
 
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class Phy(InventoryInterface):
+   @diagmethod('reset', diag=True)
    def getReset(self):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      return {
-         "reset": self.getReset().__diag__(ctx),
-      }
+      raise NotImplementedError

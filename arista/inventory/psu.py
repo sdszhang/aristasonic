@@ -1,25 +1,24 @@
 
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class Psu(InventoryInterface):
+   @diagmethod('name')
    def getName(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('model')
    def getModel(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('serial')
    def getSerial(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('present', io=True)
    def getPresence(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('status', io=True)
    def getStatus(self):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      return {
-         "name": self.getName(),
-         "present": self.getPresence() if ctx.performIo else None,
-         "getStatus": self.getStatus() if ctx.performIo else None,
-      }
+      raise NotImplementedError

@@ -1,75 +1,79 @@
 
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class Fan(InventoryInterface):
+   @diagmethod('id')
    def getId(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('name')
    def getName(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('model')
    def getModel(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('speed', io=True)
    def getSpeed(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
    def setSpeed(self, speed):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('direction', io=True)
    def getDirection(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('fault', io=True)
    def getFault(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('status', io=True)
    def getStatus(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('position', io=True)
    def getPosition(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
    def getLed(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
-   def __diag__(self, ctx):
-      return {
-         "name": self.getName(),
-         "speed": self.getSpeed() if ctx.performIo else None,
-         "direction": self.getDirection() if ctx.performIo else None,
-      }
-
+@diagcls
 class FanSlot(InventoryInterface):
+   @diagmethod('id')
    def getId(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('name')
    def getName(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('model')
    def getModel(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('present', io=True)
    def getPresence(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('fans', diag=True)
    def getFans(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('direction', io=True)
    def getDirection(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
    def getLed(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('fault', io=True)
    def getFault(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('maxPowerDraw')
    def getMaxPowerDraw(self):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      return {
-         "name": self.getName(),
-         "presence": self.getPresence() if ctx.performIo else None,
-         "fans": [ f.genDiag(ctx) for f in self.getFans() ],
-      }
+      raise NotImplementedError

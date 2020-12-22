@@ -148,9 +148,9 @@ class ScdPowerCycle(PowerCycle):
          return False
 
 class ScdInterrupt(Interrupt):
-   def __init__(self, name, reg, bit):
-      self.name = name
+   def __init__(self, reg, name, bit):
       self.reg = reg
+      self.name = name
       self.bit = bit
 
    def set(self):
@@ -217,7 +217,7 @@ class ScdInterruptRegister(object):
       ]))
 
    def getInterruptBit(self, name, bit):
-      if Config().init_irq:
+      if not Config().init_irq:
          return None
       return self.scd.inventory.addInterrupt(ScdInterrupt(self, name, bit))
 

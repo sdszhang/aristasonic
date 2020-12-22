@@ -1,15 +1,12 @@
 
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class ReloadCause(InventoryInterface):
+   @diagmethod('time')
    def getTime(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('cause')
    def getCause(self):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      return {
-         "time": self.getTime(),
-         "cause": self.getCause(),
-      }
+      raise NotImplementedError

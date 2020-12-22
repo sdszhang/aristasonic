@@ -1,22 +1,19 @@
 
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class Led(InventoryInterface):
+   @diagmethod('name')
+   def getName(self):
+      raise NotImplementedError
+
+   @diagmethod('color', io=True)
    def getColor(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
    def setColor(self, color):
-      raise NotImplementedError()
+      raise NotImplementedError
 
-   def getName(self):
-      raise NotImplementedError()
-
+   @diagmethod('isStatus')
    def isStatusLed(self):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      return {
-         "name": self.getName(),
-         "color": self.getColor() if ctx.performIo else None,
-         "is_status": self.isStatusLed(),
-      }
+      raise NotImplementedError

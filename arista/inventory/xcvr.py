@@ -1,6 +1,7 @@
 
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class Xcvr(InventoryInterface):
 
    SFP = 0
@@ -13,34 +14,29 @@ class Xcvr(InventoryInterface):
    def typeStr(cls, typeIndex):
       return ['sfp', 'qsfp', 'osfp'][typeIndex]
 
+   @diagmethod('type')
    def getType(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('name')
    def getName(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('present', io=True)
    def getPresence(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('lpmode', io=True)
    def getLowPowerMode(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
    def setLowPowerMode(self, value):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('intr', diag=True)
    def getInterruptLine(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('reset', diag=True)
    def getReset(self):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      intr = self.getInterruptLine()
-      reset = self.getReset()
-      return {
-         "name": self.getName(),
-         "presence": self.getPresence() if ctx.performIo else None,
-         "lpmode": self.getLowPowerMode() if ctx.performIo else None,
-         "intr": intr.__diag__(ctx) if intr else None,
-         "reset": reset.__diag__(ctx) if reset else None,
-      }
+      raise NotImplementedError

@@ -1,22 +1,20 @@
 
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class Interrupt(InventoryInterface):
+   # TODO: get ?
+
    def set(self):
       raise NotImplementedError()
 
    def clear(self):
       raise NotImplementedError()
 
+   @diagmethod('name')
    def getName(self):
       raise NotImplementedError()
 
+   @diagmethod('file')
    def getFile(self):
       raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      return {
-         # TODO: get ?
-         "name": self.getName(),
-         "file": self.getFile(),
-      }

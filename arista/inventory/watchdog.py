@@ -1,15 +1,14 @@
 
-class Watchdog(object):
+from . import InventoryInterface, diagcls, diagmethod
+
+@diagcls
+class Watchdog(InventoryInterface):
    def arm(self, timeout):
-      raise NotImplementedError()
+      raise NotImplementedError
 
    def stop(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('status', io=True)
    def status(self):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      return {
-         "status": self.status() if ctx.performIo else None,
-      }
+      raise NotImplementedError

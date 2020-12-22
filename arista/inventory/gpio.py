@@ -1,47 +1,38 @@
-from . import InventoryInterface
+from . import InventoryInterface, diagcls, diagmethod
 
+@diagcls
 class Gpio(InventoryInterface):
+   @diagmethod('name')
    def getName(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('addr', fmt=hex)
    def getAddr(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('path')
    def getPath(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('bit')
    def getBit(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('ro')
    def isRo(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('activeLow')
    def isActiveLow(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('rawValue', io=True)
    def getRawValue(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
+   @diagmethod('active', io=True)
    def isActive(self):
-      raise NotImplementedError()
+      raise NotImplementedError
 
    def setActive(self, value):
-      raise NotImplementedError()
-
-   def __diag__(self, ctx):
-      diagDict = {
-         "name": self.getName(),
-         "addr": hex(self.getAddr()),
-         "path": self.getPath(),
-         "bit": self.getBit(),
-         "ro": self.isRo(),
-         "activeLow": self.isActiveLow(),
-      }
-
-      if ctx.performIo:
-         diagDict.update({
-            "rawValue": self.getRawValue(),
-            "active": self.isActive(),
-         })
-
-      return diagDict
+      raise NotImplementedError
