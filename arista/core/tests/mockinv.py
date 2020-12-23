@@ -1,9 +1,10 @@
 
 import datetime
 
+from ...descs.fan import FanPosition
 from ...descs.sensor import SensorDesc, Position
 
-from ...inventory.fan import Fan
+from ...inventory.fan import Fan, FanSlot
 from ...inventory.gpio import Gpio
 from ...inventory.interrupt import Interrupt
 from ...inventory.led import Led
@@ -17,15 +18,36 @@ from ...inventory.temp import Temp
 from ...inventory.watchdog import Watchdog
 from ...inventory.xcvr import Xcvr
 
+from ..cooling import Airflow
+
 class MockFan(Fan):
-   def __init__(self, fanId=1, name="fan1", speed=12345, direction='forward'):
+   def __init__(self, fanId=1, name="fan1", speed=12345, direction=Airflow.EXHAUST,
+                model="FAN-MODEL-A", fault=False, led=None, status=True,
+                position=FanPosition.UNKNOWN):
       self.fanId = fanId
       self.name = name
       self.speed = speed
       self.direction = direction
+      self.model = model
+      self.fault = fault
+      self.led = led
+      self.status = status
+      self.position = position
+
+   def getId(self):
+      return self.fanId
 
    def getName(self):
       return self.name
+
+   def getModel(self):
+      return self.model
+
+   def getFault(self):
+      return self.fault
+
+   def getStatus(self):
+      return self.status
 
    def getSpeed(self):
       return self.speed
@@ -36,8 +58,60 @@ class MockFan(Fan):
    def getDirection(self):
       return self.direction
 
+   def getPosition(self):
+      return self.position
+
+   def getLed(self):
+      return self.led
+
    def __eq__(self, value):
       return isinstance(value, MockFan) and self.fanId == value.fanId
+
+class MockFanSlot(FanSlot):
+   def __init__(self, slotId=1, name="fan1", fans=None, direction=Airflow.EXHAUST,
+                model="FAN-MODEL-A", fault=False, led=None, status=True,
+                maxPower=10., presence=True):
+      self.slotId = slotId
+      self.name = name
+      self.fans = fans or []
+      self.direction = direction
+      self.model = model
+      self.fault = fault
+      self.led = led
+      self.status = status
+      self.presence = presence
+      self.maxPower = maxPower
+
+   def getId(self):
+      return self.slotId
+
+   def getName(self):
+      return self.name
+
+   def getModel(self):
+      # TODO: deprecate
+      return self.model
+
+   def getFault(self):
+      return self.fault
+
+   def getDirection(self):
+      return self.direction
+
+   def getPresence(self):
+      return self.presence
+
+   def getFans(self):
+      return self.fans
+
+   def getLed(self):
+      return self.led
+
+   def getMaxPowerDraw(self):
+      return self.maxPower
+
+   def __eq__(self, value):
+      return isinstance(value, MockFanSlot) and self.slotId == value.slotId
 
 class MockPsu(Psu):
    def __init__(self, psuId=1, name="psu1", presence=True, status=True,

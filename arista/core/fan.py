@@ -1,11 +1,43 @@
 
-from ..accessors.fan import FanSlotImpl
+from ..inventory.fan import FanSlot as FanSlotInv
 
 from .component import SlotComponent, Priority
 
+class FanSlotImpl(FanSlotInv):
+   # TODO: cleanup a bit more
+   def __init__(self, slot):
+      self.slot = slot
+
+   def getId(self):
+      return self.slot.getId()
+
+   def getName(self):
+      return self.slot.getName()
+
+   def getModel(self):
+      return self.slot.getModel()
+
+   def getPresence(self):
+      return self.slot.getPresence()
+
+   def getFans(self):
+      return self.slot.getFans()
+
+   def getDirection(self):
+      return self.slot.getFans()[0].getDirection()
+
+   def getLed(self):
+      return self.slot.getLed()
+
+   def getMaxPowerDraw(self):
+      return self.slot.getMaxPowerDraw()
+
+   def getFault(self):
+      return self.slot.getFault()
+
 class FanSlot(SlotComponent):
    def __init__(self, slotId=None, name=None, description=None, fans=None,
-                faultGpio=None, presentGpio=None, maxPowerDraw=0, model='N/A',
+                faultGpio=None, presentGpio=None, maxPowerDraw=0., model='N/A',
                 led=None,
                 **kwargs):
       super(FanSlot, self).__init__(priority=Priority.COOLING, **kwargs)

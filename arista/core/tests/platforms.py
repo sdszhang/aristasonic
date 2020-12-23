@@ -14,7 +14,7 @@ from ...drivers.i2c import I2cKernelDriver
 from ...drivers.scd.driver import ScdKernelDriver
 from ...drivers.sysfs import SysfsDriver, SysfsEntry
 
-from ...inventory.fan import Fan
+from ...inventory.fan import Fan, FanSlot
 from ...inventory.led import Led
 from ...inventory.psu import Psu, PsuSlot
 from ...inventory.temp import Temp
@@ -211,28 +211,47 @@ class MockPlatformTest(unittest.TestCase):
          for psu in inventory.getPsus():
             self._testPsu(psu)
 
+   def _testFan(self, fan):
+      self.assertIsInstance(fan, Fan)
+      self.assertIsInstance(fan.driver, Driver)
+      self.assertIsInstance(fan.getId(), int)
+      self.assertIsInstance(fan.getPresence(), bool)
+      self.assertIsInstance(fan.getStatus(), bool)
+      self.assertIsInstance(fan.getName(), str)
+      self.assertIsInstance(fan.getSpeed(), int)
+      assert (not fan.getSpeed() < 0) or (not fan.getSpeed() > 100)
+      fan.setSpeed(100)
+      self.assertIsInstance(fan.getDirection(), str)
+      led = fan.getLed()
+      if led is not None:
+         self._testLed(led)
+
+   def _testFanSlot(self, slot):
+      self.assertIsInstance(slot, FanSlot)
+      self.assertIsInstance(slot.getId(), int)
+      self.assertIsInstance(slot.getName(), str)
+      self.assertIsInstance(slot.getModel(), str)
+      self.assertIsInstance(slot.getFault(), bool)
+      self.assertIsInstance(slot.getDirection(), str)
+      self.assertIsInstance(slot.getPresence(), bool)
+      self.assertIsInstance(slot.getMaxPowerDraw(), float)
+      fans = slot.getFans()
+      for fan in fans or []:
+         self._testFan(fan)
+      led = slot.getLed()
+      if led is not None:
+         self._testLed(led)
+
    def testFans(self):
       for name, platform in getPlatformSkus().items():
          if not issubclass(platform, FixedSystem):
             continue
          inventory = platform().getInventory()
          self.logger.info('Testing fans for platform %s', name)
+         for slot in inventory.getFanSlots():
+            self._testFanSlot(slot)
          for fan in inventory.getFans():
-            assert isinstance(fan, Fan)
-            assert isinstance(fan.driver, Driver)
-            assert isinstance(fan.getId(), int)
-            assert isinstance(fan.getPresence(), bool)
-            assert isinstance(fan.getStatus(), bool)
-            assert isinstance(fan.getName(), str)
-            assert isinstance(fan.getSpeed(), int)
-            assert (not fan.getSpeed() < 0) or (not fan.getSpeed() > 100)
-            fan.setSpeed(100)
-            assert isinstance(fan.getDirection(), str)
-            led = fan.getLed()
-            if led is not None:
-               assert isinstance(fan.led, LedImpl)
-               assert led == fan.led
-               self._testLed(led)
+            self._testFan(fan)
 
    def _testTemp(self, temp):
       self.assertIsInstance(temp, Temp)

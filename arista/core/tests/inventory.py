@@ -8,6 +8,7 @@ from ..metainventory import MetaInventory, LazyInventory
 
 from .mockinv import (
    MockFan,
+   MockFanSlot,
    MockInterrupt,
    MockLed,
    MockPhy,
@@ -51,12 +52,14 @@ class InventoryTest(unittest.TestCase):
       ])
       for psu in psus:
          inv.addPsuSlot(MockPsuSlot(psu.psuId, name=psu.getName(), psu=psu))
-      inv.addFans([
+      fans = inv.addFans([
          MockFan(1, 'fan1'),
          MockFan(2, 'fan2'),
          MockFan(3, 'fan3'),
          MockFan(4, 'fan4'),
       ])
+      for fan in fans:
+         inv.addFanSlot(MockFanSlot(fan.fanId, name=fan.getName(), fans=[fan]))
       inv.addPowerCycle(MockPowerCycle())
       inv.addWatchdog(MockWatchdog())
       inv.addInterrupt(MockInterrupt('intr'))
