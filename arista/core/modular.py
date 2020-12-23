@@ -87,7 +87,12 @@ class Modular(Sku):
          if slotIds is not None and slot.slotId not in slotIds:
             continue
          logging.debug('Loading psu slot %d', slot.slotId)
-         slot.loadPsu()
+         slot.load()
+
+   def loadAll(self):
+      self.loadPsus()
+      self.loadFabrics()
+      self.loadLinecards()
 
    def _iterSlots(self, slots, count, presentOnly=True, key=lambda s: s):
       for slot in slots[:count]:

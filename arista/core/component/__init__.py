@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 from collections import OrderedDict
 
 from ..config import Config
@@ -145,34 +143,6 @@ class Component(object):
    def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT):
       for component in self.components:
          component.waitForIt(timeout)
-
-   def _dumpDrivers(self, depth, prefix):
-      if len(self.drivers) == 1:
-         for driver in self.drivers.values():
-            driver.dump(prefix=' => ')
-      elif self.drivers:
-         spacer = ' ' * (depth * 3)
-         print('%s%sdrivers:' % (spacer, prefix))
-         for driver in self.drivers.values():
-            driver.dump(depth + 1)
-
-   def _dumpNode(self, depth, prefix):
-      depth += 1
-      spacer = ' ' * (depth * 3)
-      if self.drivers.values():
-         self._dumpDrivers(depth, prefix)
-      print('%s%scomponents:' % (spacer, prefix))
-      for component in self.components:
-         component.dump(depth + 1)
-
-   def dump(self, depth=0, prefix=' - '):
-      spacer = ' ' * (depth * 3)
-      end = '' if len(self.drivers) == 1 else '\n'
-      print('%s%s%s' % (spacer, prefix, self), end=end)
-      if self.components:
-         self._dumpNode(depth, prefix)
-      else:
-         self._dumpDrivers(depth, prefix)
 
    def __diag__(self, ctx):
       return {}

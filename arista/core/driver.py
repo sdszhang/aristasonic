@@ -1,4 +1,3 @@
-from __future__ import print_function
 
 import os
 import subprocess
@@ -108,10 +107,6 @@ class Driver(object):
 
    def getReloadCauses(self, clear=False): # pylint: disable=unused-argument
       return []
-
-   def dump(self, depth=0, prefix=' - '):
-      spacer = ' ' * (depth * 3)
-      print('%s%s%s' % (spacer, prefix, self))
 
    def __diag__(self, ctx): # pylint: disable=unused-argument
       return {}

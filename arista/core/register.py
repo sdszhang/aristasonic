@@ -65,9 +65,6 @@ class Register(HardwareHandle):
    def split(self):
       pass
 
-   def dump(self):
-      return {}
-
    def read(self):
       return self.parent.read(self.addr)
 
