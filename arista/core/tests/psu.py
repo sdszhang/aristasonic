@@ -100,7 +100,7 @@ class MockFixedSystem(FixedSystem):
 
 class TestPsu(unittest.TestCase):
    def _checkSystem(self, system):
-      self.assertEqual(len(system.inventory.getPsus()), system.numPsus)
+      self.assertEqual(len(system.inventory.getPsuSlots()), system.numPsus)
       self.assertTrue(system.components)
       system.setup(filters=Priority.backgroundFilter)
       for i, slot in enumerate(system.slots, 1):

@@ -14,15 +14,23 @@ class ShowEnvironment(Renderer):
       data = {
          'fans': [],
          'temps': [],
-         'psus': [],
+         'psuSlots': [],
       }
       for inventory, _ in show.inventories:
          for temp in inventory.getTemps():
             data['temps'].append(temp.__diag__(ctx))
          for fan in inventory.getFans():
             data['fans'].append(fan.__diag__(ctx))
-         for psu in inventory.getPsus():
-            data['psus'].append(psu.__diag__(ctx))
+         for slot in inventory.getPsuSlots():
+            data['psuSlots'].append(slot.__diag__(ctx))
+      return data
+
+   def _getKey(self, data, key, default="N/A"):
+      try:
+         for member in key.split('.'):
+            data = data[member]
+      except Exception: # pylint: disable=broad-except
+         data = default
       return data
 
    def _renderCollection(self, hdr, collection):
@@ -33,7 +41,7 @@ class ShowEnvironment(Renderer):
       print(fmt % tuple(n for n, _, _ in hdr))
       print(fmt % tuple('-' * sz for _, _, sz in hdr))
       for item in collection:
-         print(fmt % tuple(item[k] for _, k, _ in hdr))
+         print(fmt % tuple(self._getKey(item, k) for _, k, _ in hdr))
 
    def renderText(self, show):
       data = self.data(show)
@@ -52,8 +60,8 @@ class ShowEnvironment(Renderer):
       ]
       psuHdr = [
          ('Name', 'name', 10),
-         ('Model', 'model', 15),
-         ('Serial', 'serial', 15),
+         ('Model', 'psu.model', 15),
+         ('Serial', 'psu.serial', 15),
          ('Status', 'status', 6),
       ]
 
@@ -61,4 +69,4 @@ class ShowEnvironment(Renderer):
       print()
       self._renderCollection(fanHdr, data['fans'])
       print()
-      self._renderCollection(psuHdr, data['psus'])
+      self._renderCollection(psuHdr, data['psuSlots'])

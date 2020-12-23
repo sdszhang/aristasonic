@@ -9,7 +9,7 @@ from ...inventory.interrupt import Interrupt
 from ...inventory.led import Led
 from ...inventory.phy import Phy
 from ...inventory.powercycle import PowerCycle
-from ...inventory.psu import Psu
+from ...inventory.psu import Psu, PsuSlot
 from ...inventory.reloadcause import ReloadCause
 from ...inventory.reset import Reset
 from ...inventory.slot import Slot
@@ -40,23 +40,57 @@ class MockFan(Fan):
       return isinstance(value, MockFan) and self.fanId == value.fanId
 
 class MockPsu(Psu):
-   def __init__(self, psuId=1, name="psu1", presence=True, status=True):
+   def __init__(self, psuId=1, name="psu1", presence=True, status=True,
+                model="PSU-MODEL-A", serial="PSU-SERIAL-A"):
       self.psuId = psuId
       self.name = name
+      self.model = model
       self.presence = presence
+      self.serial = serial
       self.status = status
 
    def getName(self):
       return self.name
 
-   def getPresence(self):
-      return self.presence
+   def getModel(self):
+      return self.model
+
+   def getSerial(self):
+      return self.serial
 
    def getStatus(self):
       return self.status
 
    def __eq__(self, value):
       return isinstance(value, MockPsu) and self.psuId == value.psuId
+
+class MockPsuSlot(PsuSlot):
+   def __init__(self, slotId=1, name="psu1", presence=True, status=True, led=None,
+                psu=None):
+      self.slotId = slotId
+      self.name = name
+      self.presence = presence
+      self.status = status
+      self.led = led
+      self.psu = psu
+
+   def getName(self):
+      return self.name
+
+   def getStatus(self):
+      return self.status
+
+   def getPresence(self):
+      return self.presence
+
+   def getLed(self):
+      return self.led
+
+   def getPsu(self):
+      return self.psu
+
+   def __eq__(self, value):
+      return isinstance(value, MockPsuSlot) and self.slotId == value.slotId
 
 class MockWatchdog(Watchdog):
    def __init__(self, started=True, remaining=100, timeout=300):

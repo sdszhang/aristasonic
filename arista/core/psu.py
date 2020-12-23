@@ -5,11 +5,64 @@ from .component import SlotComponent, Priority
 from .log import getLogger
 from .utils import JsonStoredData, inSimulation
 
-from ..accessors.psu import PsuSlotImpl
 from ..drivers.pmbus import PsuPmbusDetect
 from ..descs.psu import PsuDesc
 
+from ..inventory.psu import PsuSlot as PsuSlotInv
+from ..inventory.psu import Psu as PsuInv
+
 logging = getLogger(__name__)
+
+class PsuImpl(PsuInv):
+   # TODO: placeholder PsuImpl, move to the psu class itself
+   def __init__(self, slot, model, psu):
+      self.slot = slot
+      self.psu = psu
+      self.model = model
+
+   def getName(self):
+      return self.slot.getName()
+
+   def getModel(self):
+      return self.model.identifier.aristaName
+
+   def getSerial(self):
+      return self.model.identifier.metadata['serial']
+
+   def getStatus(self):
+      return self.slot.getStatus()
+
+class PsuSlotImpl(PsuSlotInv):
+   def __init__(self, slot):
+      self.slot = slot
+      self.psu = None
+
+   def getId(self):
+      return self.slot.slotId
+
+   def getName(self):
+      return 'psu%s' % self.slot.slotId
+
+   def getPresence(self):
+      return self.slot.getPresence()
+
+   def getStatus(self):
+      return self.slot.isPowerGood()
+
+   def getLed(self):
+      return self.slot.led
+
+   def getPsu(self):
+      if not self.slot.getPresence():
+         return None
+      # TODO: in the future handle PSU hotswap with potentially a different model
+      return self.psu
+
+   def insertPsu(self, psu):
+      if self.psu is not None:
+         logging.debug("%s overriding already loaded psu with %s", self.getName(),
+                       self.psu)
+      self.psu = PsuImpl(self, self.slot.model, psu)
 
 class PsuIdent(object):
    def __init__(self, partName=None, aristaName=None, airflow=None, metadata=None):
@@ -35,7 +88,8 @@ class PsuSlot(SlotComponent):
       self.psus = psus
 
       self.addrFunc(0x00) # workaround to configure a bus wide parameter
-      self.psuInv = self.inventory.addPsu(PsuSlotImpl(self))
+      self.psuSlot = self.inventory.addPsuSlot(PsuSlotImpl(self))
+      self.psuInv = None
       self.load(cacheOnly=True) # no IO in the constructor
 
    def autodetectPsuModel(self):
@@ -64,6 +118,9 @@ class PsuSlot(SlotComponent):
          'identifier': self.model.identifier.__dict__,
       }, mode='w+')
 
+   def clearCache(self):
+      self.getCacheStore().clear()
+
    def loadModelFromCache(self):
       data = self.getCache()
       if data is None:
@@ -82,14 +139,16 @@ class PsuSlot(SlotComponent):
       for key, value in self.model.identifier.metadata.items():
          logging.debug("PSU %d %s: %s", self.slotId, key, value)
 
-   def loadPsuModel(self, cacheOnly=False):
-      self.model = self.loadModelFromCache()
-      if self.model is not None:
-         logging.debug("PSU %d loaded from cache", self.slotId)
-         return self.model
+   def loadPsuModel(self, useCache=True, cacheOnly=False):
+      if useCache:
+         self.model = self.loadModelFromCache()
+         if self.model is not None:
+            logging.debug("PSU %d loaded from cache", self.slotId)
+            return self.model
 
       if cacheOnly:
-         logging.debug("PSU %d model not found in cache, skipping IO", self.slotId)
+         logging.debug("PSU %d model not found in cache, skipping IO",
+                       self.slotId)
          return None
 
       self.model = self.autodetectPsuModel()
@@ -113,18 +172,23 @@ class PsuSlot(SlotComponent):
       )
       psu.addTempSensors(desc.sensors)
       psu.addFans(desc.fans)
+      return psu
 
-   def load(self, cacheOnly=False):
+   def load(self, useCache=True, cacheOnly=False):
+      if not useCache:
+         self.clearCache()
+
       if not cacheOnly and not self.getPresence():
          logging.debug("PSU %d is not inserted", self.slotId)
+         self.clearCache()
          return
 
-      if not self.loadPsuModel(cacheOnly=cacheOnly):
+      if not self.loadPsuModel(useCache=useCache, cacheOnly=cacheOnly):
          return
 
       desc = copy.deepcopy(self.model.DESCRIPTION)
       desc.setPsuId(self.slotId)
-      self.addPsu(desc)
+      self.psuSlot.insertPsu(self.addPsu(desc))
 
    def getPresence(self):
       return self.presentGpio.isActive()
@@ -150,7 +214,7 @@ class PsuSlot(SlotComponent):
       return self.isOutputGood()
 
    def setup(self):
-      self.load()
+      self.load(useCache=False)
       if self.components:
          # initialize the PSU, iterComponent will not run on it since the list
          # has already been computed.

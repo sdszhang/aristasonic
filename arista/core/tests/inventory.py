@@ -13,6 +13,7 @@ from .mockinv import (
    MockPhy,
    MockPowerCycle,
    MockPsu,
+   MockPsuSlot,
    MockReset,
    MockSlot,
    MockTemp,
@@ -44,10 +45,12 @@ class InventoryTest(unittest.TestCase):
          'internet': MockReset('internet'),
          'humanity': MockReset('humanity'),
       })
-      inv.addPsus([
+      psus = inv.addPsus([
          MockPsu(1, 'psu1'),
          MockPsu(2, 'psu2'),
       ])
+      for psu in psus:
+         inv.addPsuSlot(MockPsuSlot(psu.psuId, name=psu.getName(), psu=psu))
       inv.addFans([
          MockFan(1, 'fan1'),
          MockFan(2, 'fan2'),

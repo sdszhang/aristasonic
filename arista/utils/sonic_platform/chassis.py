@@ -70,8 +70,8 @@ class Chassis(ChassisBase):
             self._fan_list.append(Fan(None, fan))
          for fan in self._fan_list:
             self._fan_drawer_list.append(FanDrawerLegacy(fan))
-      for psu in self._inventory.getPsus():
-         self._psu_list.append(Psu(psu))
+      for slot in self._inventory.getPsuSlots():
+         self._psu_list.append(Psu(slot))
       self._sfp_list = []
       if self._inventory and self._inventory.portEnd:
          self._sfp_list = [None] * (self._inventory.portEnd)

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from .sonic_utils import getInventory
 
-from .. import platforms
+from .. import platforms # pylint: disable=unused-import
 from ..core import platform
 from ..core.supervisor import Supervisor
 
@@ -11,28 +11,32 @@ try:
 except ImportError as e:
    raise ImportError("%s - required module not found" % str(e))
 
-
 def getPsuUtil():
    inventory = getInventory()
 
    class PsuUtil(PsuBase):
       """Platform-specific PsuUtil class"""
 
-      def get_psu_presence(self, index):
-         if index > inventory.getNumPsus() and index > 0:
-            return False
+      def _get_psu(self, index):
+         if inventory.getNumPsuSlots():
+            if 0 <= index < inventory.getNumPsuSlots():
+               return inventory.getPsuSlot(index)
+         else:
+            if 0 <= index < inventory.getNumPsus():
+               return inventory.getPsu(index)
+         return None
 
-         return inventory.getPsu(index-1).getPresence()
+      def get_psu_presence(self, index):
+         psu = self._get_psu(index - 1)
+         return psu.getPresence() if psu else False
 
       def get_psu_status(self, index):
-         if index > inventory.getNumPsus() and index > 0:
-            return False
-
-         return inventory.getPsu(index-1).getStatus()
+         psu = self._get_psu(index - 1)
+         return psu.getStatus() if psu else False
 
       def get_num_psus(self):
          if isinstance(platform.getPlatform(), Supervisor):
             return platform.getPlatform().getChassis().NUM_PSUS
-         return inventory.getNumPsus()
+         return inventory.getNumPsuSlots() or inventory.getNumPsus()
 
    return PsuUtil

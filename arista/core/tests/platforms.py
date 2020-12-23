@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from ...tests.testing import unittest, patch
 from ...tests.logging import getLogger
 
-from ...accessors.led import LedImpl
 from ...accessors.xcvr import XcvrImpl
 
 from ...components.scd import ScdInterruptRegister
@@ -16,7 +15,8 @@ from ...drivers.scd.driver import ScdKernelDriver
 from ...drivers.sysfs import SysfsDriver, SysfsEntry
 
 from ...inventory.fan import Fan
-from ...inventory.psu import Psu
+from ...inventory.led import Led
+from ...inventory.psu import Psu, PsuSlot
 from ...inventory.temp import Temp
 from ...inventory.xcvr import Xcvr
 
@@ -116,15 +116,10 @@ class MockPlatformTest(unittest.TestCase):
       ]
 
    def _testLed(self, led):
-      assert isinstance(led, LedImpl)
-      assert isinstance(led.name, str)
-      name = led.getName()
-      assert name == led.name
-      assert isinstance(led.driver, Driver)
-      color = led.getColor()
-      assert color in self.ledColors
-      for color in self.ledColors:
-         led.setColor(color)
+      self.assertIsInstance(led, Led)
+      self.assertIsInstance(led.getName(), str)
+      self.assertIsInstance(led.getColor(), str) # TODO: match supported colors
+      self.assertIsInstance(led.isStatusLed(), bool)
 
    def testSetup(self):
       for name, platform in getPlatformSkus().items():
@@ -184,18 +179,37 @@ class MockPlatformTest(unittest.TestCase):
             for led in leds:
                self._testLed(led)
 
+   def _testPsu(self, psu):
+      self.assertIsInstance(psu, Psu)
+      self.assertIsInstance(psu.psuId, int)
+      self.assertIsInstance(psu.getName(), str)
+      self.assertIsInstance(psu.getModel(), str)
+      self.assertIsInstance(psu.getSerial(), str)
+      self.assertIsInstance(psu.getStatus(), bool)
+
+   def _testPsuSlot(self, slot):
+      self.assertIsInstance(slot, PsuSlot)
+      self.assertIsInstance(slot.getId(), int)
+      self.assertIsInstance(slot.getName(), str)
+      self.assertIsInstance(slot.getPresence(), bool)
+      self.assertIsInstance(slot.getStatus(), bool)
+      led = slot.getLed()
+      if led is not None:
+         self._testLed(led)
+      psu = slot.getPsu()
+      if psu is not None:
+         self._testPsu(psu)
+
    def testPsus(self):
       for name, platform in getPlatformSkus().items():
          if not issubclass(platform, FixedSystem):
             continue
          inventory = platform().getInventory()
          self.logger.info('Testing PSUs for platform %s', name)
+         for slot in inventory.getPsuSlots():
+            self._testPsuSlot(slot)
          for psu in inventory.getPsus():
-            assert isinstance(psu, Psu)
-            assert isinstance(psu.psuId, int)
-            assert isinstance(psu.getName(), str)
-            assert isinstance(psu.getPresence(), bool)
-            assert isinstance(psu.getStatus(), bool)
+            self._testPsu(psu)
 
    def testFans(self):
       for name, platform in getPlatformSkus().items():

@@ -27,6 +27,8 @@ class Inventory(object):
 
       self.psus = []
 
+      self.psuSlots = []
+
       self.fans = []
 
       self.fanSlots = []
@@ -107,6 +109,19 @@ class Inventory(object):
 
    def getLedGroups(self):
       return self.ledGroups
+
+   def addPsuSlot(self, slot):
+      self.psuSlots.append(slot)
+      return slot
+
+   def getPsuSlot(self, index):
+      return self.psuSlots[index]
+
+   def getPsuSlots(self):
+      return self.psuSlots
+
+   def getNumPsuSlots(self):
+      return len(self.psuSlots)
 
    def addPsu(self, psu):
       self.psus.append(psu)
@@ -243,6 +258,7 @@ class Inventory(object):
          # TODO watchdog
          "xcvrs": [x.genDiag(ctx) for x in self.xcvrs.values()],
          "psus": [p.genDiag(ctx) for p in self.psus],
+         "psuSlots": [s.genDiag(ctx) for s in self.psuSlots],
          "fans": [f.genDiag(ctx) for f in self.fans],
          "fanSlots": [s.genDiag(ctx) for s in self.fanSlots],
          "interrupts": [i.genDiag(ctx) for i in self.interrupts.values()],
