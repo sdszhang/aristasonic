@@ -20,10 +20,6 @@ class Inventory():
       self.qsfpSlots = {}
       self.osfpSlots = {}
 
-      # These two are deprecated
-      self.xcvrLeds = defaultdict(list)
-      self.statusLeds = []
-
       self.psus = []
 
       self.psuSlots = []
@@ -37,6 +33,8 @@ class Inventory():
       self.powerCycles = []
 
       self.interrupts = {}
+
+      self.rails = []
 
       self.resets = {}
 
@@ -312,6 +310,13 @@ class Inventory():
    def getGpio(self, name):
       return self.gpios[name]
 
+   def addRail(self, rail):
+      self.rails.append(rail)
+      return rail
+
+   def getRails(self):
+      return self.rails
+
    def addReloadCauseProvider(self, provider):
       self.causeProviders.append(provider)
 
@@ -336,6 +341,7 @@ class Inventory():
          "fans": [f.genDiag(ctx) for f in self.fans],
          "fanSlots": [s.genDiag(ctx) for s in self.fanSlots],
          "interrupts": [i.genDiag(ctx) for i in self.interrupts.values()],
+         "rails": [r.genDiag(ctx) for r in self.rails],
          "resets" : [r.genDiag(ctx) for r in self.resets.values()],
          "phys" : [p.genDiag(ctx) for p in self.phys],
          "slot" : [s.genDiag(ctx) for s in self.slots],

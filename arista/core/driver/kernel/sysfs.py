@@ -12,6 +12,7 @@ from ....descs.led import LedColor
 from ....inventory.fan import Fan
 from ....inventory.gpio import Gpio
 from ....inventory.led import Led
+from ....inventory.rail import Rail
 from ....inventory.reset import Reset
 from ....inventory.temp import Temp
 

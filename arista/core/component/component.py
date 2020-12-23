@@ -43,13 +43,15 @@ class Component(LegacyComponent):
       self._tempSensorsWorkaround = []
       self.addObjects(**kwargs)
 
-   def addObjects(self, fans=None, leds=None, sensors=None, **kwargs):
+   def addObjects(self, fans=None, leds=None, sensors=None, rails=None, **kwargs):
       for sensor in sensors or []:
          self.addTempSensor(sensor)
       for fan in fans or []:
          self.addFan(fan)
       for led in leds or []:
          self.addLed(led)
+      for rail in rails or []:
+         self.addRail(rail)
 
    def addFan(self, desc, **kwargs):
       return self.inventory.addFan(self.driver.getFan(desc, **kwargs))
@@ -88,6 +90,12 @@ class Component(LegacyComponent):
 
    def addGpios(self, descs, **kwargs):
       return [self.addGpio(desc, **kwargs) for desc in descs]
+
+   def addRail(self, desc, **kwargs):
+      return self.inventory.addRail(self.driver.getRail(desc, **kwargs))
+
+   def addRails(self, descs, **kwargs):
+      return [self.addRail(desc, **kwargs) for desc in descs]
 
    def finish(self, filters=Priority.defaultFilter):
       super(Component, self).finish(filters=filters)
