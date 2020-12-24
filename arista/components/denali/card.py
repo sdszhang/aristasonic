@@ -49,11 +49,9 @@ class DenaliCard(Card):
          and Fans...
       '''
       self.standby = self.newComponent(PowerDomain)
-      self.pca = self.standby.newComponent(Pca9541, self.slot.bus.i2cAddr(0x77))
-      self.eeprom = self.standby.newComponent(PrefdlSeeprom,
-                                              self.pca.i2cAddr(0x50))
-      self.standbyUcd = self.standby.newComponent(Ucd90320,
-                                                  self.pca.i2cAddr(0x11))
+      self.pca = self.standby.newComponent(Pca9541, addr=self.slot.bus.i2cAddr(0x77))
+      self.eeprom = self.pca.newComponent(PrefdlSeeprom, addr=self.pca.i2cAddr(0x50))
+      self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11))
       self.createGpio1()
       self.createPlx()
 

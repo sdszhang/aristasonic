@@ -77,18 +77,18 @@ class ClearwaterBase(DenaliLinecard):
       if self.STANDBY_TEMP_SENSORS_CLS:
          # The front sensor is currently defined as INLET because we don't have
          # sensor data from the LSI. The position should be changed to OTHER.
-         self.standby.newComponent(self.STANDBY_TEMP_SENSORS_CLS, bus.i2cAddr(0x49),
-                                   sensors=[
+         self.pca.newComponent(self.STANDBY_TEMP_SENSORS_CLS, addr=bus.i2cAddr(0x49),
+                               sensors=[
             SensorDesc(diode=0, name='Front', position=Position.INLET,
                        target=65, overheat=75, critical=85),
          ])
-         self.standby.newComponent(self.STANDBY_TEMP_SENSORS_CLS, bus.i2cAddr(0x4a),
-                                   sensors=[
+         self.pca.newComponent(self.STANDBY_TEMP_SENSORS_CLS, addr=bus.i2cAddr(0x4a),
+                               sensors=[
             SensorDesc(diode=0, name='Mid', position=Position.OTHER,
                        target=80, overheat=90, critical=95),
          ])
-         self.standby.newComponent(self.STANDBY_TEMP_SENSORS_CLS, bus.i2cAddr(0x48),
-                                   sensors=[
+         self.pca.newComponent(self.STANDBY_TEMP_SENSORS_CLS, addr=bus.i2cAddr(0x48),
+                               sensors=[
             SensorDesc(diode=0, name='Back', position=Position.OTHER,
                        target=80, overheat=90, critical=95),
          ])
@@ -101,8 +101,8 @@ class ClearwaterBase(DenaliLinecard):
 
    def createGpio1(self):
       addr = self.pca.i2cAddr(self.gpio1Addr())
-      self.gpio1 = self.standby.newComponent(self.GPIO1_CLS, addr,
-                                             registerCls=GpioRegisterMap)
+      self.gpio1 = self.pca.newComponent(self.GPIO1_CLS, addr=addr,
+                                          registerCls=GpioRegisterMap)
 
 @registerPlatform()
 class Clearwater(ClearwaterBase):

@@ -26,11 +26,11 @@ class DenaliFabric(DenaliCard, Fabric):
    PLATFORM = None
 
    def createGpio1(self):
-      self.gpio1 = self.standby.newComponent(Pca9555, addr=self.pca.i2cAddr(0x20),
-                                             registerCls=Gpio1Registers)
+      self.gpio1 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x20),
+                                         registerCls=Gpio1Registers)
 
    def createPlx(self):
-      self.plx = self.standby.newComponent(PlxPex8700, addr=self.pca.i2cAddr(0x38))
+      self.plx = self.pca.newComponent(PlxPex8700, addr=self.pca.i2cAddr(0x38))
 
    def powerStandbyDomainIs(self, on):
       '''Turn on card Ecbs and fan Ecbs. On Denali fabric, we expect

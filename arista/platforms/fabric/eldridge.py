@@ -51,8 +51,8 @@ class Eldridge(DenaliFabric):
    ]
 
    def createGpio2(self):
-      self.gpio2 = self.standby.newComponent(Pca9555, self.pca.i2cAddr(0x21),
-                                             registerCls=Gpio2Registers)
+      self.gpio2 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x21),
+                                         registerCls=Gpio2Registers)
 
    def createAsics(self):
       asicAddrs = [self.slot.pciAddr(bus=bus) for bus in self.ASIC_BUSES]

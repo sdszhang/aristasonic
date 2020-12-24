@@ -160,7 +160,8 @@ class Component(object):
       else:
          output["inventory"] = None
       if ctx.recursive:
-         output["components"] = [c.genDiag(ctx) for c in self.iterComponents()]
+         output["components"] = [c.genDiag(ctx) for c in
+                                 self.iterComponents(recursive=False)]
       else:
          output["components"] = []
       return output
