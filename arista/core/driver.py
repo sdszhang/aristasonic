@@ -111,11 +111,19 @@ class Driver(object):
    def __diag__(self, ctx): # pylint: disable=unused-argument
       return {}
 
+   def __try_diag__(self, ctx):
+      try:
+         return self.__diag__(ctx)
+      except Exception: # pylint: disable=broad-except
+         if not ctx.safe:
+            raise
+         return {}
+
    def genDiag(self, ctx):
       return {
          "version": 1,
          "name": self.__class__.__name__,
-         "data": self.__diag__(ctx),
+         "data": self.__try_diag__(ctx),
       }
 
    def __str__(self):

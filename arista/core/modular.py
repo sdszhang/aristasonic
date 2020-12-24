@@ -26,8 +26,7 @@ class Modular(Sku):
 
    def genDiag(self, ctx):
       if ctx.performIo:
-         self.loadLinecards()
-         self.loadFabrics()
+         self.loadAll()
 
       return {
          "version": 1,

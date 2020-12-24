@@ -147,23 +147,35 @@ class Component(object):
    def __diag__(self, ctx):
       return {}
 
+   def __try_diag__(self, ctx):
+      try:
+         return self.__diag__(ctx)
+      except Exception: # pylint: disable=broad-except
+         if not ctx.safe:
+            raise
+         return {}
+
    def genDiag(self, ctx):
       output = {
          "version": 1,
          "name": self.__class__.__name__,
-         "data": self.__diag__(ctx),
+         "data": self.__try_diag__(ctx),
          "drivers": [d.genDiag(ctx) for d in self.drivers.values()],
+         "components": [],
+         "inventory": None,
       }
+
       if self.inventory not in ctx.inventories:
-         output["inventory"] = self.inventory.__diag__(ctx)
+         try:
+            output["inventory"] = self.inventory.__diag__(ctx)
+         except Exception: # pylint: disable=broad-except
+            if not ctx.safe:
+               raise
          ctx.inventories.add(self.inventory)
-      else:
-         output["inventory"] = None
+
       if ctx.recursive:
          output["components"] = [c.genDiag(ctx) for c in
                                  self.iterComponents(recursive=False)]
-      else:
-         output["components"] = []
       return output
 
 class PciComponent(Component):

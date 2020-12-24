@@ -12,15 +12,14 @@ class DiagArgs(object):
       self.recursive = recursive
       self.pyshell = pyshell
       self.pretty = pretty
+      self.safe = True
 
 @registerAction(dumpParser)
 def doDump(ctx, args):
    args = DiagArgs()
    skus = []
    if isinstance(ctx.platform, Supervisor):
-      chassis = ctx.platform.getChassis()
-      chassis.loadAll()
-      skus.append(chassis)
+      skus.append(ctx.platform.getChassis())
    else:
       skus.append(ctx.platform)
    doCommonDiagCli(skus, args)
