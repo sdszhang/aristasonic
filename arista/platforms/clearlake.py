@@ -59,7 +59,13 @@ class Clearlake(FixedSystem):
          'watchdog': UcdGpi(3),
          'powerloss': UcdGpi(7),
       })
-      scd.newComponent(Ds125Br, scd.i2cAddr(6, 0xff), priority=Priority.BACKGROUND)
+
+      scd.newComponent(Ds125Br, addr=scd.i2cAddr(6, 0x58), # qsfp36
+                       amplitude=[0xaa, 0xaa, 0xaa, 0xaa, 0xa9, 0xa9, 0xa9, 0xaa])
+      scd.newComponent(Ds125Br, addr=scd.i2cAddr(6, 0x59), # qsfp35
+                       amplitude=[0xaa, 0xaa, 0xaa, 0xaa, 0xa8, 0xa9, 0xa8, 0xa9])
+      scd.newComponent(Ds125Br, addr=scd.i2cAddr(6, 0x5a)) # sfp1-2
+      scd.newComponent(Ds125Br, addr=scd.i2cAddr(6, 0x5b)) # sfp3-4
 
       scd.addSmbusMasterRange(0x8000, 6)
 
