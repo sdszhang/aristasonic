@@ -1,13 +1,13 @@
 import time
 
+from ..core.component import Priority
+from ..core.component.i2c import I2cComponent
 from ..core.log import getLogger
 from ..core.register import Register, RegisterMap
 
 from ..drivers.cpld import SysCpldI2cDriver
 
 from ..inventory.powercycle import PowerCycle
-
-from .common import I2cComponent
 
 logging = getLogger(__name__)
 
@@ -23,44 +23,38 @@ class SysCpldPowerCycle(PowerCycle):
 
    def powerCycle(self):
       logging.info("Initiating powercycle through CPLD")
-      self.parent.drivers['SysCpldI2cDriver'].regs.powerCycle(0xDE)
+      self.parent.driver.regs.powerCycle(0xDE)
       logging.info("Powercycle triggered from CPLD")
 
 class SysCpld(I2cComponent):
-   def __init__(self, addr, drivers=None, registerCls=None, **kwargs):
-      self.powerCycles = []
-      if not drivers:
-         drivers = [SysCpldI2cDriver(addr=addr, registerCls=registerCls)]
-      super(SysCpld, self).__init__(addr=addr, drivers=drivers, **kwargs)
+   DRIVER = SysCpldI2cDriver
+   PRIORITY = Priority.DEFAULT
+
+   def addPowerCycle(self):
+      return self.inventory.addPowerCycle(SysCpldPowerCycle(self))
 
    def createPowerCycle(self):
-      powerCycle = SysCpldPowerCycle(self)
-      self.inventory.addPowerCycle(powerCycle)
-      return powerCycle
-
-   def getPowerCycles(self):
-      return self.powerCycles
+      # TODO: deprecate this method in favor of addPowerCycle
+      return self.addPowerCycle()
 
    def resetScd(self, sleep=1, wait=True):
-      driver = self.drivers['SysCpldI2cDriver']
-      state = driver.regs.scdReset()
+      state = self.driver.regs.scdReset()
       logging.debug('%s: scd reset: %s', self, state)
 
-      driver.regs.scdReset(1)
+      self.driver.regs.scdReset(1)
       if wait:
          time.sleep(sleep) # could be lower
-      driver.regs.scdReset(0)
+      self.driver.regs.scdReset(0)
 
    def powerCycleOnSeu(self, value=None):
-      return self.drivers['SysCpldI2cDriver'].regs.powerCycleOnCrc(value)
+      return self.driver.regs.powerCycleOnCrc(value)
 
    def hasSeuError(self):
-      return self.drivers['SysCpldI2cDriver'].regs.scdCrcError()
+      return self.driver.regs.scdCrcError()
 
    def addGpio(self, attr, name=None):
       name = name or attr
-      drv = self.drivers['SysCpldI2cDriver']
-      gpio = drv.getGpio(attr, name=name)
+      gpio = self.driver.getGpio(attr, name=name)
       self.inventory.addGpio(gpio)
       return gpio
 

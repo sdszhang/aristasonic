@@ -4,7 +4,6 @@ from ...core.component.i2c import I2cComponent
 from ...core.log import getLogger
 from ...core.register import Register, RegBitField
 
-from ...drivers.cpld import SysCpldI2cDriver
 from ...drivers.crow import CrowFanCpldKernelDriver
 
 from ..cpld import SysCpld, SysCpldCommonRegisters
@@ -36,10 +35,7 @@ class KoiCpldRegisters(CrowCpldRegisters):
    )
 
 class CrowSysCpld(SysCpld):
-   def __init__(self, addr, drivers=None, registerCls=CrowCpldRegisters, **kwargs):
-      drivers = drivers or [SysCpldI2cDriver(addr=addr, registerCls=registerCls)]
-      super(CrowSysCpld, self).__init__(addr=addr, drivers=drivers,
-                                        registerCls=registerCls, **kwargs)
+   REGISTER_CLS = CrowCpldRegisters
 
 class CrowFanCpld(I2cComponent):
    DRIVER = CrowFanCpldKernelDriver

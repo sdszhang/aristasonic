@@ -88,14 +88,21 @@ class I2cKernelDriver(Driver):
       }
 
 class I2cDevDriver(Driver):
+
+   REGISTER_CLS = None
+
    def __init__(self, name=None, addr=None, registerCls=None, **kwargs):
       super(I2cDevDriver, self).__init__(**kwargs)
       self.bus_ = None
       self.name = name
       self.addr = addr
+      registerCls = registerCls or self.REGISTER_CLS
       self.regs = registerCls(self) if registerCls is not None else None
       # TODO:
       # introduce callback table based on value types used.
+
+   def __str__(self):
+      return '%s(addr=%s)' % (self.__class__.__name__, self.addr)
 
    @property
    def bus(self):

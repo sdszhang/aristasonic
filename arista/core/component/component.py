@@ -6,6 +6,7 @@ class Component(LegacyComponent):
 
    DRIVER = None
    PRIORITY = Priority.DEFAULT
+   REGISTER_CLS = None
 
    def __init__(self, *args, **kwargs):
       # HACK: some refactor is required to get rid of this
@@ -13,6 +14,7 @@ class Component(LegacyComponent):
       if args and 'addr' not in kwargs:
          kwargs['addr'] = args[0]
          args = args[1:]
+      kwargs.setdefault('registerCls', self.REGISTER_CLS)
       drivers = [
          self.DRIVER(**kwargs), # pylint: disable=not-callable
       ]

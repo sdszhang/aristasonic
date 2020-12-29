@@ -25,9 +25,7 @@ class RookCpldRegisters(SysCpldCommonRegisters):
    )
 
 class RookSysCpld(SysCpld):
-   def __init__(self, addr, drivers=None, registerCls=RookCpldRegisters, **kwargs):
-      super(RookSysCpld, self).__init__(addr=addr, drivers=drivers,
-                                        registerCls=registerCls, **kwargs)
+   REGISTER_CLS = RookCpldRegisters
 
 class RookStatusLeds(I2cComponent):
    DRIVER = RookStatusLedKernelDriver
