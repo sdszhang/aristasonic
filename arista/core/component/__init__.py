@@ -158,6 +158,7 @@ class Component(object):
    def genDiag(self, ctx):
       output = {
          "version": 1,
+         "bases": [c.__name__ for c in self.__class__.__mro__[1:-1]],
          "name": self.__class__.__name__,
          "data": self.__try_diag__(ctx),
          "drivers": [d.genDiag(ctx) for d in self.drivers.values()],

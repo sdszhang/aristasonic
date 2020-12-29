@@ -30,6 +30,7 @@ class Modular(Sku):
 
       return {
          "version": 1,
+         "bases": [c.__name__ for c in self.__class__.__mro__[1:-1]],
          "name": self.__class__.__name__,
          "supervisors": [s.genDiag(ctx) for s in self.iterSupervisors()],
          "linecardSlots": [s.genDiag(ctx) for s in self.iterLinecards()],
