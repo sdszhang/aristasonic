@@ -1,29 +1,27 @@
 
-from .common import I2cComponent
+from ..core.component import Priority
+from ..core.component.i2c import I2cComponent
 from ..core.log import getLogger
 from ..core.prefdl import Prefdl
 from ..core.utils import JsonStoredData
+
 from ..drivers.eeprom import SeepromI2cDevDriver, EepromKernelDriver
 
 logging = getLogger(__name__)
 
 class I2cEeprom(I2cComponent):
-   def __init__(self, addr, name=None, drivers=None, **kwargs):
-      drivers = drivers or [EepromKernelDriver(addr=addr)]
-      super(I2cEeprom, self).__init__(addr=addr, drivers=drivers, **kwargs)
-      self.name = name
+   DRIVER = EepromKernelDriver
+   PRIORITY = Priority.DEFAULT
 
    def read(self):
-      return self.drivers['EepromKernelDriver'].read()
+      return self.driver.read()
 
 class I2cSeeprom(I2cComponent):
-   def __init__(self, addr, name=None, drivers=None, **kwargs):
-      drivers = drivers or [SeepromI2cDevDriver(addr=addr)]
-      super(I2cSeeprom, self).__init__(addr=addr, drivers=drivers, **kwargs)
-      self.name = name
+   DRIVER = SeepromI2cDevDriver
+   PRIORITY = Priority.DEFAULT
 
    def read(self):
-      return self.drivers['SeepromI2cDevDriver'].read()
+      return self.driver.read()
 
 class PrefdlBase(object):
    def prefdl(self):
