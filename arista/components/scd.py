@@ -15,7 +15,6 @@ from ..core.types import I2cAddr, MdioClause, MdioSpeed
 from ..core.utils import FileWaiter, MmapResource, simulateWith, writeConfig
 from ..core.log import getLogger
 
-from ..drivers.i2c import I2cKernelDriver
 from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
 from ..drivers.sysfs import (
    LedSysfsDriver,
@@ -30,6 +29,7 @@ from ..inventory.xcvr import Xcvr
 from ..inventory.reset import Reset
 
 from .common import PciComponent, I2cComponent
+from .xcvr import Sfp, Qsfp, Osfp
 
 logging = getLogger(__name__)
 
@@ -387,7 +387,7 @@ class Scd(PciComponent):
          gpioDict[scdGpio.getName()] = scdGpio
       return gpioDict
 
-   def _addXcvr(self, xcvrId, xcvrType, bus, interruptLine, leds=None, drvName=None):
+   def _addXcvr(self, xcvrId, xcvrType, bus, interruptLine, leds=None, cls=None):
       addr = self.i2cAddr(bus, Xcvr.ADDR, t=1, datr=0, datw=3, ed=0)
       reset = None
       if xcvrType != Xcvr.SFP:
@@ -397,8 +397,7 @@ class Scd(PciComponent):
                       driver=self.drivers['XcvrSysfsDriver'],
                       addr=addr, interruptLine=interruptLine,
                       reset=reset, leds=leds)
-      self.newComponent(I2cComponent, addr=addr,
-                        drivers=[I2cKernelDriver(name=drvName, addr=addr)])
+      self.newComponent(cls, addr=addr)
       self.xcvrs.append(xcvr)
       self.inventory.addXcvr(xcvr)
       return xcvr
@@ -406,17 +405,17 @@ class Scd(PciComponent):
    def addOsfp(self, addr, xcvrId, bus, interruptLine=None, leds=None):
       self.osfps += [(addr, xcvrId)]
       return self._addXcvr(xcvrId, Xcvr.OSFP, bus, interruptLine, leds=leds,
-                           drvName='optoe1')
+                           cls=Osfp)
 
    def addQsfp(self, addr, xcvrId, bus, interruptLine=None, leds=None):
       self.qsfps += [(addr, xcvrId)]
       return self._addXcvr(xcvrId, Xcvr.QSFP, bus, interruptLine, leds=leds,
-                           drvName='optoe1')
+                           cls=Qsfp)
 
    def addSfp(self, addr, xcvrId, bus, interruptLine=None, leds=None):
       self.sfps += [(addr, xcvrId)]
       return self._addXcvr(xcvrId, Xcvr.SFP, bus, interruptLine, leds=leds,
-                           drvName='optoe2')
+                           cls=Sfp)
 
    def addFan(self, desc):
       return self.inventory.addFan(self.driver.getFan(desc))
