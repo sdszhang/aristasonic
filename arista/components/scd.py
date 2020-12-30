@@ -9,6 +9,8 @@ from ..accessors.led import LedImpl
 from ..accessors.reset import ResetImpl
 from ..accessors.xcvr import XcvrImpl
 
+from ..core.component import Priority
+from ..core.component.i2c import I2cComponent
 from ..core.config import Config
 from ..core.driver import KernelDriver
 from ..core.types import I2cAddr, MdioClause, MdioSpeed
@@ -28,7 +30,7 @@ from ..inventory.watchdog import Watchdog
 from ..inventory.xcvr import Xcvr
 from ..inventory.reset import Reset
 
-from .common import PciComponent, I2cComponent
+from .common import PciComponent
 from .xcvr import Sfp, Qsfp, Osfp
 
 logging = getLogger(__name__)
@@ -491,11 +493,9 @@ class Scd(PciComponent):
 class I2cScd(I2cComponent):
    # XXX: This class should probably be part of the Scd but since it's already a pci
    #      device, another class is necessary until we find a better model.
-   def __init__(self, addr, drivers=None, registerCls=None, **kwargs):
-      if not drivers:
-         drivers = [ScdI2cDevDriver(addr=addr, registerCls=registerCls)]
-      super(I2cScd, self).__init__(addr=addr, drivers=drivers, **kwargs)
+
+   DRIVER = ScdI2cDevDriver
+   PRIORITY = Priority.DEFAULT
 
    def __getattr__(self, key):
-      driver = self.drivers['ScdI2cDevDriver']
-      return getattr(driver.regs, key)
+      return getattr(self.driver.regs, key)
