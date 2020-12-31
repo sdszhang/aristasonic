@@ -61,8 +61,8 @@ class InventoryInterface(object):
    def genDiag(self, ctx):
       desc = getattr(self, 'desc', None)
       return {
-         "version": 1,
-         "bases": [c.__name__ for c in self.__class__.__mro__[1:-1]],
+         "version": 2,
+         "classes": [c.__name__ for c in self.__class__.__mro__[:-1]],
          "name": self.__class__.__name__,
          "desc": desc.__diag__(ctx) if desc else {},
          "data": self.__diag__(ctx),

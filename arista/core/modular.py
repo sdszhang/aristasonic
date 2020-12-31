@@ -28,16 +28,17 @@ class Modular(Sku):
       if ctx.performIo:
          self.loadAll()
 
-      return {
-         "version": 1,
-         "bases": [c.__name__ for c in self.__class__.__mro__[1:-1]],
-         "name": self.__class__.__name__,
+      data = super(Modular, self).genDiag(ctx)
+      data.update({
          "supervisors": [s.genDiag(ctx) for s in self.iterSupervisors()],
-         "linecardSlots": [s.genDiag(ctx) for s in self.iterLinecards()],
-         "fabricSlots": [s.genDiag(ctx) for s in self.iterFabrics()],
+         "linecardSlots": [s.genDiag(ctx) for s in
+                           self.iterLinecards(presentOnly=False, key=lambda s: s)],
+         "fabricSlots": [s.genDiag(ctx) for s in
+                         self.iterFabrics(presentOnly=False, key=lambda s: s)],
          "fanSlots": [s.genDiag(ctx) for s in self.iterFans()],
          "psuSlots": [s.genDiag(ctx) for s in self.iterPsus()],
-      }
+      })
+      return data
 
    def iterCards(self):
       for linecard in self.iterLinecards():
@@ -101,13 +102,13 @@ class Modular(Sku):
             continue
          yield item
 
-   def iterLinecards(self, presentOnly=True):
+   def iterLinecards(self, presentOnly=True, key=lambda s: s.card):
       return self._iterSlots(self.active.linecardSlots, self.NUM_LINECARDS,
-                             presentOnly=presentOnly, key=lambda s: s.card)
+                             presentOnly=presentOnly, key=key)
 
-   def iterFabrics(self, presentOnly=True):
+   def iterFabrics(self, presentOnly=True, key=lambda s: s.card):
       return self._iterSlots(self.active.fabricSlots, self.NUM_FABRICS,
-                             presentOnly=presentOnly, key=lambda s: s.card)
+                             presentOnly=presentOnly, key=key)
 
    def iterFans(self, presentOnly=True):
       return self._iterSlots(self.active.fanSlots, self.NUM_FANS,

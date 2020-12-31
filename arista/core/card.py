@@ -1,7 +1,7 @@
 
-from .component import Priority
+from .component import Priority, SlotComponent
 from .exception import UnknownPlatformError
-from .inventory import Inventory, Slot
+from .inventory import Inventory
 from .log import getLogger
 from .platform import getPlatformCls
 from .sku import Sku
@@ -76,8 +76,9 @@ class Card(Sku):
       else:
          return '%s(slotId=%d)' % (self.__class__.__name__, self.slot.slotId)
 
-class CardSlot(Slot):
+class CardSlot(SlotComponent):
    def __init__(self, parent, slotId):
+      super(CardSlot, self).__init__()
       self.slotId = slotId
       self.parent = parent
       self.card = None
@@ -115,3 +116,17 @@ class CardSlot(Slot):
 
       self.card = card
       self.card.refresh()
+
+   def genDiag(self, ctx):
+      data = super(CardSlot, self).genDiag(ctx)
+      try:
+         eeprom = self.getEeprom() if ctx.performIo else None
+      except Exception: # pylint: disable=broad-except
+         eeprom = {}
+      data.update({
+         'eeprom': eeprom,
+         'present': self.getPresence(),
+         'slotId': self.slotId,
+         'card': self.card.genDiag(ctx) if self.card else None,
+      })
+      return data

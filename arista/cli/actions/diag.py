@@ -10,6 +10,7 @@ def doCommonDiagCli(components, args):
    diagCtx = DiagContext(
       performIo=not args.noIo,
       recursive=args.recursive,
+      safe=args.safe,
    )
    diagInfo = []
 

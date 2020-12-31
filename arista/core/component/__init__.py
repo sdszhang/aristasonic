@@ -36,7 +36,9 @@ class Component(object):
       self.__dict__.update(kwargs)
 
    def __str__(self):
-      kwargs = ['%s=%s' % (k, v) for k, v in self.__dict__.items()]
+      attrs = ['addr', 'priority']
+      kwargs = ['%s=%s' % (k, v) for k, v in self.__dict__.items()
+                if k in attrs and v is not None]
       return '%s(%s)' % (self.__class__.__name__, ', '.join(kwargs))
 
    def addComponents(self, components):
@@ -157,16 +159,17 @@ class Component(object):
 
    def genDiag(self, ctx):
       output = {
-         "version": 1,
-         "bases": [c.__name__ for c in self.__class__.__mro__[1:-1]],
-         "name": self.__class__.__name__,
+         "version": 2,
+         "classes": [c.__name__ for c in self.__class__.__mro__[:-1]],
+         "name": str(self),
          "data": self.__try_diag__(ctx),
          "drivers": [d.genDiag(ctx) for d in self.drivers.values()],
          "components": [],
          "inventory": None,
       }
 
-      if self.inventory not in ctx.inventories:
+      if isinstance(self.inventory, Inventory) and \
+         self.inventory not in ctx.inventories:
          try:
             output["inventory"] = self.inventory.__diag__(ctx)
          except Exception: # pylint: disable=broad-except
