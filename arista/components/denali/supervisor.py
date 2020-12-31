@@ -67,25 +67,24 @@ class DenaliSupervisor(Supervisor):
       ]
 
    def createPciSwitch(self):
-      ports = {}
+      self.pciSwitch = self.newComponent(self.pciSwitchCls,
+                                         addr=PciAddr(bus=0x05, device=0x00, func=1))
 
       for idx, portDesc in enumerate(self.LINECARD_PORTS):
-         portAddr = PciAddr(bus=0x06, device=0x7 + idx)
-         cardAddr = PciAddr(bus=0x46 + 0xb * idx)
-         ports[LC_BASE_SLOTID + idx] = MicrosemiPort(portDesc, addr=portAddr,
-                                                     upstreamAddr=cardAddr)
+         self.pciSwitch.addPciPort(
+            portId=LC_BASE_SLOTID + idx,
+            desc=portDesc,
+            addr=PciAddr(bus=0x06, device=0x7 + idx),
+            upstreamAddr=PciAddr(bus=0x46 + 0xb * idx),
+         )
 
       for idx, portDesc in enumerate(self.FABRIC_PORTS):
-         portAddr = PciAddr(bus=0x06, device=idx)
-         cardAddr = PciAddr(bus=0x07 + 0xa * idx)
-         ports[FC_BASE_SLOTID + idx] = MicrosemiPort(portDesc, addr=portAddr,
-                                                     upstreamAddr=cardAddr)
-
-      self.pciSwitch = self.newComponent(self.pciSwitchCls,
-                                         # XXX: confirm that this is true for all
-                                         # Denali.
-                                         addr=PciAddr(bus=0x05, device=0x00, func=1),
-                                         ports=ports)
+         self.pciSwitch.addPciPort(
+            portId=FC_BASE_SLOTID + idx,
+            desc=portDesc,
+            addr=PciAddr(bus=0x06, device=idx),
+            upstreamAddr=PciAddr(bus=0x07 + 0xa * idx),
+         )
 
    def createLinecards(self):
       for lcId in range(self.linecardCount):

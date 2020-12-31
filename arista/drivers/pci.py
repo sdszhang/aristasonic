@@ -103,10 +103,10 @@ class PciConfig(object):
 
 class PciSwitchPortDriver(Driver):
    def __init__(self, addr=None, upstreamAddr=None, **kwargs):
+      super(PciSwitchPortDriver, self).__init__(**kwargs)
       self.addr = addr
       self.upstreamAddr = upstreamAddr
       self.config = PciConfig(addr)
-      super(PciSwitchPortDriver, self).__init__(**kwargs)
 
    def upstreamPortExists(self):
       uStreamPath = os.path.join(self.addr.getSysfsPath(), str(self.upstreamAddr))

@@ -2,8 +2,8 @@
 import os
 
 from ..core.driver import Driver
-from ..core.types import PciAddr
 from ..core.utils import MmapResource
+
 from ..libs.wait import waitFor
 
 class MicrosemiConsts(object):
@@ -33,15 +33,24 @@ class MicrosemiMRPC(MCRPC_P2PSubcommand):
    MRPC_LNKSTAT = 28
 
 class MicrosemiDriver(MicrosemiConsts, MicrosemiMRPC, MicrosemiGAS, Driver):
-   def __init__(self, addr, **kwargs):
-      super(MicrosemiDriver, self).__init__(addr=addr, **kwargs)
+   def __init__(self, addr=None, **kwargs):
+      # TODO: refactor this driver to share map/pci primitives with others
+      #       something like PciUserDriver or PciDevDriver as base instead of Driver
+      super(MicrosemiDriver, self).__init__(**kwargs)
+      self.addr = addr
       self.microsemiBar = 0
-      self.mapResource()
+      self.resource_ = None
+
+   @property
+   def resource(self):
+      if self.resource_ is None:
+         self.mapResource()
+      return self.resource_
 
    def mapResource(self):
       p = os.path.join(self.addr.getSysfsPath(), "resource%d" % self.microsemiBar)
-      self.resource = MmapResource(p)
-      self.resource.map()
+      self.resource_ = MmapResource(p)
+      self.resource_.map()
 
    def write32(self, offset, value):
       return self.resource.write32(offset, value)
