@@ -197,8 +197,8 @@ class PsuModel(object):
                ident = copy.deepcopy(ident)
                ident.metadata = detector.getMetadata()
                return ident
-      except Exception: # pylint: disable=broad-except
-         logging.error("something happened while trying to detect the psu")
+      except Exception as e: # pylint: disable=broad-except
+         logging.error("something happened while trying to detect the psu: %s", e)
       return None
 
    @classmethod

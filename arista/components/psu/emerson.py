@@ -32,3 +32,9 @@ class DS750PED(EmersonPsu):
    IDENTIFIERS = [
       PsuIdent('DS750PED-3', 'PWR-745AC-F', Airflow.FORWARD),
    ]
+
+class CSU500DP3(EmersonPsu):
+   IDENTIFIERS = [
+      PsuIdent('CSU500DP-3', 'PWR-511-AC-RED', Airflow.FORWARD),
+      PsuIdent('CSU500DP-3-001', 'PWR-511-AC-BLUE', Airflow.REVERSE),
+   ]
