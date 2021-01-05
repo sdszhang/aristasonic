@@ -164,7 +164,7 @@ class PsuModel(object):
    PMBUS_ADDR = None
 
    PMBUS_CLS = None
-   DRIVER = 'pmbus'
+   DRIVER = None
    DESCRIPTION = PsuDesc()
 
    AUTODETECT_IPMI = True

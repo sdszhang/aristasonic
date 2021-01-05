@@ -21,6 +21,15 @@ class PsuPmbusDetect(I2cDevDriver):
       self.date_ = None
       self.serial_ = None
 
+      self._prepare()
+
+   def _prepare(self):
+      try:
+         # init device on page 0
+         self.write_byte_data(0x00, 0x00)
+      except Exception: # pylint: disable=broad-except
+         pass
+
    def id(self):
       if self.id_ is None:
          self.id_ = self.read_block_data_str(self.MFR_ID)

@@ -94,17 +94,20 @@ class DPS1900AB(DeltaPsu):
    ]
 
 class ECD16020102(DeltaPsu):
+   DRIVER = 'dps800'
    IDENTIFIERS = [
       PsuIdent('ECD16020102', 'PWR-3001-AC-RED', Airflow.FORWARD),
    ]
 
 class ECD26020037(DeltaPsu):
+   DRIVER = 'dps800'
    IDENTIFIERS = [
       PsuIdent('ECD26020037', 'PWR-3001-DC-RED', Airflow.FORWARD),
    ]
 
 class ECD16020097(DeltaPsu):
    PMBUS_ADDR = 0x40
+   DRIVER = 'dps800'
    IDENTIFIERS = [
       PsuIdent('ECD16020097', 'PWR-D1-3041-AC-BLUE', Airflow.REVERSE),
    ]
