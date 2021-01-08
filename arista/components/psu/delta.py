@@ -59,6 +59,7 @@ class DPS750AB(DeltaPsu):
 class DPS1500AB(DeltaPsu):
    IDENTIFIERS = [
       PsuIdent('DPS-1500AB-7 A', 'PWR-1511-AC-RED', Airflow.FORWARD),
+      PsuIdent('DPS-1500AB-9 A', 'PWR-1511-DC-RED', Airflow.FORWARD),
    ]
 
 class DPS1600AB(DeltaPsu):
