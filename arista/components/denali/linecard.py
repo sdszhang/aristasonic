@@ -86,6 +86,9 @@ class DenaliLinecard(DenaliCard, Linecard):
          self.provisionIs(lcpuCtx.provision)
          self.populateSramFromPrefdl()
          self.syscpld.gmacLowPower(False)
+         # At high temp, toggling GMAC too soon after low power might prevent it from
+         # coming up
+         time.sleep(0.1)
          self.syscpld.supGmacReset(False)
          self.syscpld.lcpuGmacReset(False)
          self.syscpld.lcpuDisableSet(False)
