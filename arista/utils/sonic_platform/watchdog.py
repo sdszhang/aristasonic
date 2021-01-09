@@ -10,18 +10,31 @@ except ImportError as e:
 class Watchdog(WatchdogBase):
    """
    Platform-specific watchdog class for interfacing with a hardware watchdog module
-
-   Unimplemented methods:
-   - get_name
-   - get_presence
-   - get_model
-   - get_serial
-   - get_status
-   - get_remaining_time
    """
 
    def __init__(self, watchdog):
       self._watchdog = watchdog
+
+   def get_name(self):
+      return "watchdog"
+
+   def get_model(self):
+      return "N/A"
+
+   def get_presence(self):
+      return True
+
+   def get_serial(self):
+      return "N/A"
+
+   def get_status(self):
+      return True
+
+   def get_position_in_parent(self):
+      return -1
+
+   def is_replaceable(self):
+      return False
 
    def arm(self, seconds):
       if not self._watchdog.arm(seconds * 100):
@@ -30,6 +43,9 @@ class Watchdog(WatchdogBase):
 
    def disarm(self):
       return self._watchdog.stop()
+
+   def get_remaining_time(self):
+      return int(self._watchdog.status()['remainingTime'] / 100)
 
    def is_armed(self):
       return self._watchdog.status()['enabled']
