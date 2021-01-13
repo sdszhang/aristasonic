@@ -7,6 +7,7 @@ from ..core.utils import incrange
 from ..components.common import SwitchChip
 from ..components.dpm import Ucd90160, Ucd90320, UcdGpi
 from ..components.phy.babbage import Babbage
+from ..components.phy.b52 import B52
 from ..components.psu.delta import DPS1500AB, DPS1600CB, DPS500AB
 from ..components.psu.liteon import PS2102
 from ..components.scd import Scd
@@ -22,6 +23,8 @@ class Smartsville(FixedSystem):
 
    SID = ['Smartsville', 'SmartsvilleSsd']
    SKU = ['DCS-7280CR3-32P4', 'DCS-7280CR3-32P4-M']
+
+   PHY = Babbage
 
    def __init__(self):
       super(Smartsville, self).__init__()
@@ -155,7 +158,7 @@ class Smartsville(FixedSystem):
          reset = scd.addReset(ResetGpio(0x4000, 3 + i, False,
                                         'phy%d_reset' % phyId))
          mdios = [scd.addMdio(i, 0), scd.addMdio(i, 1)]
-         phy = Babbage(phyId, mdios, reset=reset)
+         phy = self.PHY(phyId, mdios, reset=reset)
          self.inventory.addPhy(phy)
 
 @registerPlatform()
@@ -175,5 +178,11 @@ class SmartsvilleDDBK(Smartsville):
 
 @registerPlatform()
 class SmartsvilleBkMs(Smartsville):
-   SID = ['SmartsvilleBkMs']
-   SKU = ['DCS-7280CR3MK-32P4']
+   SID = ['SmartsvilleBkMs', 'SmartvilleBkMsTpm']
+   SKU = ['DCS-7280CR3MK-32P4', 'DCS-7280CR3MK-32P4S']
+   PHY = B52
+
+@registerPlatform()
+class SmartsvillDDBkMs(SmartsvilleBkMs):
+   SID = ['SmartsvilleDDBkMs', 'SmartsvilleDDBkMsTpm']
+   SKU = ['DCS-7280CR3MK-32D4', 'DCS-7280CR3MK-32D4S']
