@@ -1,8 +1,7 @@
-from ..core.component import Priority
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr, ResetGpio
+from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident2 import Trident2
@@ -14,6 +13,7 @@ from ..components.scd import Scd
 from ..components.ds125br import Ds125Br
 
 from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
 from .cpu.crow import CrowCpu
@@ -77,7 +77,7 @@ class Clearlake(FixedSystem):
          (0x6090, 'beacon'),
       ])
 
-      scd.addReset(ResetGpio(0x4000, 0, False, 'switch_chip_reset'))
+      scd.addReset(ResetDesc('switch_chip_reset', addr=0x4000, bit=0))
 
       scd.addGpios([
          GpioDesc("psu1_present", 0x5000, 0, ro=True),
@@ -101,49 +101,42 @@ class Clearlake(FixedSystem):
             ],
          )
 
-      addr = 0x6100
-      for xcvrId in self.qsfp40gAutoRange:
-         leds = []
-         for laneId in incrange(1, 4):
-            name = "qsfp%d_%d" % (xcvrId, laneId)
-            leds.append((addr, name))
-            addr += 0x10
-         scd.addLedGroup("qsfp%d" % xcvrId, leds)
-
-      addr = 0x6720
-      for xcvrId in self.qsfp40gOnlyRange:
-         name = "qsfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x30 if xcvrId % 2 else 0x50
-
-      addr = 0x6900
-      for xcvrId in self.sfpRange:
-         name = "sfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x10
-
       intrRegs = [
          scd.createInterrupt(addr=0x3000, num=0),
          scd.createInterrupt(addr=0x3030, num=1),
       ]
 
-      addr = 0x5010
-      bus = 8
-      for xcvrId in self.allQsfps:
-         name = 'qsfp%d' % xcvrId
-         intr = intrRegs[1].getInterruptBit(name, xcvrId - 5)
-         scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
+      scd.addQsfpSlotBlock(
+         qsfpRange=self.qsfp40gAutoRange,
+         addr=0x5010,
+         bus=8,
+         ledAddr=0x6100,
+         ledLanes=4,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 1,
+         intrBitFn=lambda xcvrId: xcvrId - 5,
+         isHwLpModeAvail=False
+      )
 
-      addr = 0x5210
-      bus = 40
-      for xcvrId in sorted(self.sfpRange):
-         scd.addSfp(addr, xcvrId, bus,
-                    leds=scd.inventory.getLedGroup('sfp%d' % xcvrId))
-         addr += 0x10
-         bus += 1
+      scd.addQsfpSlotBlock(
+         qsfpRange=self.qsfp40gOnlyRange,
+         addr=0x5190,
+         bus=32,
+         ledAddr=0x6720,
+         ledAddrOffsetFn=lambda xcvrId: 0x30 if xcvrId % 2 else 0x50,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 1,
+         intrBitFn=lambda xcvrId: xcvrId - 5,
+         isHwLpModeAvail=False
+      )
+
+      scd.addSfpSlotBlock(
+         sfpRange=self.sfpRange,
+         addr=0x5210,
+         bus=40,
+         ledAddr=0x6900
+      )
+
 
 @registerPlatform()
 class ClearlakePlus(Clearlake):

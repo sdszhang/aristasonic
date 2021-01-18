@@ -2,7 +2,7 @@ from ..core.fan import FanSlot
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr, ResetGpio
+from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident2 import Trident2
@@ -17,6 +17,7 @@ from ..components.scd import Scd
 from ..descs.fan import FanDesc, FanPosition
 from ..descs.led import LedDesc, LedColor
 from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
 @registerPlatform()
@@ -118,39 +119,38 @@ class Cloverdale(FixedSystem):
       scd.addSmbusMasterRange(0x8000, 5)
 
       scd.addResets([
-         ResetGpio(0x4000, 0, False, 'switch_chip_reset'),
-         ResetGpio(0x4000, 2, False, 'phy1_reset'),
-         ResetGpio(0x4000, 3, False, 'phy2_reset'),
-         ResetGpio(0x4000, 4, False, 'phy3_reset'),
-         ResetGpio(0x4000, 5, False, 'phy4_reset'),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=0),
+         ResetDesc('phy1_reset', addr=0x4000, bit=2),
+         ResetDesc('phy2_reset', addr=0x4000, bit=3),
+         ResetDesc('phy3_reset', addr=0x4000, bit=4),
+         ResetDesc('phy4_reset', addr=0x4000, bit=5),
       ])
-
-      addr = 0x6100
-      for xcvrId in self.qsfp40gAutoRange:
-         leds = []
-         for laneId in incrange(1, 4):
-            name = "qsfp%d_%d" % (xcvrId, laneId)
-            leds.append((addr, name))
-            addr += 0x10
-         scd.addLedGroup("qsfp%d" % xcvrId, leds)
-
-      addr = 0x6720
-      for xcvrId in self.qsfp40gOnlyRange:
-         name = "qsfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x30 if xcvrId % 2 else 0x50
 
       intrRegs = [
          scd.createInterrupt(addr=0x3000, num=0),
          scd.createInterrupt(addr=0x3030, num=1),
       ]
 
-      addr = 0x5010
-      bus = 8
-      for xcvrId in self.allQsfps:
-         name = 'qsfp%d' % xcvrId
-         intr = intrRegs[1].getInterruptBit(name, xcvrId - 1)
-         scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
+      scd.addQsfpSlotBlock(
+         qsfpRange=self.qsfp40gAutoRange,
+         addr=0x5010,
+         bus=8,
+         ledAddr=0x6100,
+         ledLanes=4,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 1,
+         intrBitFn=lambda xcvrId: xcvrId - 1,
+         isHwLpModeAvail=False
+      )
+
+      scd.addQsfpSlotBlock(
+         qsfpRange=self.qsfp40gOnlyRange,
+         addr=0x5190,
+         bus=32,
+         ledAddr=0x6720,
+         ledAddrOffsetFn=lambda xcvrId: 0x30 if xcvrId % 2 else 0x50,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 1,
+         intrBitFn=lambda xcvrId: xcvrId - 1,
+         isHwLpModeAvail=False
+      )

@@ -1,7 +1,7 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr, ResetGpio
+from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk import Tomahawk
@@ -13,6 +13,7 @@ from ..components.psu.artesyn import DS495SPE
 from ..components.scd import Scd
 
 from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
 from .cpu.crow import CrowCpu
@@ -71,8 +72,8 @@ class Upperlake(FixedSystem):
       ])
 
       scd.addResets([
-         ResetGpio(0x4000, 1, False, 'switch_chip_reset'),
-         ResetGpio(0x4000, 2, False, 'switch_chip_pcie_reset'),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=1),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=2)
       ])
 
       scd.addGpios([
@@ -106,43 +107,24 @@ class Upperlake(FixedSystem):
             ],
          )
 
-      addr = 0x6100
-      for xcvrId in self.sfpRange:
-         name = "sfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x10
-
-      addr = 0x6140
-      for xcvrId in self.qsfp100gRange:
-         leds = []
-         for laneId in incrange(1, 4):
-            name = "qsfp%d_%d" % (xcvrId, laneId)
-            leds.append((addr, name))
-            addr += 0x10
-         scd.addLedGroup("qsfp%d" % xcvrId, leds)
-
-      addr = 0x5010
-      bus = 8
-      for xcvrId in self.sfpRange:
-         scd.addSfp(addr, xcvrId, bus,
-                    leds=scd.inventory.getLedGroup('sfp%d' % xcvrId))
-         addr += 0x10
-         bus += 1
-
       intrRegs = [
          scd.createInterrupt(addr=0x3000, num=0),
          scd.createInterrupt(addr=0x3030, num=1),
       ]
 
-      addr = 0x5050
-      bus = 16
-      for xcvrId in self.qsfp100gRange:
-         name = 'qsfp%d' % xcvrId
-         intr = intrRegs[1].getInterruptBit(name, xcvrId - 1)
-         scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
+      scd.addSfpSlotBlock(sfpRange=self.sfpRange, addr=0x5010, bus=8, ledAddr=0x6100)
+
+      scd.addQsfpSlotBlock(
+         qsfpRange=self.qsfp100gRange,
+         addr=0x5050,
+         bus=16,
+         ledAddr=0x6140,
+         ledLanes=4,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 1,
+         intrBitFn=lambda xcvrId: xcvrId - 1,
+         isHwLpModeAvail=False
+      )
 
 @registerPlatform()
 class UpperlakePlus(Upperlake):

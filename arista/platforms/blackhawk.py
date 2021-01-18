@@ -1,7 +1,7 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr, ResetGpio
+from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.cpu.rook import TehamaFanCpld
@@ -12,6 +12,7 @@ from ..components.psu.delta import DPS1600AB, DPS1600CB
 from ..components.scd import Scd
 
 from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
 from .cpu.rook import RookCpu
@@ -63,10 +64,10 @@ class BlackhawkO(FixedSystem):
       ])
 
       scd.addResets([
-         ResetGpio(0x4000, 4, False, 'sat_cpld1_reset'),
-         ResetGpio(0x4000, 3, False, 'sat_cpld0_reset'),
-         ResetGpio(0x4000, 2, False, 'switch_chip_reset'),
-         ResetGpio(0x4000, 0, False, 'security_asic_reset'),
+         ResetDesc('sat_cpld1_reset', addr=0x4000, bit=4),
+         ResetDesc('sat_cpld0_reset', addr=0x4000, bit=3),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=2),
+         ResetDesc('security_asic_reset', addr=0x4000, bit=0),
       ])
 
       scd.addGpios([
@@ -78,41 +79,30 @@ class BlackhawkO(FixedSystem):
          GpioDesc("psu1_ac_status", 0x5000, 11, ro=True),
       ])
 
-      addr = 0x6100
-      for xcvrId in self.osfpRange:
-         name = "osfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x40
-
-      addr = 0x6900
-      for xcvrId in self.sfpRange:
-         name = "sfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x40
-
       intrRegs = [
          scd.createInterrupt(addr=0x3000, num=0),
          scd.createInterrupt(addr=0x3030, num=1),
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      addr = 0xA010
-      bus = 16
-      for xcvrId in sorted(self.osfpRange):
-         name = 'osfp%d' % xcvrId
-         intr = intrRegs[1].getInterruptBit(name, xcvrId - 1)
-         scd.addOsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
+      scd.addOsfpSlotBlock(
+         osfpRange=self.osfpRange,
+         addr=0xA010,
+         bus=16,
+         ledAddr=0x6100,
+         ledAddrOffsetFn=lambda x: 0x40,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 1,
+         intrBitFn=lambda xcvrId: xcvrId - 1
+      )
 
-      addr = 0xA210
-      bus = 48
-      for xcvrId in sorted(self.sfpRange):
-         scd.addSfp(addr, xcvrId, bus,
-                    leds=scd.inventory.getLedGroup('sfp%d' % xcvrId))
-         addr += 0x10
-         bus += 1
+      scd.addSfpSlotBlock(
+         sfpRange=self.sfpRange,
+         addr=0xA210,
+         bus=48,
+        ledAddr=0x6900,
+        ledAddrOffsetFn=lambda x: 0x40
+      )
 
       cpu = self.newComponent(RookCpu, fanCpldCls=TehamaFanCpld, mgmtBus=14)
       cpu.cpld.newComponent(Ucd90320, cpu.switchDpmAddr(0x11), causes={

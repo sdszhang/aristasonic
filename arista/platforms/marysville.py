@@ -1,7 +1,7 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr, ResetGpio
+from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident3 import Trident3
@@ -12,6 +12,7 @@ from ..components.scd import Scd
 from ..components.tmp464 import Tmp464
 
 from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
 from .cpu.woodpecker import WoodpeckerCpu
@@ -66,8 +67,8 @@ class Marysville(FixedSystem):
       ])
 
       scd.addResets([
-         ResetGpio(0x4000, 1, False, 'switch_chip_reset'),
-         ResetGpio(0x4000, 2, False, 'switch_chip_pcie_reset'),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=1),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=2)
       ])
 
       scd.addGpios([
@@ -97,46 +98,33 @@ class Marysville(FixedSystem):
             ],
          )
 
-      addr = 0x6100
-      for xcvrId in self.sfpRange:
-         name = "sfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x10
-
-      addr = 0x6400
-      for xcvrId in self.qsfp100gRange:
-         leds = []
-         for laneId in incrange(1, 4):
-            name = "qsfp%d_%d" % (xcvrId, laneId)
-            leds.append((addr, name))
-            addr += 0x10
-         scd.addLedGroup("qsfp%d" % xcvrId, leds)
-
       intrRegs = [
          scd.createInterrupt(addr=0x3000, num=0),
          scd.createInterrupt(addr=0x3030, num=1),
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      addr = 0xa000
-      bus = 8
-      for xcvrId in self.sfpRange:
-         name = 'sfp%d' % xcvrId
-         intr = intrRegs[xcvrId // 33 + 1].getInterruptBit(name, (xcvrId - 1) % 32)
-         scd.addSfp(addr, xcvrId, bus, interruptLine=intr,
-                    leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
+      scd.addSfpSlotBlock(
+         sfpRange=self.sfpRange,
+         addr=0xA000,
+         bus=8,
+         ledAddr=0x6100,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: xcvrId // 33 + 1,
+         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32
+      )
 
-      addr = 0xa300
-      bus = 56
-      for xcvrId in self.qsfp100gRange:
-         name = 'qsfp%d' % xcvrId
-         intr = intrRegs[2].getInterruptBit(name, xcvrId - 33)
-         scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
+      scd.addQsfpSlotBlock(
+         qsfpRange=self.qsfp100gRange,
+         addr=0xA300,
+         bus=56,
+         ledAddr=0x6400,
+         ledLanes=4,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 2,
+         intrBitFn=lambda xcvrId: xcvrId - 33,
+         isHwLpModeAvail=False
+      )
 
 @registerPlatform()
 class Marysville10(Marysville):

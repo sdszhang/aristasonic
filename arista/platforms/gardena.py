@@ -1,7 +1,7 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr, ResetGpio
+from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk2 import Tomahawk2
@@ -12,6 +12,7 @@ from ..components.psu.emerson import DS750PED
 from ..components.scd import Scd
 
 from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
 from .cpu.rook import RookCpu
@@ -45,9 +46,9 @@ class Gardena(FixedSystem):
       scd.addSmbusMasterRange(0x8000, 8, 0x80)
 
       scd.addResets([
-         ResetGpio(0x4000, 0, False, 'switch_chip_reset'),
-         ResetGpio(0x4000, 1, False, 'switch_chip_pcie_reset'),
-         ResetGpio(0x4000, 2, False, 'security_asic_reset'),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=0),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=1),
+         ResetDesc('security_asic_reset', addr=0x4000, bit=2),
       ])
 
       scd.addGpios([
@@ -88,41 +89,27 @@ class Gardena(FixedSystem):
             ],
          )
 
-      addr = 0x6100
-      for xcvrId in self.qsfpRange:
-         leds = []
-         for laneId in incrange(1, 4):
-            name = "qsfp%d_%d" % (xcvrId, laneId)
-            leds.append((addr, name))
-            addr += 0x10
-         scd.addLedGroup("qsfp%d" % xcvrId, leds)
-
-      addr = 0x7100
-      for xcvrId in self.sfpRange:
-         name = "sfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x10
-
       intrRegs = [
          scd.createInterrupt(addr=0x3000, num=0),
          scd.createInterrupt(addr=0x3030, num=1),
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      addr = 0xA010
-      bus = 8
-      for xcvrId in sorted(self.qsfpRange):
-         name = 'qsfp%d' % xcvrId
-         intr = intrRegs[xcvrId // 33 + 1].getInterruptBit(name, (xcvrId - 1) % 32)
-         scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
+      scd.addQsfpSlotBlock(
+         qsfpRange=self.qsfpRange,
+         addr=0xA010,
+         bus=8,
+         ledAddr=0x6100,
+         ledLanes=4,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: xcvrId // 33 + 1,
+         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
+         isHwLpModeAvail=False
+      )
 
-      addr = 0xA410
-      bus = 6
-      for xcvrId in sorted(self.sfpRange):
-         scd.addSfp(addr, xcvrId, bus,
-                    leds=scd.inventory.getLedGroup('sfp%d' % xcvrId))
-         addr += 0x10
-         bus += 1
+      scd.addSfpSlotBlock(
+         sfpRange=self.sfpRange,
+         addr=0xA410,
+         bus=6,
+         ledAddr=0x7100
+      )

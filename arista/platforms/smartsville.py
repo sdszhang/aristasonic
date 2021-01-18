@@ -1,7 +1,7 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr, ResetGpio
+from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.common import SwitchChip
@@ -16,6 +16,7 @@ from ..components.tmp468 import Tmp468
 from .cpu.woodpecker import WoodpeckerCpu
 
 from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
 @registerPlatform()
@@ -73,9 +74,9 @@ class Smartsville(FixedSystem):
       ])
 
       scd.addResets([
-         ResetGpio(0x4000, 0, False, 'switch_chip_reset'),
-         ResetGpio(0x4000, 1, False, 'switch_chip_pcie_reset'),
-         ResetGpio(0x4000, 2, False, 'security_asic_reset'),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=0),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=1),
+         ResetDesc('security_asic_reset', addr=0x4000, bit=2)
       ])
 
       scd.addGpios([
@@ -113,50 +114,43 @@ class Smartsville(FixedSystem):
             ],
          )
 
-      addr = 0x6100
-      for xcvrId in self.qsfpRange:
-         leds = []
-         for laneId in incrange(1, 4):
-            name = "qsfp%d_%d" % (xcvrId, laneId)
-            leds.append((addr, name))
-            addr += 0x10
-         scd.addLedGroup("qsfp%d" % xcvrId, leds)
-
-      addr = 0x6900
-      for xcvrId in self.osfpRange:
-         name = "osfp%d" % xcvrId
-         scd.addLedGroup(name, [(addr, name)])
-         addr += 0x40
-
       intrRegs = [
          scd.createInterrupt(addr=0x3000, num=0),
          scd.createInterrupt(addr=0x3030, num=1),
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      addr = 0xA010
-      bus = 8
-      for index, xcvrId in enumerate(self.qsfpRange):
-         name = 'qsfp%d' % xcvrId
-         intr = intrRegs[1].getInterruptBit(name, index)
-         scd.addQsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
-      for index, xcvrId in enumerate(self.osfpRange):
-         name = 'osfp%d' % xcvrId
-         intr = intrRegs[2].getInterruptBit(name, index)
-         scd.addOsfp(addr, xcvrId, bus, interruptLine=intr,
-                     leds=scd.inventory.getLedGroup(name))
-         addr += 0x10
-         bus += 1
+      scd.addQsfpSlotBlock(
+         qsfpRange=self.qsfpRange,
+         addr=0xA010,
+         bus=8,
+         ledAddr=0x6100,
+         ledLanes=4,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 1,
+         intrBitFn=lambda xcvrId: xcvrId - self.qsfpRange[0],
+         isHwLpModeAvail=False,
+         isHwModSelAvail=False
+      )
+
+      scd.addOsfpSlotBlock(
+         osfpRange=self.osfpRange,
+         addr=0xA210,
+         bus=40,
+         ledAddr=0x6900,
+         ledAddrOffsetFn=lambda x: 0x40,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: 2,
+         intrBitFn=lambda xcvrId: xcvrId - self.osfpRange[0],
+         isHwModSelAvail=False
+      )
 
       scd.addMdioMasterRange(0x9000, 8)
 
       for i in range(0, 8):
          phyId = i + 1
-         reset = scd.addReset(ResetGpio(0x4000, 3 + i, False,
-                                        'phy%d_reset' % phyId))
+         reset = scd.addReset(ResetDesc('phy%d_reset' % phyId, addr=0x4000,
+                                        bit=3 + i))
          mdios = [scd.addMdio(i, 0), scd.addMdio(i, 1)]
          phy = self.PHY(phyId, mdios, reset=reset)
          self.inventory.addPhy(phy)
