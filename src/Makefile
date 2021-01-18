@@ -16,6 +16,8 @@ scd-hwmon-objs += scd-reset.o
 scd-hwmon-objs += scd-smbus.o
 scd-hwmon-objs += scd-uart.o
 scd-hwmon-objs += scd-xcvr.o
+# Add module src path as include dir for tracepoints
+CFLAGS_scd-smbus.o := -I$M
 
 obj-m += crow-fan-driver.o
 obj-m += raven-fan-driver.o

@@ -1600,8 +1600,14 @@ static void scd_mask_interrupts(struct scd_dev_priv *priv) {
    }
 }
 
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 8, 0)
 static pci_ers_result_t scd_error_detected(struct pci_dev *pdev,
                                            enum pci_channel_state state) {
+#else
+static pci_ers_result_t scd_error_detected(struct pci_dev *pdev,
+                                           pci_channel_state_t state) {
+#endif
    dev_err(&pdev->dev, "error detected (state=%d)\n", state);
    return PCI_ERS_RESULT_DISCONNECT;
 }
@@ -1782,16 +1788,25 @@ static struct class scd_class =
 #endif
 };
 
-static const struct file_operations scd_dump_file_ops = {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 6, 0)
+static const struct file_operations scd_dump_proc_ops = {
    .owner = THIS_MODULE,
    .open = scd_dump_open,
    .read = seq_read,
    .llseek = seq_lseek,
    .release = single_release,
 };
+#else
+static const struct proc_ops scd_dump_proc_ops = {
+   .proc_open = scd_dump_open,
+   .proc_read = seq_read,
+   .proc_lseek = seq_lseek,
+   .proc_release = single_release,
+};
+#endif
 
 static struct proc_dir_entry *scd_procfs_create(void) {
-   return proc_create(SCD_MODULE_NAME, 0, NULL, &scd_dump_file_ops);
+   return proc_create(SCD_MODULE_NAME, 0, NULL, &scd_dump_proc_ops);
 }
 
 static void scd_procfs_remove(void) {
@@ -1864,8 +1879,7 @@ scd_lpc_enable(struct pci_dev *pdev)
    }
 
    // map address specified into kernel
-   priv->mem = (void __iomem *)ioremap_nocache((unsigned int)lpc_res_addr,
-                                               lpc_res_size);
+   priv->mem = (void __iomem *)ioremap((unsigned int)lpc_res_addr, lpc_res_size);
    if (!priv->mem) {
       rc = -ENXIO;
       goto cleanup;

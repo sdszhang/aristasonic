@@ -22,6 +22,7 @@
 #include <linux/hwmon-sysfs.h>
 #include <linux/platform_device.h>
 #include <linux/leds.h>
+#include <linux/iomap.h>
 
 #define DRIVER_NAME "sb800-fans"
 
