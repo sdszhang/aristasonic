@@ -16,7 +16,14 @@ from ...inventory.reset import Reset
 from ...inventory.slot import Slot
 from ...inventory.temp import Temp
 from ...inventory.watchdog import Watchdog
-from ...inventory.xcvr import Xcvr
+from ...inventory.xcvr import (
+   Osfp,
+   OsfpSlot,
+   Qsfp,
+   QsfpSlot,
+   Sfp,
+   SfpSlot,
+)
 
 from ..cooling import Airflow
 
@@ -281,20 +288,66 @@ class MockSlot(Slot):
    def __eq__(self, value):
       return isinstance(value, MockSlot) and self.name == value.name
 
-class MockXcvr(Xcvr):
-   def __init__(self, portId=0, xcvrType=Xcvr.QSFP, name="unknown",
-                presence=True, lpMode=False, intr=None, reset=None):
-      self.portId = portId
-      self.xcvrId = portId
-      self.xcvrType = xcvrType
+class MockSfp(Sfp):
+   def __init__(self, xcvrId, name, addr=None):
+      self.xcvrId = xcvrId
+      self.name = name
+      self.addr = addr
+
+   def getId(self):
+      return self.xcvrId
+
+   def getName(self):
+      return self.name
+
+   def getI2cAddr(self):
+      return self.addr
+
+class MockQsfp(Qsfp):
+   def __init__(self, xcvrId, name, addr=None):
+      self.xcvrId = xcvrId
+      self.name = name
+      self.addr = addr
+
+   def getId(self):
+      return self.xcvrId
+
+   def getName(self):
+      return self.name
+
+   def getI2cAddr(self):
+      return self.addr
+
+class MockOsfp(Osfp):
+   def __init__(self, xcvrId, name, addr=None):
+      self.xcvrId = xcvrId
+      self.name = name
+      self.addr = addr
+
+   def getId(self):
+      return self.xcvrId
+
+   def getName(self):
+      return self.name
+
+   def getI2cAddr(self):
+      return self.addr
+
+class MockSfpSlot(SfpSlot):
+   def __init__(self, slotId, name, presence=True, leds=None, intr=None,
+                rxLos=False, txDisable=False, txFault=False, xcvr=None):
+      self.slotId = slotId
       self.name = name
       self.presence = presence
-      self.lpMode = lpMode
+      self.leds = leds or []
       self.intr = intr
-      self.reset = reset or MockReset('xcvr%d' % portId)
+      self.rxLos = rxLos
+      self.txDisable = txDisable
+      self.txFault = txFault
+      self.xcvr = xcvr
 
-   def getType(self):
-      return self.xcvrType
+   def getId(self):
+      return self.slotId
 
    def getName(self):
       return self.name
@@ -302,20 +355,162 @@ class MockXcvr(Xcvr):
    def getPresence(self):
       return self.presence
 
+   def getLeds(self):
+      return self.leds
+
    def getLowPowerMode(self):
-      return self.lpMode
+      return False
 
    def setLowPowerMode(self, value):
-      self.lpMode = value
+      return False
+
+   def getModuleSelect(self):
+      return True
+
+   def setModuleSelect(self, value):
+      return True
 
    def getInterruptLine(self):
       return self.intr
 
    def getReset(self):
-      # TODO: introduce unsupported feature exceptions for inventory
-      # if self.xcvrType == inventory.Xcvr.QSFP:
-      #    raise FeatureNotSupported()
+      return None
+
+   def getRxLos(self):
+      return self.rxLos
+
+   def getTxDisable(self):
+      return self.txDisable
+
+   def setTxDisable(self, value):
+      self.txDisable = value
+      return True
+
+   def getTxFault(self):
+      return self.txFault
+
+   def getXcvr(self):
+      return self.xcvr
+
+class MockQsfpSlot(QsfpSlot):
+   def __init__(self, slotId, name, presence=True, leds=None, intr=None,
+                reset=None, lpMode=False, modSel=False, xcvr=None):
+      self.slotId = slotId
+      self.name = name
+      self.presence = presence
+      self.leds = leds or []
+      self.intr = intr
+      self.reset = reset
+      self.lpMode = lpMode
+      self.modSel = modSel
+      self.xcvr = xcvr
+
+   def getId(self):
+      return self.slotId
+
+   def getName(self):
+      return self.name
+
+   def getPresence(self):
+      return self.presence
+
+   def getLeds(self):
+      return self.leds
+
+   def getLowPowerMode(self):
+      return self.lpMode
+
+   def setLowPowerMode(self, value):
+      self.lpMode = value
+      return True
+
+   def getModuleSelect(self):
+      return self.modSel
+
+   def setModuleSelect(self, value):
+      self.modSel = value
+      return True
+
+   def getInterruptLine(self):
+      return self.intr
+
+   def getReset(self):
       return self.reset
+
+   def getRxLos(self):
+      return False
+
+   def getTxDisable(self):
+      return False
+
+   def setTxDisable(self, value):
+      return False
+
+   def getTxFault(self):
+      return False
+
+   def getXcvr(self):
+      return self.xcvr
+
+class MockOsfpSlot(OsfpSlot):
+   def __init__(self, slotId, name, presence=True, leds=None, intr=None,
+                reset=None, lpMode=False, modSel=False, xcvr=None):
+      self.slotId = slotId
+      self.name = name
+      self.presence = presence
+      self.leds = leds or []
+      self.intr = intr
+      self.reset = reset
+      self.lpMode = lpMode
+      self.modSel = modSel
+      self.xcvr = xcvr
+
+   def getId(self):
+      return self.slotId
+
+   def getName(self):
+      return self.name
+
+   def getPresence(self):
+      return self.presence
+
+   def getLeds(self):
+      return self.leds
+
+   def getLowPowerMode(self):
+      return self.lpMode
+
+   def setLowPowerMode(self, value):
+      self.lpMode = value
+      return True
+
+   def getModuleSelect(self):
+      return self.modSel
+
+   def setModuleSelect(self, value):
+      self.modSel = value
+      return True
+
+   def getInterruptLine(self):
+      return self.intr
+
+   def getReset(self):
+      return self.reset
+
+   def getRxLos(self):
+      return False
+
+   def getTxDisable(self):
+      return False
+
+   def setTxDisable(self, value):
+      return False
+
+   def getTxFault(self):
+      return False
+
+   def getXcvr(self):
+      return self.xcvr
 
 class MockTemp(Temp):
    def __init__(self, diode=1, temperature=30, lowThreshold=10, highThreshold=50):

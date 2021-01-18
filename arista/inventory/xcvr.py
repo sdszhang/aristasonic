@@ -16,6 +16,10 @@ class Xcvr(InventoryInterface):
    def typeStr(cls, typeIndex):
       return ['sfp', 'qsfp', 'osfp'][typeIndex]
 
+   @diagmethod('type')
+   def getType(self):
+      raise NotImplementedError
+
    @diagmethod('name')
    def getName(self):
       raise NotImplementedError
@@ -24,16 +28,8 @@ class Xcvr(InventoryInterface):
    def getId(self):
       raise NotImplementedError
 
-   @diagmethod('model')
-   def getModel(self):
-      raise NotImplementedError
-
-   @diagmethod('serial')
-   def getSerial(self):
-      raise NotImplementedError
-
-   @diagmethod('status')
-   def getStatus(self):
+   @diagmethod('addr', diag=True)
+   def getI2cAddr(self):
       raise NotImplementedError
 
 class Sfp(Xcvr):
@@ -105,10 +101,10 @@ class XcvrSlot(InventoryInterface):
       raise NotImplementedError
 
 class SfpSlot(XcvrSlot):
-   pass
+   NUM_CHANNELS = 1
 
 class QsfpSlot(XcvrSlot):
-   pass
+   NUM_CHANNELS = 4
 
 class OsfpSlot(XcvrSlot):
-   pass
+   NUM_CHANNELS = 8

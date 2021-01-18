@@ -11,19 +11,55 @@ from ..inventory.xcvr import (
 from .component import SlotComponent
 
 class SfpImpl(SfpInv):
-   # TODO Placeholder
+   def __init__(self, addrFunc, slot):
+      self.addrFunc = addrFunc
+      self.slot = slot
+
+   def getType(self):
+      return "sfp"
+
    def getId(self):
-      pass
+      return self.slot.getId()
+
+   def getName(self):
+      return self.slot.getName()
+
+   def getI2cAddr(self):
+      return self.addrFunc(self.ADDR)
 
 class QsfpImpl(QsfpInv):
-   # TODO Placeholder
+   def __init__(self, addrFunc, slot):
+      self.addrFunc = addrFunc
+      self.slot = slot
+
+   def getType(self):
+      return "qsfp"
+
    def getId(self):
-      pass
+      return self.slot.getId()
+
+   def getName(self):
+      return self.slot.getName()
+
+   def getI2cAddr(self):
+      return self.addrFunc(self.ADDR)
 
 class OsfpImpl(OsfpInv):
-   # TODO Placeholder
+   def __init__(self, addrFunc, slot):
+      self.addrFunc = addrFunc
+      self.slot = slot
+
+   def getType(self):
+      return "osfp"
+
    def getId(self):
-      pass
+      return self.slot.getId()
+
+   def getName(self):
+      return self.slot.getName()
+
+   def getI2cAddr(self):
+      return self.addrFunc(self.ADDR)
 
 class SfpSlotImpl(SfpSlotInv):
    def __init__(self, slot):
@@ -46,7 +82,7 @@ class SfpSlotImpl(SfpSlotInv):
 
    def getReset(self):
       # Not supported for SFP
-      return False
+      return None
 
    def getLowPowerMode(self):
       # Not supported for SFP
@@ -226,10 +262,10 @@ class SfpSlot(XcvrSlot):
       self.addSfp()
 
    def addSfp(self):
-      self.xcvr = self.inventory.addSfp(SfpImpl())
+      self.xcvr = self.inventory.addSfp(SfpImpl(self.addrFunc, self.sfpSlotInv))
       self.newComponent(
          cls=Sfp,
-         addr=self.addrFunc(self.xcvr.ADDR)
+         addr=self.xcvr.getI2cAddr()
       )
 
    def getTxDisable(self):
@@ -255,10 +291,10 @@ class QsfpSlot(XcvrSlot):
       self.addQsfp()
 
    def addQsfp(self):
-      self.xcvr = self.inventory.addQsfp(QsfpImpl())
+      self.xcvr = self.inventory.addQsfp(QsfpImpl(self.addrFunc, self.qsfpSlotInv))
       self.newComponent(
          cls=Qsfp,
-         addr=self.addrFunc(self.xcvr.ADDR)
+         addr=self.xcvr.getI2cAddr()
       )
 
    def getReset(self):
@@ -276,9 +312,13 @@ class QsfpSlot(XcvrSlot):
       return self.lpMode.setActive(value)
 
    def getModuleSelect(self):
+      if not self.modSel:
+         raise NotImplementedError
       return self.modSel.isActive()
 
    def setModuleSelect(self, value):
+      if not self.modSel:
+         raise NotImplementedError
       return self.modSel.setActive(value)
 
 class OsfpSlot(XcvrSlot):
@@ -291,10 +331,10 @@ class OsfpSlot(XcvrSlot):
       self.addOsfp()
 
    def addOsfp(self):
-      self.xcvr = self.inventory.addOsfp(OsfpImpl())
+      self.xcvr = self.inventory.addOsfp(OsfpImpl(self.addrFunc, self.osfpSlotInv))
       self.newComponent(
          cls=Osfp,
-         addr=self.addrFunc(self.xcvr.ADDR)
+         addr=self.xcvr.getI2cAddr()
       )
 
    def getReset(self):
@@ -311,7 +351,11 @@ class OsfpSlot(XcvrSlot):
       return self.lpMode.setActive(value)
 
    def getModuleSelect(self):
+      if not self.modSel:
+         raise NotImplementedError
       return self.modSel.isActive()
 
    def setModuleSelect(self, value):
+      if not self.modSel:
+         raise NotImplementedError
       return self.modSel.setActive(value)

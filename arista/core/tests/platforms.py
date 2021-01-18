@@ -3,9 +3,7 @@ from __future__ import absolute_import
 from ...tests.testing import unittest, patch
 from ...tests.logging import getLogger
 
-from ...accessors.xcvr import XcvrImpl
-
-from ...components.scd import ScdInterruptRegister
+from ...components.scd import ScdInterruptRegister, ScdInterrupt
 
 from ...descs.led import LedColor
 from ...descs.sensor import SensorDesc
@@ -18,8 +16,13 @@ from ...inventory.led import Led
 from ...inventory.psu import Psu, PsuSlot
 from ...inventory.reset import Reset
 from ...inventory.temp import Temp
-from ...inventory.xcvr import Xcvr
-
+from ...inventory.xcvr import (
+   Osfp,
+   Qsfp,
+   Sfp,
+   Xcvr,
+   XcvrSlot
+)
 from .. import utils
 from ..config import Config
 from ..driver import Driver
@@ -144,44 +147,85 @@ class MockPlatformTest(unittest.TestCase):
       reset.resetIn()
       reset.resetOut()
 
+   def _testXcvr(self, xcvr):
+      self.assertIsInstance(xcvr, Xcvr)
+      self.assertIsInstance(xcvr.getI2cAddr(), I2cAddr)
+      self.assertIsInstance(xcvr.getName(), str)
+      self.assertIsInstance(xcvr.getId(), int)
+
+   def _testSfp(self, sfp):
+      self.assertIsInstance(sfp, Sfp)
+      self.assertEquals(sfp.getType(), "sfp")
+      self._testXcvr(sfp)
+
+   def _testQsfp(self, qsfp):
+      self.assertIsInstance(qsfp, Qsfp)
+      self.assertEquals(qsfp.getType(), "qsfp")
+      self._testXcvr(qsfp)
+
+   def _testOsfp(self, osfp):
+      self.assertIsInstance(osfp, Osfp)
+      self.assertEquals(osfp.getType(), "osfp")
+      self._testXcvr(osfp)
+
+   def _testXcvrSlot(self, slot):
+      self.assertIsInstance(slot, XcvrSlot)
+      self.assertIsInstance(slot.getId(), int)
+      self.assertIsInstance(slot.getName(), str)
+      self.assertIsInstance(slot.getPresence(), bool)
+      self.assertIsInstance(slot.getXcvr(), Xcvr)
+
+      interruptLine = slot.getInterruptLine()
+      if interruptLine:
+         self.assertIsInstance(interruptLine, ScdInterrupt)
+         interruptLine.set()
+         interruptLine.clear()
+
+      self.assertIsInstance(slot.getTxDisable(), bool)
+      slot.setTxDisable(0)
+      slot.setTxDisable(1)
+
+      self.assertIsInstance(slot.getTxFault(), bool)
+      self.assertIsInstance(slot.getRxLos(), bool)
+
+      try:
+         self.assertIsInstance(slot.getModuleSelect(), bool)
+         slot.setModuleSelect(0)
+         slot.setModuleSelect(1)
+      except NotImplementedError:
+         pass
+
+      try:
+         self.assertIsInstance(slot.getLowPowerMode(), bool)
+         slot.setLowPowerMode(0)
+         slot.setLowPowerMode(1)
+      except NotImplementedError:
+         pass
+
+      reset = slot.getReset()
+      if reset:
+         self._testReset(reset)
+
+      leds = slot.getLeds()
+      for led in leds:
+         self._testLed(led)
+
    def testXcvrs(self):
       for name, platform in getPlatformSkus().items():
          if not issubclass(platform, FixedSystem):
             continue
          inventory = platform().getInventory()
          self.logger.info('Testing transceivers for platform %s', name)
-         for index, xcvr in inventory.getXcvrs().items():
-            self.logger.debug('Testing xcvr index %s', index)
-            assert isinstance(xcvr, XcvrImpl)
-            assert isinstance(xcvr.name, str)
-            assert isinstance(xcvr.driver, Driver)
-            assert isinstance(xcvr.addr, I2cAddr)
-            assert xcvr.xcvrType in [Xcvr.SFP, Xcvr.QSFP, Xcvr.OSFP]
-            assert isinstance(xcvr.xcvrId, int)
-            assert isinstance(xcvr.getName(), str)
-            assert isinstance(xcvr.getPresence(), bool)
-            assert isinstance(xcvr.getLowPowerMode(), bool)
-            xcvr.setLowPowerMode(0)
-            xcvr.setLowPowerMode(1)
-            assert isinstance(xcvr.getModuleSelect(), bool)
-            xcvr.setModuleSelect(0)
-            xcvr.setModuleSelect(1)
-            assert isinstance(xcvr.getTxDisable(), bool)
-            xcvr.setTxDisable(0)
-            xcvr.setTxDisable(1)
-            interruptLine = xcvr.getInterruptLine()
-            assert interruptLine is xcvr.interruptLine
-            if interruptLine:
-               assert isinstance(interruptLine.reg, object)
-               assert isinstance(interruptLine.bit, int)
-               interruptLine.set()
-               interruptLine.clear()
-            reset = xcvr.getReset()
-            if reset:
-               self._testReset(reset)
-            leds = xcvr.getLeds()
-            for led in leds:
-               self._testLed(led)
+
+         for _, slot in inventory.getXcvrSlots().items():
+            self._testXcvrSlot(slot)
+
+         for _, sfp in inventory.getSfps().items():
+            self._testSfp(sfp)
+         for _, qsfp in inventory.getQsfps().items():
+            self._testQsfp(qsfp)
+         for _, osfp in inventory.getOsfps().items():
+            self._testOsfp(osfp)
 
    def _testPsu(self, psu):
       self.assertIsInstance(psu, Psu)

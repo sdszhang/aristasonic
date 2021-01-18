@@ -13,13 +13,18 @@ from .mockinv import (
    MockLed,
    MockPhy,
    MockPowerCycle,
+   MockOsfp,
+   MockOsfpSlot,
+   MockQsfp,
+   MockQsfpSlot,
    MockPsu,
    MockPsuSlot,
    MockReset,
+   MockSfp,
+   MockSfpSlot,
    MockSlot,
    MockTemp,
    MockWatchdog,
-   MockXcvr,
 )
 
 class InventoryTest(unittest.TestCase):
@@ -29,18 +34,31 @@ class InventoryTest(unittest.TestCase):
          qsfps=list(range(2, 4)),
          osfps=list(range(4, 6)),
       )
-      xcvrs = [
-         MockXcvr(0, MockXcvr.SFP, "SFP-1G-SX"),
-         MockXcvr(1, MockXcvr.SFP, "CAB-SFP-SFP-1M"),
-         MockXcvr(2, MockXcvr.QSFP, "CAB-Q-Q-100G-1M"),
-         MockXcvr(3, MockXcvr.QSFP, "QSFP-100G-CWDM4"),
-         MockXcvr(4, MockXcvr.OSFP, "AB-O-O-400G-1M"),
-         MockXcvr(5, MockXcvr.OSFP, "AOC-O-O-400G-3M"),
-      ]
-      for xcvr in xcvrs:
-         led = MockLed('%s%d' % (xcvr.typeStr(xcvr.xcvrType), xcvr.portId))
-         inv.addLed(led)
-         inv.addXcvr(xcvr)
+
+      sfps = [MockSfp(0, 'SFP-1G-SX'), MockSfp(1, 'CAB-SFP-SFP-1M')]
+      for sfp in sfps:
+         name = sfp.getName()
+         sfpId = sfp.getId()
+         led = inv.addLed(MockLed('%s%d' % (name, sfpId)))
+         inv.addSfpSlot(MockSfpSlot(sfpId, name, leds=[led], xcvr=sfp))
+
+      qsfps = [MockQsfp(2, 'CAB-Q-Q-100G-1M'), MockQsfp(3, 'QSFP-100G-CWDM4')]
+      for qsfp in qsfps:
+         name = qsfp.getName()
+         qsfpId = qsfp.getId()
+         reset = inv.addReset(MockReset('%s%d_reset' % (name, qsfpId)))
+         led = inv.addLed(MockLed('%s%d' % (name, qsfpId)))
+         inv.addQsfpSlot(
+            MockQsfpSlot(qsfpId, name, leds=[led], reset=reset, xcvr=qsfp))
+
+      osfps = [MockOsfp(4, 'AB-O-O-400G-1M'), MockOsfp(5, 'AOC-O-O-400G-3M')]
+      for osfp in osfps:
+         name = osfp.getName()
+         osfpId = osfp.getId()
+         reset = inv.addReset(MockReset('%s%d_reset' % (name, osfpId)))
+         led = inv.addLed(MockLed('%s%d' % (name, osfpId)))
+         inv.addOsfpSlot(
+            MockOsfpSlot(osfpId, name, leds=[led], reset=reset, xcvr=osfp))
 
       inv.addResets({
          'internet': MockReset('internet'),
