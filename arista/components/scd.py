@@ -14,8 +14,21 @@ from ..core.component.i2c import I2cComponent
 from ..core.config import Config
 from ..core.driver import KernelDriver
 from ..core.types import I2cAddr, MdioClause, MdioSpeed
-from ..core.utils import FileWaiter, MmapResource, simulateWith, writeConfig
+from ..core.utils import (
+   FileWaiter,
+   incrange,
+   MmapResource,
+   simulateWith,
+   writeConfig
+)
 from ..core.log import getLogger
+from ..core.xcvr import (
+   OsfpSlot,
+   QsfpSlot,
+   SfpSlot
+)
+from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 
 from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
 from ..drivers.sysfs import (
@@ -434,6 +447,128 @@ class Scd(PciComponent):
       self.sfps += [(addr, xcvrId)]
       return self._addXcvr(xcvrId, Xcvr.SFP, bus, interruptLine, leds=leds,
                            cls=Sfp)
+
+   def _addXcvrSlot(self, cls, name, xcvrId, addr, bus, ledAddr, ledAddrOffsetFn,
+                    ledLanes, addXcvrFn, intrRegs=None, intrRegIdxFn=None,
+                    intrBitFn=None, **kwargs):
+      intr = None
+      if intrRegs:
+         intrReg = intrRegs[intrRegIdxFn(xcvrId)]
+         intr = intrReg.getInterruptBit(name, intrBitFn(xcvrId))
+
+      addrFunc = lambda addr, b=bus: self.i2cAddr(b, addr, t=1, datr=0, datw=3, ed=0)
+      presentDesc = GpioDesc("%s_present" % name, addr=addr, bit=2, ro=True,
+                             activeLow=True)
+
+      leds = []
+      for laneId in incrange(1, ledLanes):
+         laneName = name
+         if ledLanes > 1:
+            laneName = "%s_%d" % (laneName, laneId)
+            leds.append((ledAddr, laneName))
+         ledAddr += ledAddrOffsetFn(xcvrId)
+      ledGroup = self.addLedGroup(name, leds)
+
+      # TODO: Remove when XcvrImpl has been refactored away
+      addXcvrFn(addr, xcvrId, bus, interruptLine=intr,
+                leds=ledGroup)
+
+      return self.newComponent(
+         cls=cls,
+         name=name,
+         slotId=xcvrId,
+         addrFunc=addrFunc,
+         interrupt=intr,
+         presentGpio=self.addGpio(presentDesc),
+         leds=ledGroup,
+         **kwargs
+      )
+
+   def addSfpSlotBlock(self, sfpRange, addr, bus, ledAddr, addrOffset=0x10,
+                       busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
+                       **kwargs):
+      for i in sfpRange:
+         self.addSfpSlot(name="sfp%d" % i, xcvrId=i, addXcvrFn=self.addSfp,
+                         addr=addr, bus=bus, ledAddr=ledAddr,
+                         ledAddrOffsetFn=ledAddrOffsetFn, ledLanes=ledLanes,
+                         **kwargs)
+         addr += addrOffset
+         bus += busOffset
+         for _ in range(ledLanes):
+            ledAddr += ledAddrOffsetFn(i)
+
+   def addSfpSlot(self, addr, name, **kwargs):
+      rxLosDesc = GpioDesc("%s_rxlos" % name, addr, bit=0, ro=True, activeLow=True)
+      txDisableDesc = GpioDesc("%s_txdisable" % name, addr, bit=6)
+      txFaultDesc = GpioDesc("%s_txfault" % name, addr, bit=1, ro=True)
+
+      return self._addXcvrSlot(
+         addr=addr,
+         cls=SfpSlot,
+         name=name,
+         rxLosGpio=self.addGpio(rxLosDesc),
+         txDisableGpio=self.addGpio(txDisableDesc),
+         txFaultGpio=self.addGpio(txFaultDesc),
+         **kwargs
+      )
+
+   def addQsfpSlotBlock(self, qsfpRange, addr, bus, ledAddr, addrOffset=0x10,
+                        busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
+                        **kwargs):
+      for i in qsfpRange:
+         self.addQsfpSlot(name="qsfp%d" % i, xcvrId=i, addXcvrFn=self.addQsfp,
+                         addr=addr, bus=bus, ledAddr=ledAddr,
+                         ledAddrOffsetFn=ledAddrOffsetFn, ledLanes=ledLanes,
+                         **kwargs)
+         addr += addrOffset
+         bus += busOffset
+         for _ in range(ledLanes):
+            ledAddr += ledAddrOffsetFn(i)
+
+   def addQsfpSlot(self, addr, name, isHwLpModeAvail=True, isHwModSelAvail=True,
+                   **kwargs):
+      lpModeDesc = GpioDesc("%s_lp_mode" % name, addr=addr, bit=6)
+      modSelDesc = GpioDesc("%s_modsel" % name, addr=addr, bit=8)
+      resetDesc = ResetDesc("%s_reset" % name, addr=addr, bit=7)
+
+      return self._addXcvrSlot(
+         addr=addr,
+         cls=QsfpSlot,
+         name=name,
+         lpMode=self.addGpio(lpModeDesc) if isHwLpModeAvail else None,
+         modSel=self.addGpio(modSelDesc) if isHwModSelAvail else None,
+         reset=self.addReset(resetDesc),
+         **kwargs
+      )
+
+   def addOsfpSlotBlock(self, osfpRange, addr, bus, ledAddr, addrOffset=0x10,
+                        busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
+                        **kwargs):
+      for i in osfpRange:
+         self.addOsfpSlot(name="osfp%d" % i, xcvrId=i, addXcvrFn=self.addOsfp,
+                          addr=addr, bus=bus, ledAddr=ledAddr,
+                          ledAddrOffsetFn=ledAddrOffsetFn, ledLanes=ledLanes,
+                          **kwargs)
+         addr += addrOffset
+         bus += busOffset
+         for _ in range(ledLanes):
+            ledAddr += ledAddrOffsetFn(i)
+
+   def addOsfpSlot(self, addr, name, isHwLpModeAvail=True, isHwModSelAvail=True,
+                   **kwargs):
+      lpModeDesc = GpioDesc("%s_lp_mode" % name, addr=addr, bit=6)
+      modSelDesc = GpioDesc("%s_modsel" % name, addr=addr, bit=8)
+      resetDesc = ResetDesc("%s_reset" % name, addr=addr, bit=7)
+
+      return self._addXcvrSlot(
+         addr=addr,
+         cls=OsfpSlot,
+         name=name,
+         lpMode=self.addGpio(lpModeDesc) if isHwLpModeAvail else None,
+         modSel=self.addGpio(modSelDesc) if isHwModSelAvail else None,
+         reset=self.addReset(resetDesc),
+         **kwargs
+      )
 
    def addFan(self, desc):
       return self.inventory.addFan(self.driver.getFan(desc))
