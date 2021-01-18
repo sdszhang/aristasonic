@@ -14,26 +14,6 @@ EEPROM_PATH = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
 class Sfp(SfpBase):
    """
    Platform-specific sfp class
-
-   Unimplemented methods:
-   - get_model
-   - get_serial
-   - get_status
-   - get_transceiver_info
-   - get_transceiver_bulk_status
-   - get_transceiver_threshold_info
-   - get_reset_status
-   - get_rx_los
-   - get_tx_fault
-   - get_tx_disable_channel
-   - get_power_override
-   - get_temperature
-   - get_voltage
-   - get_tx_bias
-   - get_rx_power
-   - get_tx_power
-   - tx_disable_channel
-   - set_power_override
    """
 
    RESET_DELAY = 1
@@ -54,8 +34,17 @@ class Sfp(SfpBase):
    def get_name(self):
       return self._slot.getName()
 
+   def get_position_in_parent(self):
+      return self._index
+
    def get_presence(self):
       return self._slot.getPresence()
+
+   def is_replaceable(self):
+      return True
+
+   def get_status(self):
+      return self.get_presence() and self.get_transceiver_bulk_status()
 
    def get_lpmode(self):
       try:
@@ -80,16 +69,21 @@ class Sfp(SfpBase):
          return False
       return True
 
+   def get_reset_status(self):
+      reset = self._slot.getReset()
+      return reset.read() if reset else False
+
    def reset(self):
       try:
          self._slot.getReset().resetIn()
       except: # pylint: disable-msg=W0702
-         pass
+         return False
       time.sleep(self.RESET_DELAY)
       try:
          self._slot.getReset().resetOut()
       except: # pylint: disable-msg=W0702
-         pass
+         return False
+      return True
 
    def clear_interrupt(self):
       intr = self._slot.getInterruptLine()
@@ -138,5 +132,3 @@ class Sfp(SfpBase):
          return False
       return True
 
-   def get_position_in_parent(self):
-      return self._index
