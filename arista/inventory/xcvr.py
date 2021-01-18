@@ -4,18 +4,51 @@ from . import InventoryInterface, diagcls, diagmethod
 @diagcls
 class Xcvr(InventoryInterface):
 
+   # TODO Remove
    SFP = 0
    QSFP = 1
    OSFP = 2
 
    ADDR = 0x50
 
+   # TODO Remove
    @classmethod
    def typeStr(cls, typeIndex):
       return ['sfp', 'qsfp', 'osfp'][typeIndex]
 
-   @diagmethod('type')
-   def getType(self):
+   @diagmethod('name')
+   def getName(self):
+      raise NotImplementedError
+
+   @diagmethod('id')
+   def getId(self):
+      raise NotImplementedError
+
+   @diagmethod('model')
+   def getModel(self):
+      raise NotImplementedError
+
+   @diagmethod('serial')
+   def getSerial(self):
+      raise NotImplementedError
+
+   @diagmethod('status')
+   def getStatus(self):
+      raise NotImplementedError
+
+class Sfp(Xcvr):
+   pass
+
+class Qsfp(Xcvr):
+   pass
+
+class Osfp(Xcvr):
+   pass
+
+@diagcls
+class XcvrSlot(InventoryInterface):
+   @diagmethod('id')
+   def getId(self):
       raise NotImplementedError
 
    @diagmethod('name')
@@ -26,11 +59,22 @@ class Xcvr(InventoryInterface):
    def getPresence(self):
       raise NotImplementedError
 
+   @diagmethod('leds', diag=True)
+   def getLeds(self):
+      raise NotImplementedError
+
    @diagmethod('lpmode', io=True)
    def getLowPowerMode(self):
       raise NotImplementedError
 
    def setLowPowerMode(self, value):
+      raise NotImplementedError
+
+   @diagmethod('modsel', io=True)
+   def getModuleSelect(self):
+      raise NotImplementedError
+
+   def setModuleSelect(self, value):
       raise NotImplementedError
 
    @diagmethod('intr', diag=True)
@@ -40,3 +84,31 @@ class Xcvr(InventoryInterface):
    @diagmethod('reset', diag=True)
    def getReset(self):
       raise NotImplementedError
+
+   @diagmethod('rxlos', io=True)
+   def getRxLos(self):
+      raise NotImplementedError
+
+   @diagmethod('txdisable', io=True)
+   def getTxDisable(self):
+      raise NotImplementedError
+
+   def setTxDisable(self, value):
+      raise NotImplementedError
+
+   @diagmethod('txfault', io=True)
+   def getTxFault(self):
+      raise NotImplementedError
+
+   @diagmethod('xcvr', diag=True)
+   def getXcvr(self):
+      raise NotImplementedError
+
+class SfpSlot(XcvrSlot):
+   pass
+
+class QsfpSlot(XcvrSlot):
+   pass
+
+class OsfpSlot(XcvrSlot):
+   pass

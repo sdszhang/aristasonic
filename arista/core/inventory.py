@@ -19,7 +19,16 @@ class Inventory(object):
       self.leds = {}
       self.ledGroups = {}
 
+      # TODO: remove
       self.xcvrs = {}
+
+      self.sfps = {}
+      self.qsfps = {}
+      self.osfps = {}
+
+      self.sfpSlots = {}
+      self.qsfpSlots = {}
+      self.osfpSlots = {}
 
       # These two are deprecated
       self.xcvrLeds = defaultdict(list)
@@ -62,6 +71,7 @@ class Inventory(object):
       self.portStart = self.allXcvrsRange[0]
       self.portEnd = self.allXcvrsRange[-1]
 
+   # TODO: remove
    def addXcvr(self, xcvr):
       self.xcvrs[xcvr.xcvrId] = xcvr
       xcvrReset = xcvr.getReset()
@@ -69,11 +79,76 @@ class Inventory(object):
          self.resets[xcvrReset.getName()] = xcvrReset
       return xcvr
 
+   # TODO: remove
    def getXcvrs(self):
       return self.xcvrs
 
+   # TODO: remove
    def getXcvr(self, xcvrId):
       return self.xcvrs[xcvrId]
+
+   def addSfp(self, sfp):
+      self.sfps[sfp.getId()] = sfp
+      return sfp
+
+   def getSfps(self):
+      return self.sfps
+
+   def getSfp(self, xcvrId):
+      return self.sfps[xcvrId]
+
+   def addQsfp(self, qsfp):
+      self.qsfps[qsfp.getId()] = qsfp
+      return qsfp
+
+   def getQsfps(self):
+      return self.qsfps
+
+   def getQsfp(self, xcvrId):
+      return self.qsfps[xcvrId]
+
+   def addOsfp(self, osfp):
+      self.osfps[osfp.getId()] = osfp
+      return osfp
+
+   def getOsfps(self):
+      return self.osfps
+
+   def getOsfp(self, xcvrId):
+      return self.osfps[xcvrId]
+
+   def getXcvrSlot(self, slotId):
+      return self.sfpSlots.get(slotId) or \
+             self.qsfpSlots.get(slotId) or \
+             self.osfpSlots.get(slotId)
+
+   def getXcvrSlots(self):
+      xcvrSlots = {}
+      xcvrSlots.update(self.getSfpSlots())
+      xcvrSlots.update(self.getQsfpSlots())
+      xcvrSlots.update(self.getOsfpSlots())
+      return xcvrSlots
+
+   def addSfpSlot(self, slot):
+      self.sfpSlots[slot.getId()] = slot
+      return slot
+
+   def addQsfpSlot(self, slot):
+      self.qsfpSlots[slot.getId()] = slot
+      return slot
+
+   def addOsfpSlot(self, slot):
+      self.osfpSlots[slot.getId()] = slot
+      return slot
+
+   def getSfpSlots(self):
+      return self.sfpSlots
+
+   def getQsfpSlots(self):
+      return self.qsfpSlots
+
+   def getOsfpSlots(self):
+      return self.osfpSlots
 
    def getPortToEepromMapping(self):
       eepromPath = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
@@ -206,6 +281,9 @@ class Inventory(object):
 
    def getResets(self):
       return self.resets
+
+   def getReset(self, name):
+      return self.resets[name]
 
    def addPhy(self, phy):
       self.phys.append(phy)
