@@ -82,7 +82,7 @@ class Upperlake(FixedSystem):
 
       self.syscpld.addGpios([
          ('psu1DcOk', 'psu1_status'),
-         ('psu1DcOk', 'psu2_status'),
+         ('psu2DcOk', 'psu2_status'),
          ('psu1AcOk', 'psu1_ac_status'),
          ('psu2AcOk', 'psu2_ac_status'),
       ])
