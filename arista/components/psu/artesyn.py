@@ -8,7 +8,8 @@ from . import PmbusPsu
 from .ds460 import Ds460
 
 class ArtesynPsu(PsuModel):
-   MANUFACTURER = 'artesyn' # NOTE: acquired by Emerson
+   MANUFACTURER = 'artesyn'
+   MANUFACTURER_ALIASES = ['emerson'] # NOTE: acquired by Emerson
    PMBUS_ADDR = 0x58
 
 class DS495SPE(ArtesynPsu):

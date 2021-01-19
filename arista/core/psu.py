@@ -159,6 +159,7 @@ class PsuSlot(SlotComponent):
 
 class PsuModel(object):
    MANUFACTURER = None
+   MANUFACTURER_ALIASES = []
    IDENTIFIERS = []
    IPMI_ADDR = 0x50
    PMBUS_ADDR = None
@@ -173,11 +174,17 @@ class PsuModel(object):
    def __init__(self, identifier):
       self.identifier = identifier
 
-   def getManufacturer(self):
-      return self.MANUFACTURER
-
    def getProductName(self):
       return self.identifier.aristaName
+
+   @classmethod
+   def isManufacturer(cls, name):
+      if name == cls.MANUFACTURER.lower():
+         return True
+      for alias in cls.MANUFACTURER_ALIASES:
+         if name == alias.lower():
+            return True
+      return False
 
    @classmethod
    def detectIpmi(cls, addr):
@@ -190,7 +197,7 @@ class PsuModel(object):
       try:
          logging.debug('testing model %s for %s : "%s"', cls.__name__,
                        detector.id(), detector.model())
-         if cls.MANUFACTURER.lower() != detector.id().lower():
+         if not cls.isManufacturer(detector.id().lower()):
             return None
          for ident in cls.IDENTIFIERS:
             if ident.partName.rstrip() == detector.model().rstrip():
