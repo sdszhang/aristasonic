@@ -135,14 +135,6 @@ class Component(object):
       for component in self.components:
          component.resetOut()
 
-   def getReloadCauses(self, clear=False):
-      causes = []
-      for driver in self.drivers.values():
-         causes.extend(driver.getReloadCauses(clear=clear))
-      for component in self.components:
-         causes.extend(component.getReloadCauses(clear=clear))
-      return causes
-
    def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT):
       for component in self.components:
          component.waitForIt(timeout)

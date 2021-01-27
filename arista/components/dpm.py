@@ -4,13 +4,11 @@ import datetime
 from collections import namedtuple
 
 from ..core.cause import (
-   ReloadCauseDataStore,
    ReloadCauseEntry,
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
 from ..core.component import Priority
-from ..core.config import Config
 from ..core.utils import inSimulation
 from ..core.log import getLogger
 
@@ -68,7 +66,7 @@ class Ucd(I2cComponent):
       self.inventory.addReloadCauseProvider(UcdReloadCauseProvider(self))
 
    def __str__(self):
-      return '%s()' % self.__class__.__name__
+      return '%s(addr=%s)' % (self.__class__.__name__, self.addr)
 
    def setup(self):
       with self.drivers['UcdI2cDevDriver'] as drv:
@@ -115,7 +113,11 @@ class Ucd(I2cComponent):
          if not isinstance(typ, UcdGpi):
             continue
          if reg & (1 << (typ.bit - 1)):
-            causes.append(UcdReloadCauseEntry(name))
+            causes.append(UcdReloadCauseEntry(
+               cause=name,
+               rcDesc='gpi fault',
+               score=ReloadCauseScore.LOGGED,
+            ))
       return causes
 
    def _parseFaultDetail(self, reg):
@@ -133,8 +135,6 @@ class Ucd(I2cComponent):
 
       if len(reg) < self.Registers.LOGGED_FAULT_DETAIL_COUNT:
          logging.debug('invalid unknown cause %s', reg)
-         time = datetime.datetime.now()
-         causes.append(UcdReloadCauseEntry('unknown', rcTime=datetimeToStr(time)))
          return causes
 
       paged, ftype, page, value, days, msecs = self._parseFaultDetail(reg)
@@ -152,24 +152,35 @@ class Ucd(I2cComponent):
          for name, typ in self.causes.items():
             if isinstance(typ, UcdGpi) and typ.bit == page:
                logging.debug('found: %s', name)
-               causes.append(UcdReloadCauseEntry(name, rcTime=datetimeToStr(time)))
+               causes.append(UcdReloadCauseEntry(
+                  cause=name,
+                  rcTime=datetimeToStr(time),
+                  rcDesc='gpi detailed fault',
+                  score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED,
+               ))
       elif paged and ftype in [ 0, 1, 2 ]:
          # this is a Mon
          found = False
          for name, typ in self.causes.items():
             if isinstance(typ, UcdMon) and typ.val == page:
                logging.debug('found: %s', name)
-               causes.append(UcdReloadCauseEntry(name, rcTime=datetimeToStr(time)))
+               causes.append(UcdReloadCauseEntry(
+                  cause=name,
+                  rcTime=datetimeToStr(time),
+                  rcDesc='mon detailed fault',
+                  score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED,
+               ))
                found = True
          if not found:
             name = ['over-voltage', 'under-voltage', 'timeout-power-good'][ftype]
-            cause = UcdReloadCauseEntry(name, rcTime=datetimeToStr(time),
-                                        rcDesc='%s on rail %d' % (name, page + 1))
+            cause = UcdReloadCauseEntry(
+               cause=name,
+               rcTime=datetimeToStr(time),
+               rcDesc='%s on rail %d' % (name, page + 1),
+               score=ReloadCauseScore.EVENT | ReloadCauseScore.DETAILED,
+            )
             logging.debug('found: %s', cause.description)
             causes.append(cause)
-      else:
-         logging.debug('unknown cause')
-         causes.append(UcdReloadCauseEntry('unknown', rcTime=datetimeToStr(time)))
 
       return causes
 
@@ -195,24 +206,17 @@ class Ucd(I2cComponent):
 
       return causes
 
-   def getReloadCauses(self, clear=False):
-      if not self.causes or inSimulation():
+   def getReloadCauses(self):
+      if inSimulation():
          return []
 
-      rebootCauses = ReloadCauseDataStore('%s_%s' % (Config().reboot_cause_file,
-                                                     self.addr))
-      if not rebootCauses.exist():
-         with self.drivers['UcdI2cDevDriver'] as drv:
-            causes = self._getReloadCauses(drv)
-            if clear:
-               logging.debug('clearing faults')
-               drv.clearFaults()
-            if not causes:
-               time = datetime.datetime.now()
-               causes = [UcdReloadCauseEntry('unknown', rcTime=datetimeToStr(time))]
-         rebootCauses.writeList(causes)
+      with self.drivers['UcdI2cDevDriver'] as drv:
+         causes = self._getReloadCauses(drv)
+         if causes:
+            logging.debug('clearing faults')
+            drv.clearFaults()
 
-      return rebootCauses.readCauses()
+      return causes
 
 class Ucd90160(Ucd):
    class Registers(Ucd.Registers):

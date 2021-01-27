@@ -9,6 +9,8 @@ from .default import defaultPlatformParser
                 description='''
 Read last reboot information from the hardware and display it.
 ''')
-def rebootCauseParser( parser ):
+def rebootCauseParser(parser):
    parser.add_argument('--history', action='store_true',
       help='print reboot causes history if it exists')
+   parser.add_argument('--process', action='store_true',
+      help='process last reboot cause and generate report (do not use)')

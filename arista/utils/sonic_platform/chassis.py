@@ -10,6 +10,7 @@ try:
    from sonic_platform_base.chassis_base import ChassisBase
    from arista.core import cause, thermal_control
    from arista.core.card import Card
+   from arista.core.cause import getReloadCauseManager
    from arista.core.config import Config
    from arista.core.onie import OnieEeprom
    from arista.core.platform import readPrefdl
@@ -30,6 +31,7 @@ except ImportError as e:
 
 class Chassis(ChassisBase):
    REBOOT_CAUSE_DICT = {
+      'unknown':ChassisBase.REBOOT_CAUSE_NON_HARDWARE,
       'powerloss': ChassisBase.REBOOT_CAUSE_POWER_LOSS,
       'overtemp': ChassisBase.REBOOT_CAUSE_THERMAL_OVERLOAD_OTHER,
       'reboot': ChassisBase.REBOOT_CAUSE_NON_HARDWARE,
@@ -122,17 +124,15 @@ class Chassis(ChassisBase):
       return super(Chassis, self).get_sfp(index - 1)
 
    def get_reboot_cause(self):
-      unknown = (ChassisBase.REBOOT_CAUSE_NON_HARDWARE, None)
-      causes = cause.getReloadCause()
-      for item in causes:
-         reason = item.getCause()
-         cause_time = item.getTime()
-         if reason != "unknown" and cause_time != "unknown":
-            retCause = self.REBOOT_CAUSE_DICT.get(reason,
-                  ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER)
-            retDesc = str(item)
-            return (retCause, retDesc)
-      return unknown
+      rcm = getReloadCauseManager(self._platform)
+      report = rcm.lastReport()
+      if report is None:
+         return (ChassisBase.REBOOT_CAUSE_NON_HARDWARE, None)
+      return (
+         self.REBOOT_CAUSE_DICT.get(report.cause.getCause(),
+                                    ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER),
+         str(report.cause)
+      )
 
    def get_supervisor_slot(self):
       if isinstance(self._platform, Supervisor):

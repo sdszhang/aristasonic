@@ -1,4 +1,3 @@
-from .cause import ReloadCauseDataStore
 from .component import Priority
 from .config import Config
 from .driver import KernelDriver
@@ -6,7 +5,6 @@ from .inventory import Inventory
 from .metainventory import MetaInventory
 from .platform import getSysEeprom
 from .sku import Sku
-from .utils import inSimulation
 
 class FixedSystem(Sku):
 
@@ -31,12 +29,3 @@ class FixedSystem(Sku):
 
    def __str__(self):
       return '%s()' % self.__class__.__name__
-
-   def getReloadCauses(self, clear=False):
-      if inSimulation():
-         return []
-      rebootCauses = ReloadCauseDataStore()
-      if not rebootCauses.exist():
-         causes = super(FixedSystem, self).getReloadCauses(clear=clear)
-         rebootCauses.writeList(causes)
-      return rebootCauses.readCauses()

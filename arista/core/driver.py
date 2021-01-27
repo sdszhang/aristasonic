@@ -105,9 +105,6 @@ class Driver(object):
    def resetOut(self):
       pass
 
-   def getReloadCauses(self, clear=False): # pylint: disable=unused-argument
-      return []
-
    def __diag__(self, ctx): # pylint: disable=unused-argument
       return {}
 

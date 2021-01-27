@@ -278,37 +278,11 @@ class ReloadCauseManager(object):
       with open(self.path, 'w') as f:
          json.dump(self.toDict(), f, indent=3, separators=(',', ': '))
 
-def updateReloadCausesHistory(newCauses):
-   rebootCauses = ReloadCauseDataStore(lifespan='persistent')
-   causes = []
-   if rebootCauses.exist():
-      causes = rebootCauses.readCauses()
-      for newCause in newCauses:
-         addCause = True
-         for cause in causes:
-            if newCause.getTime() == cause.getTime() and \
-                  newCause.getCause() == cause.getCause():
-               addCause = False
-               break
-         if addCause:
-            causes.append(newCause)
-      rebootCauses.clear()
+def getReloadCauseManager(platform, read=False):
+   rcm = ReloadCauseManager(name=platform.getEeprom().get('SerialNumber'))
+   if read:
+      rcm.readCauses(platform.getInventory())
+      rcm.storeCauses()
    else:
-      causes = newCauses
-
-   if len(causes) > RELOAD_CAUSE_HISTORY_SIZE:
-      causes = causes[len(causes) - RELOAD_CAUSE_HISTORY_SIZE:]
-
-   rebootCauses.writeList(causes)
-
-def getReloadCause():
-   rebootCauses = ReloadCauseDataStore()
-   if rebootCauses.exist():
-      return rebootCauses.readCauses()
-   return None
-
-def getReloadCauseHistory():
-   rebootCauses = ReloadCauseDataStore(lifespan='persistent')
-   if rebootCauses.exist():
-      return rebootCauses.readCauses()
-   return None
+      rcm.loadCauses()
+   return rcm

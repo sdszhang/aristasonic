@@ -4,23 +4,21 @@ from __future__ import absolute_import, division, print_function
 from . import registerAction
 from ..args.reboot_cause import rebootCauseParser
 from ...core import utils
-from ...core.cause import (
-   getReloadCause,
-   getReloadCauseHistory,
-   updateReloadCausesHistory
-)
+from ...core.cause import getReloadCauseManager
 from ...core.config import Config
 
 @registerAction(rebootCauseParser)
 def doRebootCause(ctx, args):
    if utils.inSimulation():
       return
+
    with utils.FileLock(Config().lock_file):
-      updateReloadCausesHistory(ctx.platform.getReloadCauses(clear=True))
+      rcm = getReloadCauseManager(ctx.platform, read=args.process)
+
    if args.history:
-      causes = getReloadCauseHistory()
+      causes = [report.cause for report in rcm.allReports()]
    else:
-      causes = getReloadCause()
+      causes = [rcm.lastReport().cause]
    if not causes:
       print('No reboot cause detected')
       return
