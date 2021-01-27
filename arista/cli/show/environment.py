@@ -6,8 +6,8 @@ from ...core.diag import DiagContext
 from . import Renderer
 
 class ShowEnvironment(Renderer):
-   def __init__(self):
-      super(ShowEnvironment, self).__init__('environment')
+
+   NAME = 'environment'
 
    def data(self, show):
       ctx = DiagContext()

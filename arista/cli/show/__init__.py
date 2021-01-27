@@ -2,8 +2,11 @@
 from __future__ import print_function
 
 class Renderer(object):
-   def __init__(self, name):
-      self.name = name
+
+   NAME = None
+
+   def __init__(self, name=None):
+      self.name = name or self.NAME
 
    def renderText(self, show):
       raise NotImplementedError
@@ -17,12 +20,17 @@ class Show(object):
    TXT = 'text'
    JSON = 'json'
 
-   def __init__(self, outputFormat=None):
+   def __init__(self, outputFormat=None, args=None):
       self.outputFormat = outputFormat
       self.inventories = []
+      self.args = args
+      self.platform = None
 
    def addInventory(self, inventory, **metadata):
       self.inventories.append((inventory, metadata))
+
+   def addPlatform(self, platform):
+      self.platform = platform
 
    def renderText(self, *renderers):
       for r in renderers:
@@ -37,7 +45,10 @@ class Show(object):
       }
 
       import json
-      print(json.dumps(data))
+      if self.args.pretty:
+         print(json.dumps(data, indent=3, separators=(',', ': ')))
+      else:
+         print(json.dumps(data))
 
    def render(self, *renderers):
       if self.outputFormat == self.TXT:

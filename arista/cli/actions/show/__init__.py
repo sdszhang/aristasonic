@@ -11,4 +11,4 @@ def doShow(ctx, args):
    if args.json:
       outputFormat = Show.JSON
 
-   setattr(ctx, 'show', Show(outputFormat=outputFormat))
+   setattr(ctx, 'show', Show(outputFormat=outputFormat, args=args))
