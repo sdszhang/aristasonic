@@ -112,7 +112,7 @@ class MockPlatformTest(unittest.TestCase):
          LedColor.OFF,
          LedColor.GREEN,
          LedColor.RED,
-         LedColor.ORANGE,
+         LedColor.AMBER,
       ]
 
    def _testLed(self, led):

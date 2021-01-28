@@ -110,7 +110,7 @@ class SysfsEntryCustomLed(SysfsEntryIntLed):
          0 : LedColor.OFF,
          1 : LedColor.GREEN,
          2 : LedColor.RED,
-         3 : LedColor.ORANGE,
+         3 : LedColor.AMBER,
       }
       self.color2value = { v : k for k, v in self.value2color.items() }
       super(SysfsEntryCustomLed, self).__init__(parent, name)
@@ -223,7 +223,7 @@ class LedRgbSysfsImpl(Led):
          LedColor.RED: (1, 0, 0),
          LedColor.GREEN: (0, 1, 0),
          LedColor.BLUE: (0, 0, 1),
-         LedColor.ORANGE: (1, 1, 0),
+         LedColor.AMBER: (1, 1, 0),
       }
       self.values2color = {v : c for c, v in self.color2values.items()}
 
@@ -403,7 +403,7 @@ class LedSysfsDriver(SysfsDriver):
          '0': LedColor.OFF,
          '1': LedColor.GREEN,
          '2': LedColor.RED,
-         '3': LedColor.ORANGE,
+         '3': LedColor.AMBER,
       }
       self.inverseColorDict = {v: k for k, v in self.colorDict.items()}
       super(LedSysfsDriver, self).__init__(**kwargs)

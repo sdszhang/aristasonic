@@ -54,7 +54,7 @@
 #define FAN_LED_OFF 0
 #define FAN_LED_GREEN 1
 #define FAN_LED_RED 2
-#define FAN_LED_ORANGE 3
+#define FAN_LED_AMBER 3
 
 #define LED_ON_OFF_REG_OFFSET (1 << 6)
 #define LED_DIR_REG_OFFSET (1 << 5)
@@ -160,7 +160,7 @@ static int read_led(struct raven_pdata *pdata, int fan_id, u8 *value)
       *value = FAN_LED_RED;
    }
    else if (!(val_g & LED_ON_OFF_REG_OFFSET) && !(val_r & LED_ON_OFF_REG_OFFSET)) {
-      *value = FAN_LED_ORANGE;
+      *value = FAN_LED_AMBER;
    }
 
    return 0;
@@ -205,7 +205,7 @@ static int write_led(struct raven_pdata *pdata, u8 val, int index)
       val_r &= ~LED_ON_OFF_REG_OFFSET;
       val_g |= LED_ON_OFF_REG_OFFSET;
       break;
-   case FAN_LED_ORANGE:
+   case FAN_LED_AMBER:
       val_g &= ~LED_ON_OFF_REG_OFFSET;
       val_r &= ~LED_ON_OFF_REG_OFFSET;
       break;

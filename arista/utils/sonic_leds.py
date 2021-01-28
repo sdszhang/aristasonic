@@ -11,7 +11,7 @@ except ImportError as e:
 class LedControlCommon(led_control_base.LedControlBase):
    LED_COLOR_OFF = None
    LED_COLOR_GREEN = None
-   LED_COLOR_ORANGE = None
+   LED_COLOR_AMBER = None
 
    def __init__(self):
       self.portMapping = parsePortConfig()
@@ -33,7 +33,7 @@ class LedControlCommon(led_control_base.LedControlBase):
             if idx == 0:
                self._setIntfColor(p, idx, self.LED_COLOR_GREEN)
             else:
-               self._setIntfColor(p, idx, self.LED_COLOR_ORANGE)
+               self._setIntfColor(p, idx, self.LED_COLOR_AMBER)
          elif state == 'down':
             self._setIntfColor(p, idx, self.LED_COLOR_OFF)
          if p.singular:
@@ -44,7 +44,7 @@ class LedControlSysfs(LedControlCommon):
 
    LED_COLOR_OFF = 0
    LED_COLOR_GREEN = 1
-   LED_COLOR_ORANGE = 3
+   LED_COLOR_AMBER = 3
 
    def __init__(self):
       LedControlCommon.__init__(self)
