@@ -10,7 +10,7 @@ from .utils import JsonStoredData
 
 from ..descs.cause import ReloadCauseScore
 
-from ..libs.date import datetimeToStr, strToDatetime
+from ..libs.date import datetimeToStr, strToDatetime, epochToDatetime
 from ..libs.procfs import bootDatetime
 
 logging = getLogger(__name__)
@@ -96,8 +96,10 @@ class ReloadCauseProviderHelper(ReloadCauseProvider):
       )
 
 class ReloadCauseDataStore(JsonStoredData):
-   def __init__(self, name=Config().reboot_cause_file, **kwargs):
-      super(ReloadCauseDataStore, self).__init__(name,**kwargs)
+   # NOTE: legacy class, do not use
+   def __init__(self, name=None, **kwargs):
+      name = name or Config().reboot_cause_file
+      super(ReloadCauseDataStore, self).__init__(name, **kwargs)
       self.dataType = ReloadCauseEntry
 
    def convertFormatV1(self, data):
@@ -110,6 +112,11 @@ class ReloadCauseDataStore(JsonStoredData):
       assert isinstance(data, list) # TODO: use a dict to store data in the future
       if data and data[0].get('reloadReason'):
          data = self.convertFormatV1(data)
+      for item in data:
+         if 'description' not in item:
+            item['description'] = ''
+         if 'score' not in item:
+            item['score'] = ReloadCauseScore.UNKNOWN
       return data
 
    def readCauses(self):
@@ -118,6 +125,23 @@ class ReloadCauseDataStore(JsonStoredData):
 
    def writeCauses(self, causes):
       return self.writeList(causes)
+
+   def readCausesV3(self, name):
+      causes = self.maybeConvertReloadCauseFormat(self.read())
+      date = epochToDatetime(os.stat(self.path).st_mtime)
+      return {
+         'version': 3,
+         'name': name,
+         'reports': [{
+            'date': datetimeToStr(date),
+            'cause': causes[0],
+            'providers': [{
+               'name': 'Legacy reboot causes',
+               'causes': causes,
+               'extra': {},
+            }],
+         }],
+      }
 
 class ReloadCauseReport(object):
    def __init__(self, date=None, cause=None, providers=None):
@@ -198,6 +222,15 @@ class ReloadCauseManager(object):
          raise ValueError("Expected reload cause name to match %s" % self.name)
       self.reports.extend(ReloadCauseReport.fromDict(d) for d in data['reports'])
 
+   def loadLegacyCauseFile(self):
+      rcds = ReloadCauseDataStore(lifespan='persistent')
+      if not rcds.exist():
+         return
+
+      logging.info("Loading legacy reboot cause information")
+      self.fromDict(rcds.readCausesV3(self.name))
+      rcds.clear()
+
    def loadCauseFile(self, path):
       if not os.path.exists(path):
          logging.debug("No prior reboot cause information from %s", path)
@@ -214,7 +247,10 @@ class ReloadCauseManager(object):
    def loadCauses(self):
       '''Load reload causes from file'''
       assert not self.loaded
-      # TODO: tryLoadLegacy
+      try:
+         self.loadLegacyCauseFile()
+      except Exception: # pylint: disable=broad-except
+         logging.exception("Failed to load legacy reload causes")
       data = self.loadCauseFile(self.path)
       if data:
          self.fromDict(data)

@@ -1,4 +1,5 @@
 
+import contextlib
 import datetime
 import json
 import os
@@ -110,6 +111,7 @@ class ReloadCauseManagerTest(unittest.TestCase):
             ]
          ) for name, causes in data.items()
       ])
+      self.rcm.loaded = False
       self.rcm.readCauses(inv, date=strToDatetime(self.EXPECTED_DATE))
 
    def storeJson(self, data):
@@ -194,6 +196,39 @@ class ReloadCauseManagerTest(unittest.TestCase):
       self.assertReloadCauseEquals(self.rcm.lastReport().cause,
                                    cause='under-voltage')
       self.assertEquals(len(self.rcm.reports), 2)
+
+   @contextlib.contextmanager
+   def _processLegacyReloadCauses(self, causes):
+      path = tempfile.mktemp(prefix='unittest-arista-reload-cause-')
+      oldPath = Config().reboot_cause_file
+      try:
+         Config().reboot_cause_file = path
+         with open(path, 'w') as f:
+            json.dump(causes, f)
+         yield path
+         self.assertFalse(os.path.exists(path))
+      finally:
+         Config().reboot_cause_file = oldPath
+         if os.path.exists(path):
+            os.remove(path)
+
+   def testLegacyV1ToCurrent(self):
+      causes = [{
+            'reloadReason': 'powerloss',
+            'time': '1970-01-01 00:01:11 UTC',
+         }, {
+            'reloadReason': 'reboot',
+            'time': 'unknown',
+      }]
+      with self._processLegacyReloadCauses(causes):
+         self.rcm.loadCauses()
+         self.assertEquals(len(self.rcm.allReports()), 1)
+         report = self.rcm.lastReport()
+         reportCauses = report.providers[0].getCauses()
+         self.assertEquals(len(reportCauses), len(causes))
+         for cause, reportCause in zip(causes, reportCauses):
+            self.assertEquals(cause['reloadReason'], reportCause.getCause())
+            self.assertEquals(cause['time'], reportCause.getTime())
 
 class ReloadCauseTest(unittest.TestCase):
    EXPECTED = [

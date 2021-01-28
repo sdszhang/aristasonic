@@ -8,3 +8,6 @@ def datetimeToStr(dt, fmt=DATE_FORMAT):
 
 def strToDatetime(s, fmt=DATE_FORMAT):
    return datetime.datetime.strptime(s, fmt)
+
+def epochToDatetime(epoch):
+   return datetime.datetime.fromtimestamp(epoch)
