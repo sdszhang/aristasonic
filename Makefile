@@ -142,6 +142,9 @@ pylint:
 	   --ignore=$(PYLINT_BLACKLIST) \
 	   $(PACKAGE_NAME)
 
+pycoverage:
+	$(PYTHON3) -m pytest --cov-config=.coveragerc --cov-report term-missing:skip-covered --cov $(PACKAGE_NAME)
+
 test: test-py2 test-py3 pylint
 
 #
