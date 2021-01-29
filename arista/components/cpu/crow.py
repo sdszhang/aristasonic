@@ -33,9 +33,29 @@ class KoiCpldRegisters(CrowCpldRegisters):
       RegBitField(2, 'psu2AcOk'),
       RegBitField(3, 'psu1AcOk'),
    )
+   SEU_CONTROL = Register(0x10,
+      RegBitField(0, 'enableCpldSeuCheck', ro=False),
+      RegBitField(1, 'powerCycleOnCpldSeu', ro=False),
+      RegBitField(7, 'cpldSeuDetected'),
+   )
 
 class CrowSysCpld(SysCpld):
    REGISTER_CLS = CrowCpldRegisters
+
+   def powerCycleOnSeu(self, value=None):
+      if not isinstance(self.driver.regs, KoiCpldRegisters):
+         return super(CrowSysCpld, self).powerCycleOnSeu(value)
+
+      res1 = self.driver.regs.powerCycleOnCrc(value)
+      res2 = self.driver.regs.powerCycleOnCpldSeu(value)
+      return res1 or res2
+
+   def hasSeuError(self):
+      if not isinstance(self.driver.regs, KoiCpldRegisters):
+         return super(CrowSysCpld, self).hasSeuError()
+
+      return self.driver.regs.scdCrcError() or \
+             self.driver.regs.cpldSeuDetected()
 
 class CrowFanCpld(I2cComponent):
    DRIVER = CrowFanCpldKernelDriver
