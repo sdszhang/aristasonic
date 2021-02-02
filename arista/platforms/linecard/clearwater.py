@@ -1,6 +1,6 @@
 
 from ...core.platform import registerPlatform
-from ...core.types import ResetGpio, MdioSpeed
+from ...core.types import MdioSpeed
 from ...core.utils import incrange, HwApi
 
 from ...components.denali.linecard import DenaliLinecard, GpioRegisterMap
@@ -14,6 +14,7 @@ from ...components.phy.babbage import Babbage
 from ...components.tmp464 import Tmp464
 
 from ...descs.sensor import Position, SensorDesc
+from ...descs.reset import ResetDesc
 
 class ClearwaterBase(DenaliLinecard):
    SCD_PCI_OFFSET = 3
@@ -28,27 +29,26 @@ class ClearwaterBase(DenaliLinecard):
       qsfpRange = incrange(1, 48)
       self.inventory.addPorts(qsfps=qsfpRange)
 
-      for qsfpId in qsfpRange:
-         name = 'qsfp%d' % qsfpId
-
-         ledAddr = 0x6100 + (qsfpId - 1) * 0x10
-         self.scd.addLedGroup(name, [(ledAddr, name)])
-
-         # IRQ2 -> port 32:1 (bit 31:0)
-         # IRQ3 -> port 48:33 (bit 15:0)
-         intReg = self.scd.getInterrupt(qsfpId // 32 + 2)
-         intr = intReg.getInterruptBit(name, (qsfpId - 1) % 32)
-         qsfpAddr = 0xA010 + (qsfpId - 1) * 0x10
-         bus = self.XCVR_BUS_OFFSET + qsfpId - 1
-         self.scd.addQsfp(qsfpAddr, qsfpId, bus, interruptLine=intr,
-                          leds=self.scd.inventory.getLedGroup(name))
+      intrRegs = [self.scd.getInterrupt(intId) for intId in incrange(0, 6)]
+      # IRQ2 -> port 32:1 (bit 31:0)
+      # IRQ3 -> port 48:33 (bit 15:0)
+      self.scd.addQsfpSlotBlock(
+         qsfpRange=qsfpRange,
+         addr=0xA010,
+         bus=self.XCVR_BUS_OFFSET,
+         ledAddr=0x6100,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: xcvrId // 32 + 2,
+         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
+         isHwModSelAvail=False
+      )
 
       self.scd.addMdioMasterRange(0x9000, 12, speed=MdioSpeed.S10)
 
       for i in range(12):
          phyId = i + 1
-         reset = self.scd.addReset(ResetGpio(0x4000, 8 + i, False,
-                                             'phy%d_reset' % phyId))
+         resetDesc = ResetDesc('phy%d_reset' % phyId, addr=0x4000, bit=8 + i)
+         reset = self.scd.addReset(resetDesc)
          mdios = [self.scd.addMdio(i, 0), self.scd.addMdio(i, 1)]
          phy = self.PHY_CLS(phyId, mdios, reset=reset)
          self.inventory.addPhy(phy)
