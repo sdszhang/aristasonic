@@ -7,6 +7,7 @@ from ..core.utils import incrange
 from ..components.asic.xgs.trident3 import Trident3
 from ..components.dpm import Ucd90160, Ucd90320, UcdGpi
 from ..components.psu.delta import DPS500AB
+from ..components.psu.artesyn import CSU500DP
 from ..components.scd import Scd
 from ..components.tmp464 import Tmp464
 
@@ -92,6 +93,7 @@ class Marysville(FixedSystem):
             led=scd.inventory.getLed('%s' % name),
             psus=[
                DPS500AB,
+               CSU500DP,
             ],
          )
 

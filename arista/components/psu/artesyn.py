@@ -60,3 +60,9 @@ class DS460(ArtesynPsu):
                     target=55, overheat=80, critical=150),
       ]
    )
+
+class CSU500DP(DS495SPE):
+   IDENTIFIERS = [
+      PsuIdent('CSU500DP-3    ', 'PWR-511-AC-RED', Airflow.FORWARD),
+      PsuIdent('CSU500DP-3-001', 'PWR-511-AC-BLUE', Airflow.REVERSE),
+   ]

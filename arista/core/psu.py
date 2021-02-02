@@ -243,6 +243,7 @@ class PsuModel(object):
 
    @classmethod
    def isManufacturer(cls, name):
+      name = name.rstrip()
       if name == cls.MANUFACTURER.lower():
          return True
       for alias in cls.MANUFACTURER_ALIASES:
