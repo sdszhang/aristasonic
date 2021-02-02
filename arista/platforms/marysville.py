@@ -36,10 +36,11 @@ class Marysville(FixedSystem):
       self.cpu = self.newComponent(WoodpeckerCpu)
       self.cpu.cpld.newComponent(Ucd90160, addr=self.cpu.cpuDpmAddr())
       self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(), causes={
-         'powerloss': UcdGpi(4),
-         'reboot': UcdGpi(5),
-         'watchdog': UcdGpi(6),
-         'overtemp': UcdGpi(7),
+         'powerloss': UcdGpi(1),
+         'reboot': UcdGpi(3),
+         'watchdog': UcdGpi(4),
+         'overtemp': UcdGpi(6),
+         'cpu': UcdGpi(7),
       })
 
       scd.createWatchdog()
