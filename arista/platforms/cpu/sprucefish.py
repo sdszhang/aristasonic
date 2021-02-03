@@ -2,7 +2,7 @@ from ...core.cpu import Cpu
 from ...core.types import PciAddr
 
 from ...components.scd import Scd
-from ...components.eeprom import PrefdlSeeprom
+from ...components.eeprom import At24C512
 from ...components.max6658 import Max6658
 
 class SprucefishCpu(Cpu):
@@ -11,7 +11,7 @@ class SprucefishCpu(Cpu):
 
    def __init__(self, **kwargs):
       super(SprucefishCpu, self).__init__(**kwargs)
-      cpld = self.newComponent(Scd, PciAddr(bus=0xff, device=0x0b, func=3))
+      cpld = self.newComponent(Scd, addr=PciAddr(bus=0xff, device=0x0b, func=3))
       self.cpld = cpld
 
       cpld.createPowerCycle()
@@ -28,9 +28,10 @@ class SprucefishCpu(Cpu):
          (0x60B0, 'beacon'),
       ])
 
-      self.eeprom = cpld.newComponent(PrefdlSeeprom, cpld.i2cAddr(0, 0x50))
+      self.eeprom = cpld.newComponent(At24C512, addr=cpld.i2cAddr(0, 0x50),
+                                      label='supervisor')
 
-      self.max6658 = cpld.newComponent(Max6658, cpld.i2cAddr(0, 0x4c))
+      self.max6658 = cpld.newComponent(Max6658, addr=cpld.i2cAddr(0, 0x4c))
 
    def cpuDpmAddr(self, addr=0x4e, **kwargs):
       return self.cpld.i2cAddr(1, addr, **kwargs)

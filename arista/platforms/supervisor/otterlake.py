@@ -4,7 +4,7 @@ from __future__ import absolute_import, division
 from ...components.denali.psu import DenaliPsuSlotDesc
 from ...components.denali.supervisor import DenaliSupervisor
 from ...components.dpm import Ucd90120A, Ucd90160, UcdMon, UcdGpi
-from ...components.eeprom import PrefdlSeeprom
+from ...components.eeprom import At24C512
 from ...components.microsemi import MicrosemiPortDesc
 
 from ...core.platform import registerPlatform
@@ -72,5 +72,5 @@ class OtterLake(DenaliSupervisor):
          'powerloss': UcdMon(9),
       })
 
-      self.eeprom = self.cpu.cpld.newComponent(PrefdlSeeprom,
-                                               self.cpu.shimEepromAddr())
+      self.eeprom = self.cpu.cpld.newComponent(At24C512, label='supervisor_shim',
+                                               addr=self.cpu.shimEepromAddr())

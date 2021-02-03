@@ -7,7 +7,7 @@ from ...drivers.scd.register import ScdStatusChangedRegister, ScdSramRegister
 
 from ..cpu.hedgehog import HedgehogCpu
 
-from ...components.eeprom import PrefdlSeeprom
+from ...components.eeprom import At24C512
 from ...components.lm75 import Tmp75
 from ...components.phy.b52 import B52
 from ...components.scd import I2cScd
@@ -69,7 +69,8 @@ class ClearwaterCpuBase(ClearwaterBase):
       # Riser cards prefdl
       for riserId in incrange(1, 12):
          bus = 96 + riserId
-         self.scd.newComponent(PrefdlSeeprom, self.scd.i2cAddr(bus, 0x50))
+         self.scd.newComponent(At24C512, addr=self.scd.i2cAddr(bus, 0x50),
+                               label='card%d_riser%s' % (self.slot.slotId, riserId))
 
    def standbyDomain(self):
       super(ClearwaterCpuBase, self).standbyDomain()

@@ -5,76 +5,67 @@ from ..core.log import getLogger
 from ..core.prefdl import Prefdl
 from ..core.utils import JsonStoredData
 
-from ..drivers.eeprom import SeepromI2cDevDriver, EepromKernelDriver
+from ..drivers.eeprom import (
+   At24C64KernelDriver,
+   At24C512KernelDriver,
+   EepromKernelDriver,
+)
 
 logging = getLogger(__name__)
+
+def maybeCached(name, func, cls=JsonStoredData):
+   name += '.json'
+   try:
+      cache = JsonStoredData(name)
+      if cache.exist():
+         return cache.read()
+   except Exception: # pylint: disable=broad-except
+      logging.debug('Failed to read cache for %s' % name)
+
+   data = func()
+
+   if cache:
+      try:
+         cache.write(data, mode='w')
+      except Exception: # pylint: disable=broad-except
+         logging.debug('Failed to cache value for %s' % name)
+
+   return data
+
+def maybeClearCache(name):
+   name += '.json'
+   try:
+      cache = JsonStoredData(name)
+      cache.clear()
+   except Exception: # pylint: disable=broad-except
+      logging.debug("Failed to clear cache %s" % name)
 
 class I2cEeprom(I2cComponent):
    DRIVER = EepromKernelDriver
    PRIORITY = Priority.DEFAULT
 
-   def read(self):
-      return self.driver.read()
+   def eepromName(self):
+      return self.label or 'eeprom_%s' % self.addr
 
-class I2cSeeprom(I2cComponent):
-   DRIVER = SeepromI2cDevDriver
-   PRIORITY = Priority.DEFAULT
-
-   def read(self):
-      return self.driver.read()
-
-class PrefdlBase(object):
    def prefdl(self):
-      cachedPrefdl = None
-      try:
-         cachedPrefdl = JsonStoredData(self.cacheFile())
-         if cachedPrefdl.exist():
-            return cachedPrefdl.read()
-      except:
-         logging.debug('Failed to read cached prefdl for device %s' %
-               self.prefdlAddr())
+      return maybeCached(self.eepromName(), lambda: self.readPrefdl().toDict())
 
-      data = self.decode()
+   def readPrefdl(self):
+      return Prefdl.fromBinFile(self.driver.eepromPath())
 
-      if cachedPrefdl:
-         try:
-            cachedPrefdl.write(data, mode='w')
-         except:
-            logging.debug('Failed to cache prefdl for device %s' % self.prefdlAddr())
-
-      return data
+   def read(self):
+      return self.driver.read()
 
    def clean(self):
-      cachedPrefdl = JsonStoredData(self.cacheFile())
-      cachedPrefdl.clear()
+      super(I2cEeprom, self).clean()
+      maybeClearCache(self.eepromName())
 
-   def cacheFile(self):
-      return 'prefdl_%s' % self.prefdlAddr()
+class I2cSeeprom(I2cEeprom):
+   def readPrefdl(self):
+      return Prefdl.fromBinFile(self.driver.eepromPath(), skip=8)
 
-   def decode(self):
-      raise NotImplementedError
+class At24C64(I2cSeeprom):
+   DRIVER = At24C64KernelDriver
 
-   def prefdlAddr(self):
-      raise NotImplementedError
-
-class PrefdlEeprom(I2cEeprom, PrefdlBase):
-   def decode(self):
-      return Prefdl.fromBytes(self.read()).data()
-
-   def prefdlAddr(self):
-      return str(self.addr)
-
-   def clean(self):
-      I2cEeprom.clean(self)
-      PrefdlBase.clean(self)
-
-class PrefdlSeeprom(I2cSeeprom, PrefdlBase):
-   def decode(self):
-      return Prefdl.fromBytes(self.read()[8:]).data()
-
-   def prefdlAddr(self):
-      return str(self.addr)
-
-   def clean(self):
-      I2cSeeprom.clean(self)
-      PrefdlBase.clean(self)
+class At24C512(I2cSeeprom):
+   DRIVER = At24C512KernelDriver

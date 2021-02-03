@@ -5,7 +5,7 @@ from ...core.utils import incrange, HwApi
 
 from ...components.denali.linecard import DenaliLinecard, GpioRegisterMap
 from ...components.dpm import Ucd90320
-from ...components.eeprom import PrefdlSeeprom
+from ...components.eeprom import At24C512
 from ...components.lm73 import Lm73
 from ...components.lm75 import Tmp75
 from ...components.max6581 import Max6581
@@ -132,7 +132,8 @@ class Clearwater(ClearwaterBase):
                     position=Position.OTHER, target=75, overheat=85, critical=95),
       ])
 
-      self.scd.newComponent(PrefdlSeeprom, self.scd.i2cAddr(busId, 0x52 + cardId))
+      self.scd.newComponent(At24C512, self.scd.i2cAddr(busId, 0x52 + cardId),
+                            label='card%d_daughter%d' % (self.slot.slotId, cardId))
 
    def mainDomain(self):
       self.cwMainDomainCommon()

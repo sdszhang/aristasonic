@@ -30,6 +30,7 @@ class Component(object):
       self.drivers = OrderedDict()
       self.inventory = inventory
       self.parent = parent
+      self.label = None
       if not inventory and inventoryCls:
          self.inventory = inventoryCls()
       self.addDrivers(drivers)

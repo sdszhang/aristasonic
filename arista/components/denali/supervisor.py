@@ -6,8 +6,8 @@ from ...core.types import PciAddr
 
 from ...descs.gpio import GpioDesc
 
-from ..eeprom import PrefdlSeeprom
-from ..microsemi import Microsemi, MicrosemiPort
+from ..eeprom import At24C64
+from ..microsemi import Microsemi
 from ..pca9541 import Pca9541
 from ..psu.delta import ECD16020097
 from ..scd import Scd
@@ -60,10 +60,10 @@ class DenaliSupervisor(Supervisor):
       ])
 
       self.chassisEeproms = [
-         self.scd.newComponent(PrefdlSeeprom, addr=self.scd.i2cAddr(14, 0x51),
-                               name='chassis1'),
-         self.scd.newComponent(PrefdlSeeprom, addr=self.scd.i2cAddr(15, 0x51),
-                               name='chassis2'),
+         self.scd.newComponent(At24C64, addr=self.scd.i2cAddr(14, 0x51),
+                               label='chassis1'),
+         self.scd.newComponent(At24C64, addr=self.scd.i2cAddr(15, 0x51),
+                               label='chassis2'),
       ]
 
    def createPciSwitch(self):

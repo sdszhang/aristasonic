@@ -7,7 +7,7 @@ from ...core.card import Card, CardSlot
 from ...core.log import getLogger
 from ...libs.wait import waitFor
 from ..dpm import Ucd90320
-from ..eeprom import PrefdlSeeprom
+from ..eeprom import At24C512
 from ..pca9541 import Pca9541
 from ..power import PowerDomain
 
@@ -49,8 +49,10 @@ class DenaliCard(Card):
          and Fans...
       '''
       self.standby = self.newComponent(PowerDomain)
-      self.pca = self.standby.newComponent(Pca9541, addr=self.slot.bus.i2cAddr(0x77))
-      self.eeprom = self.pca.newComponent(PrefdlSeeprom, addr=self.pca.i2cAddr(0x50))
+      self.pca = self.standby.newComponent(Pca9541, addr=self.slot.bus.i2cAddr(0x77),
+                                           driverMode='kernel')
+      self.eeprom = self.pca.newComponent(At24C512, addr=self.pca.i2cAddr(0x50),
+                                          label='card_%d' % self.slot.slotId)
       self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11))
       self.createGpio1()
       self.createPlx()
@@ -170,6 +172,11 @@ class DenaliCard(Card):
    def setupPlx(self):
       self.enablePlxDownstreamHotplug()
 
+   def setupIdentification(self):
+      self.pca.takeOwnership()
+      self.pca.setup()
+      self.eeprom.setup()
+
 class DenaliCardSlot(CardSlot):
    def __init__(self, parent, slotId, pci, bus, presenceGpio=None, card=None):
       super(DenaliCardSlot, self).__init__(parent, slotId)
@@ -189,7 +196,7 @@ class DenaliCardSlot(CardSlot):
    def getEeprom(self):
       if not self.getPresence():
          return None
-      self.card.pca.takeOwnership()
+      self.card.setupIdentification()
       return self.card.eeprom.prefdl()
 
    def pciAddr(self, domain=0, bus=0, device=0, func=0):

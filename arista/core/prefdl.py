@@ -211,8 +211,10 @@ class Prefdl(object):
          raise UnknownPrefdlVersion("unknown prefdl verison %s" % version)
 
    @classmethod
-   def fromBinFile(cls, path, version=None):
+   def fromBinFile(cls, path, version=None, skip=0):
       with open(path, mode='rb') as f:
+         if skip:
+            f.read(skip)
          version = version or f.read(4)
          return cls.getPrefdlCls(version)(f=f, version=version)
 
