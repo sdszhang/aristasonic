@@ -11,6 +11,7 @@ from ..descs.led import LedColor
 from ..inventory.fan import Fan
 from ..inventory.gpio import Gpio
 from ..inventory.led import Led
+from ..inventory.reset import Reset
 from ..inventory.temp import Temp
 from ..inventory.xcvr import Xcvr
 
@@ -315,6 +316,29 @@ class TempSysfsImpl(Temp):
          return self.lcrit.read()
       return self.desc.lcritical
 
+class ResetSysfsImpl(Reset):
+   def __init__(self, driver, desc, **kwargs):
+      self.driver = driver
+      self.addr = desc.addr
+      self.bit = desc.bit
+      self.name = desc.name
+      def getResetPath(name):
+         return os.path.join(driver.getSysfsPath(), name)
+      self.reset = SysfsEntryBool(self, desc.name, pathCallback=getResetPath)
+      self.__dict__.update(**kwargs)
+
+   def getName(self):
+      return self.name
+
+   def read(self):
+      return self.reset.read()
+
+   def resetIn(self):
+      return self.reset.write(True)
+
+   def resetOut(self):
+      return self.reset.write(False)
+
 class GpioSysfsImpl(Gpio):
    def __init__(self, driver, desc, hwActiveLow=False, **kwargs):
       self.driver = driver
@@ -436,18 +460,6 @@ class XcvrSysfsDriver(SysfsDriver):
          logging.debug('setting txdisable for %s to %s', xcvr.name, value)
          return self.write('%s_%s' % (xcvr.name, 'txdisable'), '1' if value else '0')
       return False
-
-class ResetSysfsDriver(SysfsDriver):
-   def readReset(self, reset):
-      return self.read('%s_%s' % (reset.name, 'reset'))
-
-   def resetComponentIn(self, reset):
-      logging.debug('putting %s in reset', reset.name)
-      return self.write('%s_%s' % (reset.name, 'reset'), '1')
-
-   def resetComponentOut(self, reset):
-      logging.debug('putting %s out of reset', reset.name)
-      return self.write('%s_%s' % (reset.name, 'reset'), '0')
 
 class LedSysfsDriver(SysfsDriver):
    def __init__(self, colorDict=None, **kwargs):

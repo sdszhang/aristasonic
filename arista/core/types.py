@@ -8,8 +8,6 @@ NamedRegister = namedtuple("NamedRegister", Register._fields + ("name", ))
 
 Gpio = namedtuple("Gpio", ["bit", "ro", "activeLow"])
 
-ResetGpio = namedtuple("ResetGpio", ["addr", "bit", "activeLow", "name"])
-
 class SysfsPath(object):
    def getSysfsPath(self):
       raise NotImplementedError

@@ -9,7 +9,7 @@ from ...core.log import getLogger
 
 from ..i2c import I2cDevDriver
 from ..pci import PciKernelDriver
-from ..sysfs import FanSysfsImpl, GpioSysfsImpl, LedSysfsImpl
+from ..sysfs import FanSysfsImpl, GpioSysfsImpl, LedSysfsImpl, ResetSysfsImpl
 
 logging = getLogger(__name__)
 
@@ -155,15 +155,16 @@ class ScdKernelDriver(PciKernelDriver):
       super(ScdKernelDriver, self).finish()
 
    def resetSim(self, value):
-      resets = self.scd.getSysfsResetNameList()
+      resets = [reset.getName() for reset in self.scd.getResets()]
       logging.debug('resetting devices %s', resets)
 
    @utils.simulateWith(resetSim)
    def reset(self, value):
-      path = self.addr.getSysfsPath()
-      for reset in self.scd.getSysfsResetNameList():
-         with open(os.path.join(path, reset), 'w') as f:
-            f.write('1' if value else '0')
+      for reset in self.scd.getResets():
+         if value:
+            reset.resetIn()
+         else:
+            reset.resetOut()
 
    def resetIn(self):
       self.reset(True)
@@ -176,6 +177,9 @@ class ScdKernelDriver(PciKernelDriver):
 
    def getFanLed(self, desc):
       return LedSysfsImpl(self, desc)
+
+   def getReset(self, desc, **kwargs):
+      return ResetSysfsImpl(self, desc, **kwargs)
 
    def getGpio(self, desc, **kwargs):
       return GpioSysfsImpl(self, desc, hwActiveLow=True, **kwargs)

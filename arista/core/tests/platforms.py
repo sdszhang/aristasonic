@@ -16,6 +16,7 @@ from ...drivers.sysfs import SysfsDriver, SysfsEntry, GpioSysfsImpl
 from ...inventory.fan import Fan, FanSlot
 from ...inventory.led import Led
 from ...inventory.psu import Psu, PsuSlot
+from ...inventory.reset import Reset
 from ...inventory.temp import Temp
 from ...inventory.xcvr import Xcvr
 
@@ -136,6 +137,13 @@ class MockPlatformTest(unittest.TestCase):
          inventory = platform.getInventory()
          assert inventory
 
+   def _testReset(self, reset):
+      self.assertIsInstance(reset, Reset)
+      self.assertIsInstance(reset.getName(), str)
+      self.assertIsInstance(reset.read(), bool)
+      reset.resetIn()
+      reset.resetOut()
+
    def testXcvrs(self):
       for name, platform in getPlatformSkus().items():
          if not issubclass(platform, FixedSystem):
@@ -169,14 +177,8 @@ class MockPlatformTest(unittest.TestCase):
                interruptLine.set()
                interruptLine.clear()
             reset = xcvr.getReset()
-            assert reset is xcvr.reset
             if reset:
-               assert isinstance(reset.name, str)
-               assert isinstance(reset.driver, Driver)
-               assert isinstance(reset.getName(), str)
-               assert reset.read() in ['0', '1']
-               reset.resetIn()
-               reset.resetOut()
+               self._testReset(reset)
             leds = xcvr.getLeds()
             for led in leds:
                self._testLed(led)

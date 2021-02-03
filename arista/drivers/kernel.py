@@ -16,6 +16,7 @@ from .sysfs import (
    FanSysfsImpl,
    GpioSysfsImpl,
    LedSysfsImpl,
+   ResetSysfsImpl,
    TempSysfsImpl,
 )
 
@@ -98,6 +99,9 @@ class KernelDriver(Driver):
 
    def getTempSensor(self, desc, **kwargs):
       return TempSysfsImpl(self, desc, **kwargs)
+
+   def getReset(self, desc, **kwargs):
+      return ResetSysfsImpl(self, desc, **kwargs)
 
    def getGpio(self, desc, **kwargs):
       return GpioSysfsImpl(self, desc, **kwargs)

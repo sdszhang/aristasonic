@@ -61,6 +61,12 @@ class Component(LegacyComponent):
    def addTempSensors(self, descs, **kwargs):
       return [self.addTempSensor(desc, **kwargs) for desc in descs]
 
+   def addReset(self, desc, **kwargs):
+      return self.inventory.addReset(self.driver.getReset(desc, **kwargs))
+
+   def addResets(self, descs, **kwargs):
+      return [self.addReset(desc, **kwargs) for desc in descs]
+
    def addGpio(self, desc, **kwargs):
       return self.inventory.addGpio(self.driver.getGpio(desc, **kwargs))
 

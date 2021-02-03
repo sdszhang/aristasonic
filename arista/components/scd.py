@@ -5,7 +5,6 @@ import os
 from collections import OrderedDict, namedtuple
 
 from ..accessors.led import LedImpl
-from ..accessors.reset import ResetImpl
 from ..accessors.xcvr import XcvrImpl
 
 from ..core.component import Priority
@@ -32,7 +31,6 @@ from ..descs.reset import ResetDesc
 from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
 from ..drivers.sysfs import (
    LedSysfsDriver,
-   ResetSysfsDriver,
    XcvrSysfsDriver,
 )
 
@@ -40,7 +38,6 @@ from ..inventory.interrupt import Interrupt
 from ..inventory.powercycle import PowerCycle
 from ..inventory.watchdog import Watchdog
 from ..inventory.xcvr import Xcvr
-from ..inventory.reset import Reset
 
 from ..libs.python import monotonicRaw
 
@@ -59,34 +56,6 @@ class ScdI2cAddr(I2cAddr):
    @property
    def bus(self):
       return self.scd_.i2cOffset + self.bus_
-
-class ScdReset(Reset):
-   def __init__(self, path, reset):
-      self.addr = reset.addr
-      self.name = reset.name
-      self.bit = reset.bit
-      self.path = os.path.join(path, self.name)
-
-   def read(self):
-      with open(self.path, 'r') as f:
-         return f.read().rstrip()
-
-   def resetSim(self, value):
-      logging.debug('resetting device %s', self.name)
-
-   @simulateWith(resetSim)
-   def doReset(self, value):
-      with open(self.path, 'w') as f:
-         f.write('1' if value else '0')
-
-   def resetIn(self):
-      self.doReset(True)
-
-   def resetOut(self):
-      self.doReset(False)
-
-   def getName(self):
-      return self.name
 
 class ScdWatchdog(Watchdog):
    MAX_TIMEOUT = 65535
@@ -288,7 +257,6 @@ class Scd(PciComponent):
          KernelDriver(module='scd'),
          ScdKernelDriver(scd=self, addr=addr, registerCls=registerCls),
          LedSysfsDriver(sysfsPath=os.path.join(self.pciSysfs, 'leds')),
-         ResetSysfsDriver(sysfsPath=self.pciSysfs),
          XcvrSysfsDriver(sysfsPath=self.pciSysfs),
       ]
       self.driver = drivers[1]
@@ -400,18 +368,13 @@ class Scd(PciComponent):
       self.inventory.addLedGroup(groupName, leds)
       return leds
 
-   def addReset(self, gpio):
-      scdReset = ScdReset(self.pciSysfs, gpio)
-      self.resets += [scdReset]
-      self.inventory.addReset(scdReset)
-      return scdReset
+   def addReset(self, desc, **kwargs):
+      reset = self.driver.getReset(desc, **kwargs)
+      self.resets += [reset]
+      return self.inventory.addReset(reset)
 
-   def addResets(self, gpios):
-      scdResets = [ScdReset(self.pciSysfs, gpio) for gpio in gpios]
-      self.resets += scdResets
-      resetDict = {reset.getName(): reset for reset in scdResets}
-      self.inventory.addResets(resetDict)
-      return resetDict
+   def addResets(self, descs, **kwargs):
+      return [self.addReset(desc, **kwargs) for desc in descs]
 
    def addGpio(self, desc, **kwargs):
       gpio = self.driver.getGpio(desc, **kwargs)
@@ -425,16 +388,17 @@ class Scd(PciComponent):
       # Note: separate adder to avoid conflicting with kernel driver
       return self.inventory.addGpio(self.driver.getGpio(desc, **kwargs))
 
-   def addXcvrReset(self, gpio):
+   def addXcvrReset(self, desc, **kwargs):
       # Note: separate adder to avoid conflicting with kernel driver
-      return self.inventory.addReset(ScdReset(self.pciSysfs, gpio))
+      return self.inventory.addReset(self.driver.getReset(desc, **kwargs))
 
    def _addXcvr(self, xcvrId, xcvrType, bus, interruptLine, leds=None, cls=None):
+      # TODO remove
       addr = self.i2cAddr(bus, Xcvr.ADDR, t=1, datr=0, datw=3, ed=0)
       reset = None
       if xcvrType != Xcvr.SFP:
-         reset = ResetImpl(name='%s%s' % (Xcvr.typeStr(xcvrType), xcvrId),
-                           driver=self.drivers['ResetSysfsDriver'])
+         reset = self.inventory.getReset('%s%s_reset' % (Xcvr.typeStr(xcvrType),
+                                                         xcvrId))
       xcvr = XcvrImpl(xcvrId=xcvrId, xcvrType=xcvrType,
                       driver=self.drivers['XcvrSysfsDriver'],
                       addr=addr, interruptLine=interruptLine,
@@ -622,12 +586,8 @@ class Scd(PciComponent):
       for i, addr in enumerate(addrs, 0):
          self.addUartPort(addr, i)
 
-   def getSysfsResetNameList(self, xcvrs=True):
-      entries = [reset.name for reset in self.resets]
-      if xcvrs:
-         entries += ['qsfp%d_reset' % xcvrId for _, xcvrId in self.qsfps]
-         entries += ['osfp%d_reset' % xcvrId for _, xcvrId in self.osfps]
-      return entries
+   def getResets(self):
+      return self.resets
 
    def resetOut(self):
       super(Scd, self).resetOut()
