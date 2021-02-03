@@ -2,6 +2,7 @@ import time
 
 from ..core.component import Priority
 from ..core.component.i2c import I2cComponent
+from ..core.driver import modprobe
 from ..core.log import getLogger
 from ..core.register import Register, RegisterMap
 
@@ -22,6 +23,9 @@ class SysCpldPowerCycle(PowerCycle):
       self.parent = parent
 
    def powerCycle(self):
+      # Modprobe for kdump kernel
+      modprobe('i2c-dev')
+
       logging.info("Initiating powercycle through CPLD")
       self.parent.driver.regs.powerCycle(0xDE)
       logging.info("Powercycle triggered from CPLD")

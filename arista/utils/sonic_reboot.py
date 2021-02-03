@@ -8,6 +8,8 @@ calls the function to perform the powercycle.
 
 from __future__ import print_function
 
+import traceback
+
 from arista.core.platform import getPlatform
 from arista.core.utils import klog
 from .sonic_utils import getInventory
@@ -22,4 +24,8 @@ def reboot(inventory=None):
       return
    klog("Restarting system", level=0)
    for powerCycle in powerCycles:
-      powerCycle.powerCycle()
+      try:
+         powerCycle.powerCycle()
+      except:
+         klog("Failed to power cycle using %s" % powerCycle, level=0)
+         klog(traceback.format_exc(), level=0)
