@@ -49,8 +49,8 @@ class LedControlSysfs(LedControlCommon):
    def __init__(self):
       LedControlCommon.__init__(self)
       self.portSysfsMapping = defaultdict(list)
-      for xcvr in self.inventory.getXcvrs().values():
-         for led in xcvr.getLeds():
+      for xcvrSlot in self.inventory.getXcvrSlots().values():
+         for led in xcvrSlot.getLeds():
             ledName = led.getName()
             port = int(re.search(r'\d+', ledName).group(0))
             self.portSysfsMapping[port].append(self.LED_SYSFS_PATH.format(ledName))

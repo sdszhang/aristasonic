@@ -19,9 +19,6 @@ class Inventory(object):
       self.leds = {}
       self.ledGroups = {}
 
-      # TODO: remove
-      self.xcvrs = {}
-
       self.sfps = {}
       self.qsfps = {}
       self.osfps = {}
@@ -73,21 +70,12 @@ class Inventory(object):
       self.portStart = self.allXcvrsRange[0]
       self.portEnd = self.allXcvrsRange[-1]
 
-   # TODO: remove
-   def addXcvr(self, xcvr):
-      self.xcvrs[xcvr.xcvrId] = xcvr
-      xcvrReset = xcvr.getReset()
-      if xcvrReset is not None:
-         self.resets[xcvrReset.getName()] = xcvrReset
-      return xcvr
-
-   # TODO: remove
    def getXcvrs(self):
-      return self.xcvrs
-
-   # TODO: remove
-   def getXcvr(self, xcvrId):
-      return self.xcvrs[xcvrId]
+      xcvrs = {}
+      xcvrs.update(self.getSfps())
+      xcvrs.update(self.getQsfps())
+      xcvrs.update(self.getOsfps())
+      return xcvrs
 
    def addSfp(self, sfp):
       self.sfps[sfp.getId()] = sfp
@@ -154,11 +142,13 @@ class Inventory(object):
 
    def getPortToEepromMapping(self):
       eepromPath = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
-      return {xcvrId : eepromPath.format(xcvr.addr.bus, xcvr.addr.address)
-               for xcvrId, xcvr in self.xcvrs.items()}
+      return {xcvrId : eepromPath.format(
+                       xcvr.getI2cAddr().bus, xcvr.getI2cAddr().address)
+              for xcvrId, xcvr in self.getXcvrs().items()}
 
    def getPortToI2cAdapterMapping(self):
-      return {xcvrId : xcvr.addr.bus for xcvrId, xcvr in self.xcvrs.items()}
+      return {xcvrId : xcvr.getI2cAddr().bus
+              for xcvrId, xcvr in self.getXcvrs().items()}
 
    def addLed(self, led):
       self.leds[led.getName()] = led
@@ -345,7 +335,8 @@ class Inventory(object):
          "leds": [l.genDiag(ctx) for l in self.leds.values()],
          # TODO led groups
          # TODO watchdog
-         "xcvrs": [x.genDiag(ctx) for x in self.xcvrs.values()],
+         "xcvrs": [x.genDiag(ctx) for x in self.getXcvrs().values()],
+         "xcvrSlots": [s.genDiag(ctx) for s in self.getXcvrSlots().values()],
          "psus": [p.genDiag(ctx) for p in self.psus],
          "psuSlots": [s.genDiag(ctx) for s in self.psuSlots],
          "fans": [f.genDiag(ctx) for f in self.fans],

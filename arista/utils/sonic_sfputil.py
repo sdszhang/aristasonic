@@ -53,20 +53,23 @@ def getSfpUtil():
             if not self._is_valid_port(port_num):
                 return False
 
-            return inventory.getXcvr(port_num).getPresence()
+            return inventory.getXcvrSlot(port_num).getPresence()
 
         def get_low_power_mode(self, port_num):
             if not self._is_valid_port(port_num):
                 return False
 
-            return inventory.getXcvr(port_num).getLowPowerMode()
+            try:
+                return inventory.getXcvrSlot(port_num).getLowPowerMode()
+            except:
+                return False
 
         def set_low_power_mode(self, port_num, lpmode):
             if not self._is_valid_port(port_num):
                 return False
 
             try:
-               return inventory.getXcvr(port_num).setLowPowerMode(lpmode)
+               return inventory.getXcvrSlot(port_num).setLowPowerMode(lpmode)
             except:
                #print('failed to set low power mode for xcvr %d' % port_num)
                return False
@@ -75,7 +78,7 @@ def getSfpUtil():
             if not self._is_valid_port(port_num):
                 return False
 
-            xcvr = inventory.getXcvr(port_num).getReset()
+            xcvr = inventory.getXcvrSlot(port_num).getReset()
             if xcvr is None:
                return False
 
@@ -97,27 +100,27 @@ def getSfpUtil():
             return True
 
         def get_transceiver_change_event(self, timeout=0):
-            xcvrs = inventory.getXcvrs()
+            xcvrSlots = inventory.getXcvrSlots()
             epoll = select.epoll()
             openFiles = []
             ret = {}
             try:
                # Clear the interrupt masks
-               for xcvr in xcvrs.values():
-                  intr = xcvr.getInterruptLine()
+               for xcvrSlot in xcvrSlots.values():
+                  intr = xcvrSlot.getInterruptLine()
                   if not intr:
                      continue
-                  xcvr.getPresence()
+                  xcvrSlot.getPresence()
                   intr.clear()
                   openFile = open(intr.getFile())
-                  openFiles.append((xcvr, openFile))
+                  openFiles.append((xcvrSlot, openFile))
                   epoll.register(openFile.fileno(), select.EPOLLIN)
                pollRet = epoll.poll(timeout=timeout if timeout != 0 else -1)
                if pollRet:
                   pollRet = dict(pollRet)
-                  for xcvr, openFile in openFiles:
+                  for xcvrSlot, openFile in openFiles:
                      if openFile.fileno() in pollRet:
-                        ret[str(xcvr.xcvrId)] = '1' if xcvr.getPresence() else '0'
+                        ret[str(xcvrSlot.getId())] = '1' if xcvrSlot.getPresence() else '0'
                   return True, ret
             finally:
                for _, openFile in openFiles:

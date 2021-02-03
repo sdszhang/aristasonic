@@ -5,7 +5,6 @@ import os
 from collections import OrderedDict, namedtuple
 
 from ..accessors.led import LedImpl
-from ..accessors.xcvr import XcvrImpl
 
 from ..core.component import Priority
 from ..core.component.i2c import I2cComponent
@@ -31,18 +30,15 @@ from ..descs.reset import ResetDesc
 from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
 from ..drivers.sysfs import (
    LedSysfsDriver,
-   XcvrSysfsDriver,
 )
 
 from ..inventory.interrupt import Interrupt
 from ..inventory.powercycle import PowerCycle
 from ..inventory.watchdog import Watchdog
-from ..inventory.xcvr import Xcvr
 
 from ..libs.python import monotonicRaw
 
 from .common import PciComponent
-from .xcvr import Sfp, Qsfp, Osfp
 
 logging = getLogger(__name__)
 
@@ -257,7 +253,6 @@ class Scd(PciComponent):
          KernelDriver(module='scd'),
          ScdKernelDriver(scd=self, addr=addr, registerCls=registerCls),
          LedSysfsDriver(sysfsPath=os.path.join(self.pciSysfs, 'leds')),
-         XcvrSysfsDriver(sysfsPath=self.pciSysfs),
       ]
       self.driver = drivers[1]
       self.smbusMasters = OrderedDict()
@@ -271,7 +266,6 @@ class Scd(PciComponent):
       self.qsfps = []
       self.sfps = []
       self.tweaks = []
-      self.xcvrs = []
       self.uioMap = {}
       self.resets = []
       self.i2cOffset = 0
@@ -392,39 +386,8 @@ class Scd(PciComponent):
       # Note: separate adder to avoid conflicting with kernel driver
       return self.inventory.addReset(self.driver.getReset(desc, **kwargs))
 
-   def _addXcvr(self, xcvrId, xcvrType, bus, interruptLine, leds=None, cls=None):
-      # TODO remove
-      addr = self.i2cAddr(bus, Xcvr.ADDR, t=1, datr=0, datw=3, ed=0)
-      reset = None
-      if xcvrType != Xcvr.SFP:
-         reset = self.inventory.getReset('%s%s_reset' % (Xcvr.typeStr(xcvrType),
-                                                         xcvrId))
-      xcvr = XcvrImpl(xcvrId=xcvrId, xcvrType=xcvrType,
-                      driver=self.drivers['XcvrSysfsDriver'],
-                      addr=addr, interruptLine=interruptLine,
-                      reset=reset, leds=leds)
-      self.newComponent(cls, addr=addr)
-      self.xcvrs.append(xcvr)
-      self.inventory.addXcvr(xcvr)
-      return xcvr
-
-   def addOsfp(self, addr, xcvrId, bus, interruptLine=None, leds=None):
-      self.osfps += [(addr, xcvrId)]
-      return self._addXcvr(xcvrId, Xcvr.OSFP, bus, interruptLine, leds=leds,
-                           cls=Osfp)
-
-   def addQsfp(self, addr, xcvrId, bus, interruptLine=None, leds=None):
-      self.qsfps += [(addr, xcvrId)]
-      return self._addXcvr(xcvrId, Xcvr.QSFP, bus, interruptLine, leds=leds,
-                           cls=Qsfp)
-
-   def addSfp(self, addr, xcvrId, bus, interruptLine=None, leds=None):
-      self.sfps += [(addr, xcvrId)]
-      return self._addXcvr(xcvrId, Xcvr.SFP, bus, interruptLine, leds=leds,
-                           cls=Sfp)
-
    def _addXcvrSlot(self, cls, name, xcvrId, addr, bus, ledAddr, ledAddrOffsetFn,
-                    ledLanes, addXcvrFn, intrRegs=None, intrRegIdxFn=None,
+                    ledLanes, intrRegs=None, intrRegIdxFn=None,
                     intrBitFn=None, **kwargs):
       intr = None
       if intrRegs:
@@ -444,10 +407,6 @@ class Scd(PciComponent):
          ledAddr += ledAddrOffsetFn(xcvrId)
       ledGroup = self.addLedGroup(name, leds)
 
-      # TODO: Remove when XcvrImpl has been refactored away
-      addXcvrFn(addr, xcvrId, bus, interruptLine=intr,
-                leds=ledGroup)
-
       return self.newComponent(
          cls=cls,
          name=name,
@@ -463,10 +422,10 @@ class Scd(PciComponent):
                        busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
                        **kwargs):
       for i in sfpRange:
-         self.addSfpSlot(name="sfp%d" % i, xcvrId=i, addXcvrFn=self.addSfp,
-                         addr=addr, bus=bus, ledAddr=ledAddr,
-                         ledAddrOffsetFn=ledAddrOffsetFn, ledLanes=ledLanes,
-                         **kwargs)
+         self.addSfpSlot(name="sfp%d" % i, xcvrId=i, addr=addr, bus=bus,
+                         ledAddr=ledAddr, ledAddrOffsetFn=ledAddrOffsetFn,
+                         ledLanes=ledLanes, **kwargs)
+         self.sfps += [(addr, i)]
          addr += addrOffset
          bus += busOffset
          for _ in range(ledLanes):
@@ -491,10 +450,10 @@ class Scd(PciComponent):
                         busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
                         **kwargs):
       for i in qsfpRange:
-         self.addQsfpSlot(name="qsfp%d" % i, xcvrId=i, addXcvrFn=self.addQsfp,
-                         addr=addr, bus=bus, ledAddr=ledAddr,
-                         ledAddrOffsetFn=ledAddrOffsetFn, ledLanes=ledLanes,
-                         **kwargs)
+         self.addQsfpSlot(name="qsfp%d" % i, xcvrId=i, addr=addr, bus=bus,
+                          ledAddr=ledAddr, ledAddrOffsetFn=ledAddrOffsetFn,
+                          ledLanes=ledLanes, **kwargs)
+         self.qsfps += [(addr, i)]
          addr += addrOffset
          bus += busOffset
          for _ in range(ledLanes):
@@ -520,10 +479,10 @@ class Scd(PciComponent):
                         busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
                         **kwargs):
       for i in osfpRange:
-         self.addOsfpSlot(name="osfp%d" % i, xcvrId=i, addXcvrFn=self.addOsfp,
-                          addr=addr, bus=bus, ledAddr=ledAddr,
-                          ledAddrOffsetFn=ledAddrOffsetFn, ledLanes=ledLanes,
-                          **kwargs)
+         self.addOsfpSlot(name="osfp%d" % i, xcvrId=i, addr=addr, bus=bus,
+                          ledAddr=ledAddr, ledAddrOffsetFn=ledAddrOffsetFn,
+                          ledLanes=ledLanes, **kwargs)
+         self.osfps += [(addr, i)]
          addr += addrOffset
          bus += busOffset
          for _ in range(ledLanes):
@@ -591,11 +550,16 @@ class Scd(PciComponent):
 
    def resetOut(self):
       super(Scd, self).resetOut()
-      for xcvr in self.xcvrs:
-         xcvr.setModuleSelect(True)
-         xcvr.setTxDisable(False)
-         if xcvr.getLowPowerMode():
-            xcvr.setLowPowerMode(False)
+      for xcvrSlot in self.inventory.getXcvrSlots().values():
+         try:
+            xcvrSlot.setModuleSelect(True)
+         except NotImplementedError:
+            pass
+         xcvrSlot.setTxDisable(False)
+         try:
+            xcvrSlot.setLowPowerMode(False)
+         except NotImplementedError:
+            pass
 
    def uioMapInit(self):
       for uio in os.listdir(SYS_UIO_PATH):

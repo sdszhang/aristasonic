@@ -77,8 +77,8 @@ class Chassis(ChassisBase):
       self._sfp_list = []
       if self._inventory and self._inventory.portEnd:
          self._sfp_list = [None] * (self._inventory.portEnd)
-         for index, sfp in self._inventory.getXcvrs().items():
-            self._sfp_list[index - 1] = Sfp(index, sfp)
+         for index, slot in self._inventory.getXcvrSlots().items():
+            self._sfp_list[index - 1] = Sfp(index, slot)
       for thermal in self._inventory.getTemps():
          self._thermal_list.append(Thermal(thermal))
       self._watchdog = Watchdog(self._inventory.getWatchdog())

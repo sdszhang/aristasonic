@@ -38,56 +38,61 @@ class Sfp(SfpBase):
 
    RESET_DELAY = 1
 
-   def __init__(self, index, sfp):
+   def __init__(self, index, slot):
       SfpBase.__init__(self)
       self._index = index
-      self._sfp = sfp
+      self._slot = slot
       self._sfputil = None
-      self._eepromPath = EEPROM_PATH.format(sfp.addr.bus, sfp.addr.address)
+      sfp = slot.getXcvr()
+      self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
+                                            sfp.getI2cAddr().address)
       self.sfp_type = sfp.getType().upper()
 
    def get_id(self):
       return self._index
 
    def get_name(self):
-      return self._sfp.getName()
+      return self._slot.getName()
 
    def get_presence(self):
-      return self._sfp.getPresence()
+      return self._slot.getPresence()
 
    def get_lpmode(self):
-      return self._sfp.getLowPowerMode()
+      try:
+         return self._slot.getLowPowerMode()
+      except: # pylint: disable-msg=W0702
+         return False
 
    def set_lpmode(self, lpmode):
       try:
-         self._sfp.setLowPowerMode(lpmode)
+         self._slot.setLowPowerMode(lpmode)
       except: # pylint: disable-msg=W0702
          return False
       return True
 
    def get_tx_disable(self):
-      return self._sfp.getTxDisable()
+      return self._slot.getTxDisable()
 
    def tx_disable(self, tx_disable):
       try:
-         self._sfp.setTxDisable(tx_disable)
+         self._slot.setTxDisable(tx_disable)
       except: # pylint: disable-msg=W0702
          return False
       return True
 
    def reset(self):
       try:
-         self._sfp.getReset().resetIn()
+         self._slot.getReset().resetIn()
       except: # pylint: disable-msg=W0702
          pass
       time.sleep(self.RESET_DELAY)
       try:
-         self._sfp.getReset().resetOut()
+         self._slot.getReset().resetOut()
       except: # pylint: disable-msg=W0702
          pass
 
    def clear_interrupt(self):
-      intr = self._sfp.getInterruptLine()
+      intr = self._slot.getInterruptLine()
       if not intr:
          return False
       self.get_presence()
@@ -95,7 +100,7 @@ class Sfp(SfpBase):
       return True
 
    def get_interrupt_file(self):
-      intr = self._sfp.getInterruptLine()
+      intr = self._slot.getInterruptLine()
       if intr:
          return intr.getFile()
       return None

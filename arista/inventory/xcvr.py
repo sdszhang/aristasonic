@@ -4,17 +4,7 @@ from . import InventoryInterface, diagcls, diagmethod
 @diagcls
 class Xcvr(InventoryInterface):
 
-   # TODO Remove
-   SFP = 0
-   QSFP = 1
-   OSFP = 2
-
    ADDR = 0x50
-
-   # TODO Remove
-   @classmethod
-   def typeStr(cls, typeIndex):
-      return ['sfp', 'qsfp', 'osfp'][typeIndex]
 
    @diagmethod('type')
    def getType(self):

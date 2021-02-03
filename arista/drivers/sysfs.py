@@ -13,7 +13,6 @@ from ..inventory.gpio import Gpio
 from ..inventory.led import Led
 from ..inventory.reset import Reset
 from ..inventory.temp import Temp
-from ..inventory.xcvr import Xcvr
 
 logging = getLogger(__name__)
 
@@ -424,42 +423,6 @@ class SysfsDriver(Driver):
       path = path or os.path.join(self.sysfsPath, name)
       with open(path, 'w') as f:
          return f.write(value)
-
-class XcvrSysfsDriver(SysfsDriver):
-   def getXcvrPresence(self, xcvr):
-      return self.read('%s_%s' % (xcvr.name, 'present')) == '1'
-
-   def getXcvrLowPowerMode(self, xcvr):
-      if xcvr.xcvrType == Xcvr.SFP:
-         return False
-      return self.read('%s_%s' % (xcvr.name, 'lp_mode')) == '1'
-
-   def setXcvrLowPowerMode(self, xcvr, value):
-      if xcvr.xcvrType == Xcvr.SFP:
-         return False
-      return self.write('%s_%s' % (xcvr.name, 'lp_mode'), '1' if value else '0')
-
-   def getXcvrModuleSelect(self, xcvr):
-      if xcvr.xcvrType == Xcvr.SFP:
-         return True
-      return self.read('%s_%s' % (xcvr.name, 'modsel')) == '1'
-
-   def setXcvrModuleSelect(self, xcvr, value):
-      if xcvr.xcvrType == Xcvr.SFP:
-         return True
-      logging.debug('setting modsel for %s to %s', xcvr.name, value)
-      return self.write('%s_%s' % (xcvr.name, 'modsel'), '1' if value else '0')
-
-   def getXcvrTxDisable(self, xcvr):
-      if xcvr.xcvrType == Xcvr.SFP:
-         return self.read('%s_%s' % (xcvr.name, 'txdisable')) == '1'
-      return False
-
-   def setXcvrTxDisable(self, xcvr, value):
-      if xcvr.xcvrType == Xcvr.SFP:
-         logging.debug('setting txdisable for %s to %s', xcvr.name, value)
-         return self.write('%s_%s' % (xcvr.name, 'txdisable'), '1' if value else '0')
-      return False
 
 class LedSysfsDriver(SysfsDriver):
    def __init__(self, colorDict=None, **kwargs):
