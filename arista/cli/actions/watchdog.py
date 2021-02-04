@@ -28,7 +28,7 @@ def doWatchdog(ctx, args):
       logging.info('arming the hardware watchdog for %ds', args.watchdog_timeout)
       # Tens of milliseconds
       watchdog_timeout = args.watchdog_timeout * 100
-      if watchdog_timeout >= 65536:
+      if watchdog_timeout > watchdog.MAX_TIMEOUT:
          logging.error('failed to arm the hardware watchdog: time value is too big')
          return 1
       if not watchdog.arm(watchdog_timeout):

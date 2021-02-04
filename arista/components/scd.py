@@ -90,6 +90,8 @@ class ScdReset(Reset):
       return self.name
 
 class ScdWatchdog(Watchdog):
+   MAX_TIMEOUT = 65535
+
    def __init__(self, scd, reg=0x0120):
       self.scd = scd
       self.reg = reg
@@ -108,6 +110,10 @@ class ScdWatchdog(Watchdog):
       return regValue
 
    def armSim(self, timeout):
+      if timeout > ScdWatchdog.MAX_TIMEOUT:
+         logging.error("watchdog timeout %s exceeds max timeout %s",
+                       timeout, ScdWatchdog.MAX_TIMEOUT)
+         return False
       self.armTimeStamp = monotonicRaw()
       regValue = self.armReg(timeout)
       logging.info("watchdog arm reg={0:32b}".format(regValue))
@@ -115,6 +121,10 @@ class ScdWatchdog(Watchdog):
 
    @simulateWith(armSim)
    def arm(self, timeout):
+      if timeout > ScdWatchdog.MAX_TIMEOUT:
+         logging.error("watchdog timeout %s exceeds max timeout %s",
+                       timeout, ScdWatchdog.MAX_TIMEOUT)
+         return False
       self.armTimeStamp = monotonicRaw()
       regValue = self.armReg(timeout)
       try:
