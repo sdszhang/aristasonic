@@ -142,7 +142,8 @@ class KernelDriver(Driver):
       return '%s(name=%s)' % (self.__class__.__name__, self.driverName)
 
    def setup(self):
-      modprobe(self.module, self.args)
+      if not self.loaded():
+         modprobe(self.module, self.args)
       self.fileWaiter.waitFileReady()
 
    def clean(self):

@@ -39,7 +39,8 @@ class KernelDriver(Driver):
    def setup(self):
       if self.PASSIVE:
          return
-      modprobe(self.module, self.margs)
+      if not self.loaded():
+         modprobe(self.module, self.margs)
 
    def clean(self):
       if self.PASSIVE:
