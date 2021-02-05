@@ -8,7 +8,7 @@ logging = getLogger(__name__)
 class Ds125BrDevDriver(I2cDevDriver):
 
    def __init__(self, amplitude=None, channels=8, **kwargs):
-      super(Ds125BrDevDriver, self).__init__(self, **kwargs)
+      super(Ds125BrDevDriver, self).__init__(**kwargs)
       self.channels = channels
       self.amplitude = amplitude
       self.config = self.qsfpPortConfig(amplitude) if amplitude else \
