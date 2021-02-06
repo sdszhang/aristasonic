@@ -34,6 +34,12 @@ class Fan(FanBase):
    def get_name(self):
       return self._fan.getName()
 
+   def get_serial(self):
+      return "N/A"
+
+   def get_model(self):
+      return "N/A"
+
    def get_direction(self):
       return self.fanDirectionConversion[self._fan.getDirection()]
 
@@ -75,6 +81,9 @@ class Fan(FanBase):
 
    def get_presence(self):
       return self._fan.getPresence()
+
+   def is_replaceable(self):
+      return False
 
    def get_interrupt_file(self):
       return None

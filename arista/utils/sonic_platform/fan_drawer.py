@@ -10,6 +10,7 @@ class FanDrawer(FanDrawerBase):
       self._parent = parent
       self._fan_list = [Fan(self, fan) for fan in slot.getFans()]
       self._slot = slot
+      self._hotswappable = True
 
    def get_name(self):
       return self._slot.getName()
@@ -38,6 +39,9 @@ class FanDrawer(FanDrawerBase):
 
    def get_maximum_consumed_power(self):
       return self._slot.getMaxPowerDraw()
+
+   def is_replaceable(self):
+      return self._hotswappable
 
 class FanDrawerLegacy(FanDrawerBase):
    def __init__(self, fan):
