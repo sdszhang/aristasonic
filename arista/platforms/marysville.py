@@ -26,7 +26,7 @@ class Marysville(FixedSystem):
       super(Marysville, self).__init__()
 
       self.sfpRange = incrange(1, 48)
-      self.qsfp100gRange = incrange(49, 52)
+      self.qsfp100gRange = incrange(49, 56)
 
       self.inventory.addPorts(sfps=self.sfpRange, qsfps=self.qsfp100gRange)
 
