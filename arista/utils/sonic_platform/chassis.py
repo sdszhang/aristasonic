@@ -111,7 +111,7 @@ class Chassis(ChassisBase):
    def set_status_led(self, color):
       # FIXME: add support for blinking
       color = color.replace('_blink', '')
-      self._inventory.getLed('status').setColor(color)
+      return self._inventory.getLed('status').setColor(color)
 
    def get_status_led(self):
       return self._inventory.getLed('status').getColor()

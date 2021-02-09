@@ -46,15 +46,16 @@ class SysfsEntry(object):
 
    def _write(self, value):
       if utils.inSimulation():
-         return
+         return True
       with open(self.entryPath, 'w') as f:
          f.write(value)
+      return True
 
    def read(self):
       return self._readConversion(self._read().rstrip())
 
    def write(self, value):
-      self._write(self._writeConversion(value))
+      return self._write(self._writeConversion(value))
 
 class SysfsEntryInt(SysfsEntry):
    def _readConversion(self, value):
@@ -205,7 +206,7 @@ class LedSysfsImpl(Led):
       return self.brightness.read()
 
    def setColor(self, color):
-      self.brightness.write(color)
+      return self.brightness.write(color)
 
    def isStatusLed(self):
       return 'sfp' in self.desc.name
@@ -239,6 +240,7 @@ class LedRgbSysfsImpl(Led):
       for led, value in zip(self.leds, values):
          if led.exists():
             led.write(value)
+      return True
 
    def isStatusLed(self):
       return 'sfp' in self.desc.name
