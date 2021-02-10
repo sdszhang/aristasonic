@@ -9,6 +9,7 @@ from ..core.log import getLogger
 from ..descs.led import LedColor
 
 from ..inventory.fan import Fan
+from ..inventory.gpio import Gpio
 from ..inventory.led import Led
 from ..inventory.temp import Temp
 from ..inventory.xcvr import Xcvr
@@ -313,6 +314,55 @@ class TempSysfsImpl(Temp):
       if self.lcrit.exists():
          return self.lcrit.read()
       return self.desc.lcritical
+
+class GpioSysfsImpl(Gpio):
+   def __init__(self, driver, desc, hwActiveLow=False, **kwargs):
+      self.driver = driver
+      self.addr = desc.addr
+      self.bit = desc.bit
+      self.name = desc.name
+      self.ro = desc.ro
+      self.activeLow = desc.activeLow
+      self.hwActiveLow = hwActiveLow
+      def getGpioPath(name):
+         return os.path.join(self.driver.getSysfsPath(), name)
+      self.gpio = SysfsEntryBool(self, self.name, pathCallback=getGpioPath)
+      self.__dict__.update(**kwargs)
+
+   def getName(self):
+      return self.name
+
+   def getAddr(self):
+      return self.addr
+
+   def getPath(self):
+      return self.gpio.entryPath
+
+   def getBit(self):
+      return self.bit
+
+   def isRo(self):
+      return self.ro
+
+   def isActiveLow(self):
+      return False if self.hwActiveLow else self.activeLow
+
+   def getRawValue(self):
+      return self.gpio.read()
+
+   def setRawValue(self, value):
+      self.gpio.write(value)
+
+   def _activeValue(self):
+      return 0 if self.isActiveLow() else 1
+
+   def isActive(self):
+      if utils.inSimulation():
+         return True
+      return self.getRawValue() == self._activeValue()
+
+   def setActive(self, value):
+      self.setRawValue(not value if self.isActiveLow() else value)
 
 #
 # NOTE: do not use classes below, they are being deprecated

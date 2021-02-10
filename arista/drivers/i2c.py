@@ -1,7 +1,7 @@
 
 from contextlib import closing
 
-from ..accessors.gpio import FuncGpioImpl
+from .user import GpioFuncImpl
 
 from ..core.driver import Driver
 from ..core import utils
@@ -77,7 +77,7 @@ class I2cDevDriver(Driver):
       name = name or attr
       # XXX: could be enhanced to forward all the appropriate info to the Gpio obj
       #      for now it's enough the way it is.
-      return FuncGpioImpl(func, name)
+      return GpioFuncImpl(self, func, name=name)
 
    def __diag__(self, ctx):
       return {

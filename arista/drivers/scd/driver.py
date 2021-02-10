@@ -9,7 +9,7 @@ from ...core.log import getLogger
 
 from ..i2c import I2cDevDriver
 from ..pci import PciKernelDriver
-from ..sysfs import FanSysfsImpl, LedSysfsImpl
+from ..sysfs import FanSysfsImpl, GpioSysfsImpl, LedSysfsImpl
 
 logging = getLogger(__name__)
 
@@ -176,6 +176,9 @@ class ScdKernelDriver(PciKernelDriver):
 
    def getFanLed(self, desc):
       return LedSysfsImpl(self, desc)
+
+   def getGpio(self, desc, **kwargs):
+      return GpioSysfsImpl(self, desc, hwActiveLow=True, **kwargs)
 
 class ScdI2cDevDriver(I2cDevDriver):
    def __init__(self, **kwargs):

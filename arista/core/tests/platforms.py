@@ -11,7 +11,7 @@ from ...descs.led import LedColor
 from ...descs.sensor import SensorDesc
 
 from ...drivers.scd.driver import ScdKernelDriver
-from ...drivers.sysfs import SysfsDriver, SysfsEntry
+from ...drivers.sysfs import SysfsDriver, SysfsEntry, GpioSysfsImpl
 
 from ...inventory.fan import Fan, FanSlot
 from ...inventory.led import Led
@@ -86,6 +86,9 @@ def mock_iterAll(self):
 def mock_maybeCreatePath(self, dirPath):
    pass
 
+def mock_setRawValue(self, value):
+   assert value is not None
+
 @patch('arista.drivers.scd.driver.i2cBusFromName', mock_i2cBusFromName)
 @patch('arista.core.utils.inSimulation', mock_inSimulation)
 @patch('arista.core.utils.locateHwmonFolder', mock_locateHwmonFolder)
@@ -102,6 +105,7 @@ def mock_maybeCreatePath(self, dirPath):
 @patch.object(SysfsDriver, 'write', mock_write)
 @patch.object(utils.FileWaiter, 'waitFileReady', mock_return)
 @patch.object(utils.StoredData, 'maybeCreatePath', mock_maybeCreatePath)
+@patch.object(GpioSysfsImpl, 'setRawValue', mock_setRawValue)
 class MockPlatformTest(unittest.TestCase):
    @classmethod
    def setUpClass(cls):

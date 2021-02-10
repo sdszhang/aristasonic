@@ -30,6 +30,9 @@ class Gpio(InventoryInterface):
    def getRawValue(self):
       raise NotImplementedError
 
+   def setRawValue(self, value):
+      raise NotImplementedError
+
    @diagmethod('active', io=True)
    def isActive(self):
       raise NotImplementedError

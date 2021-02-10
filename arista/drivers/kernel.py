@@ -14,6 +14,7 @@ from ..core import utils
 
 from .sysfs import (
    FanSysfsImpl,
+   GpioSysfsImpl,
    LedSysfsImpl,
    TempSysfsImpl,
 )
@@ -97,6 +98,9 @@ class KernelDriver(Driver):
 
    def getTempSensor(self, desc, **kwargs):
       return TempSysfsImpl(self, desc, **kwargs)
+
+   def getGpio(self, desc, **kwargs):
+      return GpioSysfsImpl(self, desc, **kwargs)
 
 class I2cKernelDriver(KernelDriver):
 

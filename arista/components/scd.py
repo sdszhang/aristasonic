@@ -4,7 +4,6 @@ import os
 
 from collections import OrderedDict, namedtuple
 
-from ..accessors.gpio import FileGpioImpl
 from ..accessors.led import LedImpl
 from ..accessors.reset import ResetImpl
 from ..accessors.xcvr import XcvrImpl
@@ -414,19 +413,13 @@ class Scd(PciComponent):
       self.inventory.addResets(resetDict)
       return resetDict
 
-   def addGpio(self, gpio):
-      scdGpio = FileGpioImpl(self.pciSysfs, gpio.name, addr=gpio.addr, bit=gpio.bit,
-                             ro=gpio.ro, activeLow=gpio.activeLow, hwActiveLow=True)
-      self.gpios.append(scdGpio)
-      self.inventory.addGpio(scdGpio)
-      return scdGpio
+   def addGpio(self, desc, **kwargs):
+      gpio = self.driver.getGpio(desc, **kwargs)
+      self.gpios += [gpio]
+      return self.inventory.addGpio(gpio)
 
-   def addGpios(self, gpios):
-      gpioDict = {}
-      for gpio in gpios:
-         scdGpio = self.addGpio(gpio)
-         gpioDict[scdGpio.getName()] = scdGpio
-      return gpioDict
+   def addGpios(self, descs, **kwargs):
+      return [self.addGpio(desc, **kwargs) for desc in descs]
 
    def _addXcvr(self, xcvrId, xcvrType, bus, interruptLine, leds=None, cls=None):
       addr = self.i2cAddr(bus, Xcvr.ADDR, t=1, datr=0, datw=3, ed=0)
