@@ -53,6 +53,9 @@ class I2cEeprom(I2cComponent):
    def readPrefdl(self):
       return Prefdl.fromBinFile(self.driver.eepromPath())
 
+   def readPrefdlRaw(self):
+      return self.readPrefdl().getRaw()
+
    def read(self):
       return self.driver.read()
 
@@ -63,6 +66,10 @@ class I2cEeprom(I2cComponent):
 class I2cSeeprom(I2cEeprom):
    def readPrefdl(self):
       return Prefdl.fromBinFile(self.driver.eepromPath(), skip=8)
+
+   def readPrefdlRaw(self):
+      header = self.driver.read(8)
+      return header + self.readPrefdl().getRaw()
 
 class At24C64(I2cSeeprom):
    DRIVER = At24C64KernelDriver

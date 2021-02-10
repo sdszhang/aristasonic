@@ -8,6 +8,7 @@ from ..asic.dnx.jericho2 import Jericho2
 from ..linecard import Linecard
 from ..plx import PlxPex8700
 from ..scd import Scd
+from ...core.log import getLogger
 from ...core.provision import ProvisionConfig, ProvisionMode
 from ...core.register import RegBitField, RegisterMap
 from ...core.types import PciAddr
@@ -15,6 +16,8 @@ from ...drivers.pca9555 import GpioRegister
 from ...drivers.scd.register import ScdResetRegister
 from ...drivers.scd.sram import SramContent
 from ...libs.wait import waitFor
+
+logging = getLogger(__name__)
 
 class DenaliLinecard(DenaliCard, Linecard):
    PLATFORM = None
@@ -65,9 +68,11 @@ class DenaliLinecard(DenaliCard, Linecard):
 
    def populateSramFromPrefdl(self):
       sramContent = SramContent()
-      prefdlRaw = self.eeprom.read()
+      prefdlRaw = self.eeprom.readPrefdlRaw()
       for addr, byte in enumerate(prefdlRaw):
-         sramContent.write(addr, byte)
+         if not sramContent.write(addr, byte):
+            logging.error('%s: Could not write further content to the SRAM', self)
+            break
       self.syscpld.sram(sramContent)
 
    def provisionIs(self, provisionStatus):

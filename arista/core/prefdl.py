@@ -113,6 +113,9 @@ class PrefdlBase(object):
    def getCrc(self):
       return self._crc
 
+   def getRaw(self):
+      return self._buffer
+
    def isCrcValid(self):
       return self._crcOk
 

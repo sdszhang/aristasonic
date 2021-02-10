@@ -10,9 +10,9 @@ class EepromKernelDriver(I2cKernelDriver):
    def eepromPath(self):
       return os.path.join(self.getSysfsPath(), 'eeprom')
 
-   def read(self):
+   def read(self, size=-1):
       with open(self.eepromPath(), 'rb') as f:
-         return bytearray(f.read())
+         return bytearray(f.read(size))
 
 class At24KernelDriver(EepromKernelDriver):
    MODULE = 'at24'
