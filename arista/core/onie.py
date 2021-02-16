@@ -10,17 +10,22 @@ class OnieEeprom(object):
          0x22: prefdl.get('ASY'),
          0x23: prefdl.get('SerialNumber'),
          0x24: prefdl.get('MAC', '').replace(':', ''),
-         0x25: self._convertMfgTime(prefdl.get('MfgTime')),
+         0x25: self._convertMfgTime(prefdl.get('MfgTime2', prefdl.get('MfgTime'))),
          0x26: "01",
-         0x27: '.'.join('%02x' % v for v in prefdl.get('HwApi', [0])),
+         0x27: self._convertHwApi(prefdl.get('HwApi')),
          0x28: self._getOniePlatform(), # XXX: won't work for modules
          0x2A: None, # num macs (could be added using per platform metadata)
          0x2B: None, # manufacturer
          0x2C: None, # manufacturer country code
          0x2D: 'Arista Networks',
          0x2E: self._getAbootVersion(), # XXX: won't work for modules
-         0x2F: prefdl.get('SerialNumbor'), # service tag
+         0x2F: prefdl.get('SerialNumber'), # service tag
       }
+
+   def _convertHwApi(self, hwApi):
+      if isinstance(hwApi, str):
+         return hwApi
+      return '.'.join('%02x' % v for v in hwApi or [0, 0])
 
    def _getAbootVersion(self):
       return getCmdlineDict().get('Aboot', 'N/A')

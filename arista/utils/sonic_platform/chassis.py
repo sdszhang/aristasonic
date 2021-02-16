@@ -136,12 +136,15 @@ class Chassis(ChassisBase):
 
    def get_supervisor_slot(self):
       if isinstance(self._platform, Supervisor):
-         return self.getSlotId()
+         return self._platform.getSlotId()
       # FIXME: Linecards need to compute the slot id of the supervisor
-      return 1
+      return SupervisorModule.MODULE_INVALID_SLOT
 
    def get_my_slot(self):
-      return self._platform.getSlotId()
+      try:
+         return self._platform.getSlotId()
+      except AttributeError:
+         return SupervisorModule.MODULE_INVALID_SLOT
 
    def is_modular_chassis(self):
       return isinstance(self._platform, (Supervisor, Card))

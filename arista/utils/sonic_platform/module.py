@@ -84,7 +84,15 @@ class Module(ModuleBase):
       return False
 
    def get_maximum_consumed_power(self):
-      pass
+      # TODO: add power consumption to various skus
+      return 0
+
+   def is_midplane_reachable(self):
+      return True
+
+   def get_midplane_ip(self):
+      # TODO: will this work from the linecard side? comment is not that clear
+      return "127.100.%d.1" % self.get_slot()
 
 class SupervisorModule(Module):
    def get_name(self):
@@ -100,6 +108,9 @@ class FabricModule(Module):
 
    def get_type(self):
       return self.MODULE_TYPE_FABRIC
+
+   def is_midplane_reachable(self):
+      return False
 
 class LinecardModule(Module):
    def get_name(self):

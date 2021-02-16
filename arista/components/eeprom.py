@@ -48,7 +48,7 @@ class I2cEeprom(I2cComponent):
       return self.label or 'eeprom_%s' % self.addr
 
    def prefdl(self):
-      return maybeCached(self.eepromName(), lambda: self.readPrefdl().toDict())
+      return maybeCached(self.eepromName(), lambda: self.readPrefdl().data())
 
    def readPrefdl(self):
       return Prefdl.fromBinFile(self.driver.eepromPath())

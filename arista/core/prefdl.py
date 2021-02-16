@@ -84,6 +84,7 @@ class PrefdlBase(object):
       TlvStrField(0x0d, 'PCA', length=12),
       TlvSerialField(0x0e, 'SerialNumber', length=11),
       TlvStrField(0x0f, 'KVN', length=3),
+      TlvStrField(0x17, 'MfgTime2'),
    ]
 
    FIELD_CODE = {f.code : f for f in FIELDS}
