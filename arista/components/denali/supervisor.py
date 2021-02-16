@@ -1,5 +1,4 @@
 
-from ...core.card import LC_BASE_SLOTID, FC_BASE_SLOTID
 from ...core.psu import PsuSlot
 from ...core.supervisor import Supervisor
 from ...core.types import PciAddr
@@ -12,7 +11,12 @@ from ..pca9541 import Pca9541
 from ..psu.delta import ECD16020097
 from ..scd import Scd
 
-from .card import DenaliCardSlot
+from .card import (
+   DenaliLinecardBase,
+   DenaliLinecardSlot,
+   DenaliFabricBase,
+   DenaliFabricSlot,
+)
 
 class DenaliSupervisor(Supervisor):
    LINECARD_PORTS = []
@@ -72,7 +76,7 @@ class DenaliSupervisor(Supervisor):
 
       for idx, portDesc in enumerate(self.LINECARD_PORTS):
          self.pciSwitch.addPciPort(
-            portId=LC_BASE_SLOTID + idx,
+            portId=DenaliLinecardBase.ABSOLUTE_CARD_OFFSET + idx,
             desc=portDesc,
             addr=PciAddr(bus=0x06, device=0x7 + idx),
             upstreamAddr=PciAddr(bus=0x46 + 0xb * idx),
@@ -80,7 +84,7 @@ class DenaliSupervisor(Supervisor):
 
       for idx, portDesc in enumerate(self.FABRIC_PORTS):
          self.pciSwitch.addPciPort(
-            portId=FC_BASE_SLOTID + idx,
+            portId=DenaliFabricBase.ABSOLUTE_CARD_OFFSET + idx,
             desc=portDesc,
             addr=PciAddr(bus=0x06, device=idx),
             upstreamAddr=PciAddr(bus=0x07 + 0xa * idx),
@@ -89,7 +93,7 @@ class DenaliSupervisor(Supervisor):
    def createLinecards(self):
       for lcId in range(self.linecardCount):
          name = "lc%d" % (lcId + 1)
-         slotId = lcId + LC_BASE_SLOTID
+         slotId = lcId + DenaliLinecardBase.ABSOLUTE_CARD_OFFSET
          self.scd.addGpios([
             GpioDesc("%s_present" % name, 0x4100, lcId, ro=True),
             GpioDesc("%s_present_changed" % name, 0x4100, 16 + lcId),
@@ -97,8 +101,8 @@ class DenaliSupervisor(Supervisor):
          bus = self.scd.getSmbus(self.linecardSmbus[lcId])
          pci = PciAddr(bus=0x47 + 0xb * lcId)
          presenceGpio = self.scd.inventory.getGpio("%s_present" % name)
-         self.linecardSlots.append(DenaliCardSlot(self, slotId, pci, bus,
-                                                  presenceGpio=presenceGpio))
+         self.linecardSlots.append(DenaliLinecardSlot(self, slotId, pci, bus,
+                                                      presenceGpio=presenceGpio))
 
    def createFabricCards(self):
       self.fabricSmbus = range(8, 8 + 6)
@@ -106,7 +110,7 @@ class DenaliSupervisor(Supervisor):
 
       for fcId in range(self.fabricCount):
          name = "fc%d" % (fcId + 1)
-         slotId = fcId + FC_BASE_SLOTID
+         slotId = fcId + DenaliFabricBase.ABSOLUTE_CARD_OFFSET
          self.scd.addGpios([
             GpioDesc("%s_present" % name, 0x4110, fcId, ro=True),
             GpioDesc("%s_present_changed" % name, 0x4110, 16 + fcId),
@@ -114,8 +118,8 @@ class DenaliSupervisor(Supervisor):
          bus = self.scd.getSmbus(self.fabricSmbus[fcId])
          pci = PciAddr(bus=0x07 + 0xa * fcId)
          presenceGpio = self.scd.inventory.getGpio("%s_present" % name)
-         self.fabricSlots.append(DenaliCardSlot(self, slotId, pci, bus,
-                                                presenceGpio=presenceGpio))
+         self.fabricSlots.append(DenaliFabricSlot(self, slotId, pci, bus,
+                                                  presenceGpio=presenceGpio))
 
    def createPsus(self):
       for idx, desc in enumerate(self.PSUS):

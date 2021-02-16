@@ -42,7 +42,7 @@ class Gpio2Registers(RegisterMap):
 @registerPlatform()
 class Eldridge(DenaliFabric):
    SID = ['Eldridge']
-   SKU = ['DCS-7808-FM']
+   SKU = ['DCS-7808-FM', '7808R3-FM']
 
    ASIC_BUSES = [
       0x02,

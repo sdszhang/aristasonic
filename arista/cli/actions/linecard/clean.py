@@ -5,8 +5,7 @@ from .. import registerAction
 from ...args.linecard.clean import cleanParser
 from ....core.config import Config
 from ....core.log import getLogger
-
-from ....components.linecard import LCpuCtx
+from ....core.linecard import LCpuCtx
 
 logging = getLogger(__name__)
 

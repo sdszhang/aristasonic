@@ -4,8 +4,11 @@ from __future__ import absolute_import, division, print_function
 import copy
 
 from ...core.card import Card, CardSlot
+from ...core.fabric import Fabric
+from ...core.linecard import Linecard
 from ...core.log import getLogger
 from ...libs.wait import waitFor
+
 from ..dpm import Ucd90320
 from ..eeprom import At24C512
 from ..pca9541 import Pca9541
@@ -178,6 +181,9 @@ class DenaliCard(Card):
       self.eeprom.setup()
 
 class DenaliCardSlot(CardSlot):
+
+   CARD_CLS = None
+
    def __init__(self, parent, slotId, pci, bus, presenceGpio=None, card=None):
       super(DenaliCardSlot, self).__init__(parent, slotId)
       self.pci = pci
@@ -185,7 +191,7 @@ class DenaliCardSlot(CardSlot):
       self.card = card
       self.presenceGpio = presenceGpio
       if not self.card:
-         self.loadCard(DenaliCard(self))
+         self.loadCard(self.CARD_CLS(self))
 
    def getPresence(self):
       if self.presenceGpio is None:
@@ -208,3 +214,15 @@ class DenaliCardSlot(CardSlot):
       addr.func += func
 
       return addr
+
+class DenaliLinecardBase(DenaliCard, Linecard):
+   pass
+
+class DenaliFabricBase(DenaliCard, Fabric):
+   pass
+
+class DenaliLinecardSlot(DenaliCardSlot):
+   CARD_CLS = DenaliLinecardBase
+
+class DenaliFabricSlot(DenaliCardSlot):
+   CARD_CLS = DenaliFabricBase

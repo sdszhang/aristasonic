@@ -4,11 +4,10 @@ from __future__ import absolute_import, division, print_function
 from ...tests.testing import unittest
 from ...tests.logging import getLogger
 
-from ...components.denali.card import DenaliCardSlot
+from ...components.denali.card import DenaliLinecardSlot
 from ...components.denali.linecard import DenaliLinecard
-from ...components.linecard import Linecard
 from ...components.scd import Scd
-from ...core.card import LC_BASE_SLOTID
+from ...core.linecard import Linecard
 
 from ..card import CardSlot
 from ..component import Priority
@@ -27,7 +26,8 @@ class LinecardTest(unittest.TestCase):
          pci = PciAddr(bus=0x01)
          scd = Scd(PciAddr(bus=0x02))
          bus = scd.getSmbus(0x03)
-         slot = DenaliCardSlot(None, LC_BASE_SLOTID, pci, bus)
+         slotId = DenaliLinecard.ABSOLUTE_CARD_OFFSET
+         slot = DenaliLinecardSlot(None, slotId, pci, bus)
       else:
          slot = CardSlot(None, 0)
       return cls(slot=slot)

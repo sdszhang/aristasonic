@@ -7,9 +7,6 @@ logging = getLogger(__name__)
 
 class Modular(Sku):
 
-   CARD_SLOT_CLS = None
-   CARD_CLS = None
-
    NUM_SUPERVISORS = None
    NUM_LINECARDS = None
    NUM_FABRICS = None

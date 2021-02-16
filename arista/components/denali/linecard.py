@@ -3,11 +3,6 @@ from __future__ import absolute_import, division, print_function
 
 import time
 
-from .card import DenaliCard, DenaliCardSlot
-from ..asic.dnx.jericho2 import Jericho2
-from ..linecard import Linecard
-from ..plx import PlxPex8700
-from ..scd import Scd
 from ...core.log import getLogger
 from ...core.provision import ProvisionConfig, ProvisionMode
 from ...core.register import RegBitField, RegisterMap
@@ -17,9 +12,15 @@ from ...drivers.scd.register import ScdResetRegister
 from ...drivers.scd.sram import SramContent
 from ...libs.wait import waitFor
 
+from ..asic.dnx.jericho2 import Jericho2
+from ..plx import PlxPex8700
+from ..scd import Scd
+
+from .card import DenaliLinecardBase, DenaliLinecardSlot
+
 logging = getLogger(__name__)
 
-class DenaliLinecard(DenaliCard, Linecard):
+class DenaliLinecard(DenaliLinecardBase):
    PLATFORM = None
 
    SCD_PCI_OFFSET = 0
@@ -44,7 +45,7 @@ class DenaliLinecard(DenaliCard, Linecard):
 
    def createCpu(self):
       assert self.CPU_CLS
-      self.slot = DenaliCardSlot(self, 0, PciAddr(bus=0x04), None, card=self)
+      self.slot = DenaliLinecardSlot(self, 0, PciAddr(bus=0x04), None, card=self)
       self.cpu = self.newComponent(self.CPU_CLS, self.slot)
 
    def powerStandbyDomainIs(self, on):

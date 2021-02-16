@@ -2,10 +2,11 @@
 from ...core.register import RegBitField, RegisterMap
 from ...drivers.pca9555 import GpioRegister
 from ...libs.wait import waitFor
-from ..fabric import Fabric
+
 from ..pca9555 import Pca9555
 from ..plx import PlxPex8700
-from .card import DenaliCard
+
+from .card import DenaliFabricBase
 
 class Gpio1Registers(RegisterMap):
    A = GpioRegister(0x0,
@@ -22,7 +23,7 @@ class Gpio1Registers(RegisterMap):
       RegBitField(7, 'ecbFanOn', ro=False),
    )
 
-class DenaliFabric(DenaliCard, Fabric):
+class DenaliFabric(DenaliFabricBase):
    PLATFORM = None
 
    def createGpio1(self):

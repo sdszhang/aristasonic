@@ -8,10 +8,6 @@ from .sku import Sku
 
 logging = getLogger(__name__)
 
-# Starting slot id for linecard and fabric cards
-LC_BASE_SLOTID = 3
-FC_BASE_SLOTID = 51
-
 class Card(Sku):
 
    CPU_CLS = None

@@ -6,8 +6,7 @@ from ...args.linecard.setup import setupParser
 from ....core.component import Priority
 from ....core.config import Config
 from ....core.log import getLogger
-
-from ....components.linecard import LCpuCtx
+from ....core.linecard import LCpuCtx
 
 logging = getLogger(__name__)
 
