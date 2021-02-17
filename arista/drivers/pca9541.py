@@ -7,7 +7,7 @@ from contextlib import closing
 from ..core.driver import Driver
 from ..core.utils import SMBus, inSimulation
 
-from .i2c import I2cKernelDriver, busNameToId
+from .kernel import I2cKernelDriver
 
 CTRL_REG = 0x01
 
@@ -70,18 +70,18 @@ class Pca9541I2cDevDriver(Driver):
       return True
 
 class Pca9541KernelDriver(I2cKernelDriver):
-   def __init__(self, name='pca9541', module='i2c-mux-pca9541', **kwargs):
-      super(Pca9541KernelDriver, self).__init__(name=name, module=module, **kwargs)
+
+   MODULE = 'i2c-mux-pca9541'
+   NAME = 'pca9541'
 
    def getBus(self):
       if inSimulation():
          return 42
       channelPath = os.path.join(self.getSysfsPath(), 'channel-0')
-      return busNameToId(os.path.basename(os.readlink(channelPath)))
+      return self.busNameToId(os.path.basename(os.readlink(channelPath)))
 
    def ping(self):
       return True # TODO: linecard presence should not be based on pca
 
    def takeOwnership(self):
       return True
-

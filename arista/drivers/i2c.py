@@ -1,91 +1,14 @@
-import os
 
 from contextlib import closing
 
 from ..accessors.gpio import FuncGpioImpl
 
-from ..core.driver import Driver, KernelDriver
+from ..core.driver import Driver
 from ..core import utils
 from ..core.log import getLogger
 from ..core.utils import SMBus
 
 logging = getLogger(__name__)
-
-def busNameToId(name):
-   '''name is assumed to be of the form i2c-X'''
-   return int(name[4:])
-
-class I2cKernelDriver(Driver):
-   def __init__(self, name=None, addr=None, waitFile=None, waitTimeout=None,
-                module=None, **kwargs):
-      self.name = name
-      self.addr = addr
-      self.module = module
-      if module:
-         self.kernelDriver = KernelDriver(module=module, **kwargs)
-      else:
-         self.kernelDriver = None
-      if waitFile == utils.WAITFILE_HWMON:
-         waitFile = (self.getSysfsPath(), 'hwmon', r'hwmon\d')
-      self.fileWaiter = utils.FileWaiter(waitFile, waitTimeout)
-      super(I2cKernelDriver, self).__init__(**kwargs)
-      self.hwmonPath = None
-
-   def getSysfsPath(self):
-      return self.addr.getSysfsPath()
-
-   def getSysfsBusPath(self):
-      return '/sys/bus/i2c/devices/i2c-%d' % self.addr.bus
-
-   def getHwmonPath(self):
-      if self.hwmonPath is None:
-         self.hwmonPath = utils.locateHwmonFolder(self.addr.getSysfsPath())
-      return self.hwmonPath
-
-   def getHwmonEntry(self, entry):
-      return os.path.join(self.getHwmonPath(), entry)
-
-   def setup(self):
-      if self.kernelDriver:
-         self.kernelDriver.setup()
-      addr = self.addr
-      devicePath = self.getSysfsPath()
-      path = os.path.join(self.getSysfsBusPath(), 'new_device')
-      logging.debug('creating i2c device %s on bus %d at 0x%02x',
-                    self.name, addr.bus, addr.address)
-      if utils.inSimulation():
-         return
-      if os.path.exists(devicePath):
-         logging.debug('i2c device %s already exists', devicePath)
-      else:
-         with open(path, 'w') as f:
-            f.write('%s 0x%02x' % (self.name, self.addr.address))
-         self.fileWaiter.waitFileReady()
-      super(I2cKernelDriver, self).setup()
-
-   def clean(self):
-      # i2c kernel devices are automatically cleaned when the module is removed
-      if utils.inSimulation():
-         return
-      path = os.path.join(self.getSysfsBusPath(), 'delete_device')
-      addr = self.addr
-      if os.path.exists(self.getSysfsPath()):
-         logging.debug('removing i2c device %s from bus %d', self.name, addr.bus)
-         with open(path, 'w') as f:
-            f.write('0x%02x' % addr.address)
-      if self.kernelDriver:
-         self.kernelDriver.clean()
-      super(I2cKernelDriver, self).clean()
-
-   def __str__(self):
-      return '%s(name=%s)' % (self.__class__.__name__, self.name)
-
-   def __diag__(self, ctx):
-      return {
-         "name": self.name,
-         "module": self.module,
-         "sysfs": self.getSysfsPath(),
-      }
 
 class I2cDevDriver(Driver):
 

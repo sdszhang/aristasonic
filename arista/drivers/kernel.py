@@ -146,6 +146,11 @@ class I2cKernelDriver(KernelDriver):
    def getSysfsBusPath(self):
       return '/sys/bus/i2c/devices/i2c-%d' % self.addr.bus
 
+   @staticmethod
+   def busNameToId(name):
+      '''name is assumed to be of the form i2c-X'''
+      return int(name[4:])
+
    def __diag__(self, ctx):
       return super(I2cKernelDriver, self).__diag__(ctx).update({
          'addr': self.addr,

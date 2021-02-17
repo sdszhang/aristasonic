@@ -10,7 +10,6 @@ from ...components.scd import ScdInterruptRegister
 from ...descs.led import LedColor
 from ...descs.sensor import SensorDesc
 
-from ...drivers.i2c import I2cKernelDriver
 from ...drivers.scd.driver import ScdKernelDriver
 from ...drivers.sysfs import SysfsDriver, SysfsEntry
 
@@ -92,7 +91,6 @@ def mock_maybeCreatePath(self, dirPath):
 @patch('arista.core.utils.locateHwmonFolder', mock_locateHwmonFolder)
 @patch('arista.core.utils.locateHwmonPath', mock_locateHwmonPath)
 @patch('arista.core.utils.writeConfig', mock_writeConfig)
-@patch.object(I2cKernelDriver, 'setup', mock_return)
 @patch.object(ScdInterruptRegister, 'readReg', mock_readReg)
 @patch.object(ScdInterruptRegister, 'setup', mock_return)
 @patch.object(ScdKernelDriver, 'finish', mock_return)
