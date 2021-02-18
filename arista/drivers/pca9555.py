@@ -1,8 +1,38 @@
-from __future__ import absolute_import, division, print_function
 
-from .i2c import I2cDevDriver
 from ..core.register import Register
 from ..core.utils import inSimulation
+from ..descs.led import LedColor
+from ..inventory.led import Led
+
+from .i2c import I2cDevDriver
+
+class LedGpioImpl(Led):
+   def __init__(self, driver, name, gpio, colorActive=LedColor.RED,
+                colorInactive=LedColor.OFF, **kwargs):
+      self.name = name
+      self.driver = driver
+      self.gpio = gpio
+      self.colorActive = colorActive
+      self.colorInactive = colorInactive
+      self.__dict__.update(kwargs)
+
+   def getName(self):
+      return self.name
+
+   def getColor(self):
+      if self.gpio.isActive():
+         return self.colorActive
+      return self.colorInactive
+
+   def setColor(self, color):
+      if color == self.colorActive:
+         self.gpio.setActive(True)
+      else:
+         self.gpio.setActive(False)
+      return True
+
+   def isStatusLed(self):
+      return True
 
 PCA9555_INPUT_REG = 0x0
 PCA9555_OUTPUT_REG = 0x2
@@ -45,8 +75,12 @@ class Pca9555I2cDevDriver(I2cDevDriver):
       self.write(PCA9555_CONFIG_REG, data)
       self.write(PCA9555_CONFIG_REG + 1, data)
 
+   def getGpioLed(self, name, **kwargs):
+      return LedGpioImpl(self, name, self.getGpio(name), **kwargs)
+
    def __diag__(self, ctx):
       return {
+         'name': self.name,
          'regs': self.regs.__diag__(ctx),
          'status': { reg : self.read(reg) for reg in range(8) },
       }
