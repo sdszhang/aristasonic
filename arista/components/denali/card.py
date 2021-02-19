@@ -53,7 +53,7 @@ class DenaliCard(Card):
       '''
       self.standby = self.newComponent(PowerDomain)
       self.pca = self.standby.newComponent(Pca9541, addr=self.slot.bus.i2cAddr(0x77),
-                                           driverMode='kernel')
+                                           driverMode='user')
       self.eeprom = self.pca.newComponent(At24C512, addr=self.pca.i2cAddr(0x50),
                                           label='card_%d' % self.slot.slotId)
       self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11))
