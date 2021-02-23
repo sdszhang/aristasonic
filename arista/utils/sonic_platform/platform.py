@@ -12,5 +12,6 @@ except ImportError as e:
 
 class Platform(PlatformBase):
    def __init__(self):
+      PlatformBase.__init__(self)
       self._platform = getPlatform()
       self._chassis = Chassis(self._platform)

@@ -13,7 +13,7 @@ class Psu(PsuBase):
    """
 
    def __init__(self, slot):
-      super(Psu, self).__init__()
+      PsuBase.__init__(self)
       self._slot = slot
       # TODO: add thermal info
       # TODO: add fan info
@@ -34,6 +34,9 @@ class Psu(PsuBase):
       if not self.get_presence():
          return "N/A"
       return self._slot.getPsu().getSerial()
+
+   def get_position_in_parent(self):
+      return self._slot.getId()
 
    def is_replaceable(self):
       return True

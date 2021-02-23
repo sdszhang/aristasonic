@@ -13,6 +13,7 @@ class Thermal(ThermalBase):
    """
 
    def __init__(self, temp):
+      ThermalBase.__init__(self)
       self._temp = temp
       self._minimum = None
       self._maximum = None
@@ -31,6 +32,10 @@ class Thermal(ThermalBase):
 
    def get_status(self):
       return True
+
+   def get_position_in_parent(self):
+      # TODO: give a unique identifier for every sensor
+      return -1
 
    def is_replaceable(self):
       return False

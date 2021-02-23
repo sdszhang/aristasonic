@@ -7,6 +7,7 @@ except ImportError as e:
 
 class FanDrawer(FanDrawerBase):
    def __init__(self, parent, slot):
+      FanDrawerBase.__init__(self)
       self._parent = parent
       self._fan_list = [Fan(self, fan) for fan in slot.getFans()]
       self._slot = slot
@@ -40,11 +41,15 @@ class FanDrawer(FanDrawerBase):
    def get_maximum_consumed_power(self):
       return self._slot.getMaxPowerDraw()
 
+   def get_position_in_parent(self):
+      return self._slot.getId()
+
    def is_replaceable(self):
       return self._hotswappable
 
 class FanDrawerLegacy(FanDrawerBase):
    def __init__(self, fan):
+      FanDrawerBase.__init__(self)
       # XXX: temporary 1:1 fan to fan_drawer mapping
       self._fan_list = [fan]
 

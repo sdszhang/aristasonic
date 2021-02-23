@@ -90,6 +90,9 @@ class Module(ModuleBase):
    def is_midplane_reachable(self):
       return True
 
+   def get_position_in_parent(self):
+      return self._sku.getSlotId()
+
    def get_midplane_ip(self):
       # TODO: will this work from the linecard side? comment is not that clear
       return "127.100.%d.1" % self.get_slot()

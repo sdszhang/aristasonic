@@ -14,4 +14,5 @@ class Eeprom(EepromDecoder):
 
    # Work in progress
    def __init__(self, prefdl):
+      EepromDecoder.__init__(self)
       self._prefdl = prefdl

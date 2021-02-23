@@ -39,6 +39,7 @@ class Sfp(SfpBase):
    RESET_DELAY = 1
 
    def __init__(self, index, sfp):
+      SfpBase.__init__(self)
       self._index = index
       self._sfp = sfp
       self._sfputil = None
@@ -131,3 +132,6 @@ class Sfp(SfpBase):
       except (OSError, IOError):
          return False
       return True
+
+   def get_position_in_parent(self):
+      return self._index

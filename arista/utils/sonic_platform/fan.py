@@ -10,10 +10,6 @@ except ImportError as e:
 class Fan(FanBase):
    """
    Platform-specific Fan class
-
-   Unimplemented methods:
-   - get_model
-   - get_serial
    """
 
    DEFAULT_TOLERANCE = 100
@@ -27,6 +23,7 @@ class Fan(FanBase):
    }
 
    def __init__(self, parent, fan):
+      FanBase.__init__(self)
       self._parent = parent
       self._target_speed = None
       self._fan = fan
@@ -81,6 +78,9 @@ class Fan(FanBase):
 
    def get_presence(self):
       return self._fan.getPresence()
+
+   def get_position_in_parent(self):
+      return self._fan.getId()
 
    def is_replaceable(self):
       return False
