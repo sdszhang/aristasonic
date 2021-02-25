@@ -189,6 +189,9 @@ class MockWatchdog(Watchdog):
    def status(self):
       return self.started
 
+   def __eq__(self, value):
+      return isinstance(value, MockWatchdog) and self.__dict__ == value.__dict__
+
 class MockPowerCycle(PowerCycle):
    def __init__(self, powered=True):
       self.powered = powered

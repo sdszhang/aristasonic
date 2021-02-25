@@ -79,7 +79,10 @@ class Chassis(ChassisBase):
             self._sfp_list[index - 1] = Sfp(index, slot)
       for thermal in self._inventory.getTemps():
          self._thermal_list.append(Thermal(thermal))
-      self._watchdog = Watchdog(self._inventory.getWatchdog())
+
+      watchdogs = self._inventory.getWatchdogs()
+      if watchdogs:
+         self._watchdog = Watchdog(watchdogs[0])
 
       self._interrupt_dict, self._presence_dict = \
          self._get_interrupts_for_components()

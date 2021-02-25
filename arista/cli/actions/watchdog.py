@@ -10,7 +10,12 @@ logging = getLogger(__name__)
 
 @registerAction(watchdogParser)
 def doWatchdog(ctx, args):
-   watchdog = ctx.platform.getInventory().getWatchdog()
+   watchdogs = ctx.platform.getInventory().getWatchdogs()
+   if not watchdogs:
+      print("Watchdog not supported on this platform")
+      return 0
+
+   watchdog = watchdogs[0]
    if args.watchdog_status:
       st = watchdog.status()
       if st:

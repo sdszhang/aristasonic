@@ -4,7 +4,6 @@ from collections import defaultdict
 # pylint: disable=unused-import
 from ..inventory.reloadcause import ReloadCause, ReloadCauseProvider
 from ..inventory.slot import Slot
-from ..inventory.watchdog import Watchdog
 
 class Inventory(object):
    def __init__(self):
@@ -39,7 +38,7 @@ class Inventory(object):
 
       self.fanSlots = []
 
-      self.watchdog = Watchdog()
+      self.watchdogs = []
 
       self.powerCycles = []
 
@@ -239,11 +238,11 @@ class Inventory(object):
       return self.fanSlots
 
    def addWatchdog(self, watchdog):
-      self.watchdog = watchdog
+      self.watchdogs.append(watchdog)
       return watchdog
 
-   def getWatchdog(self):
-      return self.watchdog
+   def getWatchdogs(self):
+      return self.watchdogs
 
    def addPowerCycle(self, powerCycle):
       self.powerCycles.append(powerCycle)
