@@ -421,6 +421,14 @@ class Scd(PciComponent):
    def addGpios(self, descs, **kwargs):
       return [self.addGpio(desc, **kwargs) for desc in descs]
 
+   def addXcvrGpio(self, desc, **kwargs):
+      # Note: separate adder to avoid conflicting with kernel driver
+      return self.inventory.addGpio(self.driver.getGpio(desc, **kwargs))
+
+   def addXcvrReset(self, gpio):
+      # Note: separate adder to avoid conflicting with kernel driver
+      return self.inventory.addReset(ScdReset(self.pciSysfs, gpio))
+
    def _addXcvr(self, xcvrId, xcvrType, bus, interruptLine, leds=None, cls=None):
       addr = self.i2cAddr(bus, Xcvr.ADDR, t=1, datr=0, datw=3, ed=0)
       reset = None
@@ -468,7 +476,7 @@ class Scd(PciComponent):
          laneName = name
          if ledLanes > 1:
             laneName = "%s_%d" % (laneName, laneId)
-            leds.append((ledAddr, laneName))
+         leds.append((ledAddr, laneName))
          ledAddr += ledAddrOffsetFn(xcvrId)
       ledGroup = self.addLedGroup(name, leds)
 
@@ -482,7 +490,7 @@ class Scd(PciComponent):
          slotId=xcvrId,
          addrFunc=addrFunc,
          interrupt=intr,
-         presentGpio=self.addGpio(presentDesc),
+         presentGpio=self.addXcvrGpio(presentDesc),
          leds=ledGroup,
          **kwargs
       )
@@ -501,7 +509,7 @@ class Scd(PciComponent):
             ledAddr += ledAddrOffsetFn(i)
 
    def addSfpSlot(self, addr, name, **kwargs):
-      rxLosDesc = GpioDesc("%s_rxlos" % name, addr, bit=0, ro=True, activeLow=True)
+      rxLosDesc = GpioDesc("%s_rxlos" % name, addr, bit=0, ro=True)
       txDisableDesc = GpioDesc("%s_txdisable" % name, addr, bit=6)
       txFaultDesc = GpioDesc("%s_txfault" % name, addr, bit=1, ro=True)
 
@@ -509,9 +517,9 @@ class Scd(PciComponent):
          addr=addr,
          cls=SfpSlot,
          name=name,
-         rxLosGpio=self.addGpio(rxLosDesc),
-         txDisableGpio=self.addGpio(txDisableDesc),
-         txFaultGpio=self.addGpio(txFaultDesc),
+         rxLosGpio=self.addXcvrGpio(rxLosDesc),
+         txDisableGpio=self.addXcvrGpio(txDisableDesc),
+         txFaultGpio=self.addXcvrGpio(txFaultDesc),
          **kwargs
       )
 
@@ -531,16 +539,16 @@ class Scd(PciComponent):
    def addQsfpSlot(self, addr, name, isHwLpModeAvail=True, isHwModSelAvail=True,
                    **kwargs):
       lpModeDesc = GpioDesc("%s_lp_mode" % name, addr=addr, bit=6)
-      modSelDesc = GpioDesc("%s_modsel" % name, addr=addr, bit=8)
+      modSelDesc = GpioDesc("%s_modsel" % name, addr=addr, bit=8, activeLow=True)
       resetDesc = ResetDesc("%s_reset" % name, addr=addr, bit=7)
 
       return self._addXcvrSlot(
          addr=addr,
          cls=QsfpSlot,
          name=name,
-         lpMode=self.addGpio(lpModeDesc) if isHwLpModeAvail else None,
-         modSel=self.addGpio(modSelDesc) if isHwModSelAvail else None,
-         reset=self.addReset(resetDesc),
+         lpMode=self.addXcvrGpio(lpModeDesc) if isHwLpModeAvail else None,
+         modSel=self.addXcvrGpio(modSelDesc) if isHwModSelAvail else None,
+         reset=self.addXcvrReset(resetDesc),
          **kwargs
       )
 
@@ -560,16 +568,16 @@ class Scd(PciComponent):
    def addOsfpSlot(self, addr, name, isHwLpModeAvail=True, isHwModSelAvail=True,
                    **kwargs):
       lpModeDesc = GpioDesc("%s_lp_mode" % name, addr=addr, bit=6)
-      modSelDesc = GpioDesc("%s_modsel" % name, addr=addr, bit=8)
+      modSelDesc = GpioDesc("%s_modsel" % name, addr=addr, bit=8, activeLow=True)
       resetDesc = ResetDesc("%s_reset" % name, addr=addr, bit=7)
 
       return self._addXcvrSlot(
          addr=addr,
          cls=OsfpSlot,
          name=name,
-         lpMode=self.addGpio(lpModeDesc) if isHwLpModeAvail else None,
-         modSel=self.addGpio(modSelDesc) if isHwModSelAvail else None,
-         reset=self.addReset(resetDesc),
+         lpMode=self.addXcvrGpio(lpModeDesc) if isHwLpModeAvail else None,
+         modSel=self.addXcvrGpio(modSelDesc) if isHwModSelAvail else None,
+         reset=self.addXcvrReset(resetDesc),
          **kwargs
       )
 
