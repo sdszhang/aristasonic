@@ -11,4 +11,4 @@ class QsfpKernelDriver(XcvrKernelDriver):
    NAME = 'optoe1'
 
 class OsfpKernelDriver(XcvrKernelDriver):
-   NAME = 'optoe1'
+   NAME = 'optoe3'
