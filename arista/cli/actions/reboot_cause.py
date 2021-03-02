@@ -18,7 +18,8 @@ def doRebootCause(ctx, args):
    if args.history:
       causes = [report.cause for report in rcm.allReports()]
    else:
-      causes = [rcm.lastReport().cause]
+      report = rcm.lastReport()
+      causes = [report.cause] if report else []
    if not causes:
       print('No reboot cause detected')
       return

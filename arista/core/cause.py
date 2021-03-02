@@ -12,6 +12,7 @@ from ..descs.cause import ReloadCauseScore
 
 from ..libs.date import datetimeToStr, strToDatetime, epochToDatetime
 from ..libs.procfs import bootDatetime
+from ..libs.python import makedirs
 
 logging = getLogger(__name__)
 
@@ -275,6 +276,11 @@ class ReloadCauseManager(object):
       '''Store reload causes into a file'''
       if not self.loaded:
          raise RuntimeError("Storing reboot cause without loading them first")
+
+      folder = os.path.dirname(self.path)
+      if not os.path.isdir(folder):
+         makedirs(folder, mode=0o755, exist_ok=True)
+
       with open(self.path, 'w') as f:
          json.dump(self.toDict(), f, indent=3, separators=(',', ': '))
 
