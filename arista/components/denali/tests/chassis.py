@@ -8,6 +8,7 @@ from ....platforms.fabric.eldridge import Eldridge
 from ....platforms.fabric.dragonfly import Dragonfly
 from ....platforms.linecard.clearwater import Clearwater, ClearwaterMs
 from ....platforms.linecard.clearwater2 import Clearwater2, Clearwater2Ms
+from ....platforms.linecard.wolverine import WolverineO, WolverineQ
 from ....platforms.supervisor.otterlake import OtterLake
 
 from ....tests.testing import unittest
@@ -36,7 +37,13 @@ class DenaliChassisTest(unittest.TestCase):
 
       return chassis
 
-   def _buildBasicChassis(self, chassis, supervisor, fabric):
+   def _buildBasicChassis(self, chassis, supervisor, fabric, linecards=None):
+      linecards = linecards or {
+         1: Clearwater,
+         2: ClearwaterMs,
+         3: Clearwater2,
+         4: Clearwater2Ms,
+      }
       return self._buildChassis(
          chassis,
          supervisors={
@@ -45,12 +52,7 @@ class DenaliChassisTest(unittest.TestCase):
          fabrics={
             slotId: fabric for slotId in incrange(1, 6)
          },
-         linecards={
-            1: Clearwater,
-            2: ClearwaterMs,
-            3: Clearwater2,
-            4: Clearwater2Ms,
-         },
+         linecards=linecards,
       )
 
    def testCampChassis(self):
@@ -60,7 +62,12 @@ class DenaliChassisTest(unittest.TestCase):
       self._buildBasicChassis(NorthFace, OtterLake, Eldridge)
 
    def testNorthFaceDragonflyChassis(self):
-      self._buildBasicChassis(NorthFace, OtterLake, Dragonfly)
+      self._buildBasicChassis(NorthFace, OtterLake, Dragonfly, linecards={
+         1: Clearwater2,
+         2: Clearwater2Ms,
+         3: WolverineO,
+         4: WolverineQ,
+      })
 
 if __name__ == '__main__':
    unittest.main()
