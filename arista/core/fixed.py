@@ -3,7 +3,7 @@ from .config import Config
 from .driver import KernelDriver
 from .inventory import Inventory
 from .metainventory import MetaInventory
-from .platform import getSysEeprom
+from .platform import getSysEepromData
 from .sku import Sku
 
 class FixedSystem(Sku):
@@ -16,7 +16,7 @@ class FixedSystem(Sku):
                                         **kwargs)
 
    def getEeprom(self):
-      return getSysEeprom()
+      return getSysEepromData()
 
    def getInventory(self):
       if Config().use_metainventory:

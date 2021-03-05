@@ -16,6 +16,7 @@ platforms = []
 platformSidIndex = {}
 platformSkuIndex = {}
 syseeprom = None
+syseepromData = None
 
 host_prefdl_path = '/host/.system-prefdl'
 host_prefdl_path_bin = '/host/.system-prefdl-bin'
@@ -32,7 +33,7 @@ def readPrefdlEeprom(*addrs):
          pfdl = Prefdl.fromBinFile(eeprompath)
          pfdl.writeToFile(fmted_prefdl_path)
          return pfdl
-      except Exception as e:
+      except Exception as e: # pylint: disable=broad-except
          logging.warn('could not obtain prefdl from %s', eeprompath)
          logging.warn('error seen: %s', e)
 
@@ -57,26 +58,39 @@ def readPrefdl():
 
    return readPrefdlEeprom('1-0052')
 
-def getPrefdlDataSim():
-   logging.debug('bypass prefdl reading by returning default values')
-   return {
-      'SKU': 'simulation',
-      'HwApi': '42',
-   }
+class SysEeprom(object):
+   def prefdlSim(self):
+      logging.debug('bypass prefdl reading by returning default values')
+      return {
+         'SKU': 'simulation',
+         'HwApi': '42',
+      }
 
-@simulateWith(getPrefdlDataSim)
-def getPrefdlData():
-   return readPrefdl().data()
+   @simulateWith(prefdlSim)
+   def prefdl(self):
+      return self.readPrefdl().data()
+
+   def readPrefdl(self):
+      return readPrefdl()
+
+   def readPrefdlRaw(self):
+      raise NotImplementedError
 
 def getSysEeprom():
    global syseeprom
    if not syseeprom:
-      syseeprom = getPrefdlData()
-      assert 'SKU' in syseeprom
+      syseeprom = SysEeprom()
    return syseeprom
 
+def getSysEepromData():
+   global syseepromData
+   if not syseepromData:
+      syseepromData = getSysEeprom().prefdl()
+      assert 'SKU' in syseepromData
+   return syseepromData
+
 def readSku():
-   return getSysEeprom().get('SKU')
+   return getSysEepromData().get('SKU')
 
 def readSid():
    return getCmdlineDict().get('sid')
@@ -85,7 +99,7 @@ def readPlatformName():
    return getCmdlineDict().get('platform')
 
 def readHwApi():
-   return getSysEeprom().get('HwApi')
+   return getSysEepromData().get('HwApi')
 
 def detectPlatform():
    # TODO: refactor by obtaining a Cpu object based on the platform= from cmdline

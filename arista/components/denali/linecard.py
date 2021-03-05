@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function
 import time
 
 from ...core.log import getLogger
+from ...core.platform import getSysEeprom
 from ...core.provision import ProvisionConfig, ProvisionMode
 from ...core.register import Register, RegisterMap, RegBitField, SetClearRegister
 from ...core.types import PciAddr
@@ -56,6 +57,7 @@ class DenaliLinecard(DenaliLinecardBase):
       assert self.CPU_CLS
       self.slot = DenaliLinecardSlot(self, 0, PciAddr(bus=0x04), None, card=self)
       self.cpu = self.newComponent(self.CPU_CLS, self.slot)
+      self.eeprom = getSysEeprom()
 
    def powerStandbyDomainIs(self, on):
       '''Turn on card Ecbs. On Denali linecard, we expect

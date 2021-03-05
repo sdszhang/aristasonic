@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 from ..core.daemon import registerDaemonFeature, OneShotFeature
 from ..core.log import getLogger
-from ..core.platform import getSysEeprom
+from ..core.platform import getSysEepromData
 from ..core.utils import getCmdlineDict
 
 logging = getLogger(__name__)
@@ -21,7 +21,7 @@ class MacOneShotFeature(OneShotFeature):
    def run(self):
       intfName = 'eth0'
       currentMac = self.readMacAddress(intfName)
-      desiredMac = getSysEeprom().get('MAC', '00:00:00:00:00:00')
+      desiredMac = getSysEepromData().get('MAC', '00:00:00:00:00:00')
       currentMacValue = int(currentMac.replace(':', ''), 16)
       desiredMacValue = int(desiredMac.replace(':', ''), 16)
       if currentMac == desiredMac:
