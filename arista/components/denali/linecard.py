@@ -5,14 +5,19 @@ import time
 
 from ...core.log import getLogger
 from ...core.provision import ProvisionConfig, ProvisionMode
-from ...core.register import RegBitField, RegisterMap
+from ...core.register import Register, RegisterMap, RegBitField, SetClearRegister
 from ...core.types import PciAddr
+
 from ...drivers.pca9555 import GpioRegister
-from ...drivers.scd.register import ScdResetRegister
+from ...drivers.scd.register import (
+   ScdResetRegister,
+   ScdSramRegister,
+   ScdStatusChangedRegister,
+)
 from ...drivers.scd.sram import SramContent
+
 from ...libs.wait import waitFor
 
-from ..asic.dnx.jericho2 import Jericho2
 from ..plx import PlxPex8700
 from ..scd import Scd
 
@@ -24,7 +29,7 @@ class DenaliLinecard(DenaliLinecardBase):
    PLATFORM = None
 
    SCD_PCI_OFFSET = 0
-   ASIC_PCI_OFFSET = {}
+   ASICS = []
 
    PLX_LCPU_MODE = None
 
@@ -36,12 +41,16 @@ class DenaliLinecard(DenaliLinecardBase):
       self.scd = self.main.newComponent(Scd, scdAddr, registerCls=ScdRegisterMap)
 
    def createAsics(self):
-      asicAddr = self.slot.pciAddr(bus=self.ASIC_PCI_OFFSET[0])
-      self.asics = [
-         self.main.newComponent(Jericho2, asicAddr, rescan=True,
-                                resetGpio=self.scd.regs.je1Reset,
-                                pcieResetGpio=self.scd.regs.je1PcieReset),
-      ]
+      self.asics = []
+      for desc in self.ASICS:
+         addr = self.slot.pciAddr(bus=desc.bus)
+         # TODO: use sysfs entries for the asic resets
+         rst = getattr(self.scd.regs, 'je%dReset' % desc.rstIdx)
+         prst = getattr(self.scd.regs, 'je%dPcieReset' % desc.rstIdx)
+         # TODO: avoid the rescan on the lcpu side, look into plx vs hotswap
+         asic = self.main.newComponent(desc.cls, addr, rescan=True,
+                                       resetGpio=rst, pcieResetGpio=prst)
+         self.asics.append(asic)
 
    def createCpu(self):
       assert self.CPU_CLS
@@ -159,3 +168,34 @@ class ScdRegisterMap(RegisterMap):
       RegBitField(4, 'je2Reset', ro=False),
       RegBitField(5, 'je2PcieReset', ro=False),
    )
+
+class StandbyScdRegisterMap(RegisterMap):
+   REVISION = Register(0x01, name='revision')
+   SCRATCHPAD = Register(0x02, name='scratchpad', ro=False)
+   SLOT_ID = Register(0x03, name='slotId', ro=False)
+   STATUS0 = ScdStatusChangedRegister(0x04,
+      RegBitField(0, name='lcpuPowerGood'),
+      RegBitField(2, name='lcpuInReset'),
+      RegBitField(3, name='lcpuMuxSel', flip=True),
+   )
+   STATUS1 = ScdStatusChangedRegister(0x06,
+      RegBitField(6, name='vrmAlert'),
+      RegBitField(7, name='vrmHot'),
+   )
+   STATUS2 = ScdStatusChangedRegister(0x05,
+      RegBitField(0, name='lcpuThermTrip'),
+      RegBitField(1, name='lcpuHot'),
+      RegBitField(2, name='lcpuAlert'),
+   )
+   STATUS7 = ScdStatusChangedRegister(0x12,
+      RegBitField(3, name='lcpuPresent'),
+   )
+   LCPU_CTRL = SetClearRegister(0x30, 0x31,
+      RegBitField(0, name='lcpuDisableSet', ro=False),
+      RegBitField(1, name='lcpuResetSet', ro=False),
+      RegBitField(3, name='supGmacReset', ro=False),
+      RegBitField(4, name='lcpuGmacReset', ro=False),
+      RegBitField(5, name='gmacLowPower', ro=False),
+   )
+   PROVISION = Register(0x32, name='provision', ro=False)
+   SRAM = ScdSramRegister(0x33, name='sram')

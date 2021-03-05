@@ -3,6 +3,8 @@ from ...core.platform import registerPlatform
 from ...core.types import MdioSpeed
 from ...core.utils import incrange, HwApi
 
+from ...components.asic.dnx.jericho2 import Jericho2
+from ...components.denali.desc import DenaliAsicDesc
 from ...components.denali.linecard import DenaliLinecard, GpioRegisterMap
 from ...components.dpm import Ucd90320
 from ...components.eeprom import At24C512
@@ -18,8 +20,10 @@ from ...descs.reset import ResetDesc
 
 class ClearwaterBase(DenaliLinecard):
    SCD_PCI_OFFSET = 3
-   ASIC_PCI_OFFSET = {0 : 2}
    XCVR_BUS_OFFSET = 0
+   ASICS = [
+      DenaliAsicDesc(cls=Jericho2, bus=2, rstIdx=1),
+   ]
 
    STANDBY_TEMP_SENSORS_CLS = Lm73
    GPIO1_CLS = Pca9555
