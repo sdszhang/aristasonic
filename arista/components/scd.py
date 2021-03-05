@@ -422,24 +422,27 @@ class Scd(PciComponent):
                        busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
                        **kwargs):
       for i in sfpRange:
-         self.addSfpSlot(name="sfp%d" % i, xcvrId=i, addr=addr, bus=bus,
+         self.addSfpSlot(xcvrId=i, addr=addr, bus=bus,
                          ledAddr=ledAddr, ledAddrOffsetFn=ledAddrOffsetFn,
                          ledLanes=ledLanes, **kwargs)
-         self.sfps += [(addr, i)]
          addr += addrOffset
          bus += busOffset
          for _ in range(ledLanes):
             ledAddr += ledAddrOffsetFn(i)
 
-   def addSfpSlot(self, addr, name, **kwargs):
+   def addSfpSlot(self, xcvrId, addr, **kwargs):
+      name = 'sfp%d' % xcvrId
       rxLosDesc = GpioDesc("%s_rxlos" % name, addr, bit=0, ro=True)
       txDisableDesc = GpioDesc("%s_txdisable" % name, addr, bit=6)
       txFaultDesc = GpioDesc("%s_txfault" % name, addr, bit=1, ro=True)
 
+      self.sfps += [(addr, xcvrId)]
+
       return self._addXcvrSlot(
-         addr=addr,
          cls=SfpSlot,
          name=name,
+         xcvrId=xcvrId,
+         addr=addr,
          rxLosGpio=self.addXcvrGpio(rxLosDesc),
          txDisableGpio=self.addXcvrGpio(txDisableDesc),
          txFaultGpio=self.addXcvrGpio(txFaultDesc),
@@ -450,25 +453,28 @@ class Scd(PciComponent):
                         busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
                         **kwargs):
       for i in qsfpRange:
-         self.addQsfpSlot(name="qsfp%d" % i, xcvrId=i, addr=addr, bus=bus,
+         self.addQsfpSlot(xcvrId=i, addr=addr, bus=bus,
                           ledAddr=ledAddr, ledAddrOffsetFn=ledAddrOffsetFn,
                           ledLanes=ledLanes, **kwargs)
-         self.qsfps += [(addr, i)]
          addr += addrOffset
          bus += busOffset
          for _ in range(ledLanes):
             ledAddr += ledAddrOffsetFn(i)
 
-   def addQsfpSlot(self, addr, name, isHwLpModeAvail=True, isHwModSelAvail=True,
-                   **kwargs):
+   def addQsfpSlot(self, xcvrId, addr, isHwLpModeAvail=True,
+                   isHwModSelAvail=True, **kwargs):
+      name = 'qsfp%d' % xcvrId
       lpModeDesc = GpioDesc("%s_lp_mode" % name, addr=addr, bit=6)
       modSelDesc = GpioDesc("%s_modsel" % name, addr=addr, bit=8, activeLow=True)
       resetDesc = ResetDesc("%s_reset" % name, addr=addr, bit=7)
 
+      self.qsfps += [(addr, xcvrId)]
+
       return self._addXcvrSlot(
-         addr=addr,
          cls=QsfpSlot,
          name=name,
+         xcvrId=xcvrId,
+         addr=addr,
          lpMode=self.addXcvrGpio(lpModeDesc) if isHwLpModeAvail else None,
          modSel=self.addXcvrGpio(modSelDesc) if isHwModSelAvail else None,
          reset=self.addXcvrReset(resetDesc),
@@ -479,25 +485,28 @@ class Scd(PciComponent):
                         busOffset=1, ledAddrOffsetFn=lambda x: 0x10, ledLanes=1,
                         **kwargs):
       for i in osfpRange:
-         self.addOsfpSlot(name="osfp%d" % i, xcvrId=i, addr=addr, bus=bus,
+         self.addOsfpSlot(xcvrId=i, addr=addr, bus=bus,
                           ledAddr=ledAddr, ledAddrOffsetFn=ledAddrOffsetFn,
                           ledLanes=ledLanes, **kwargs)
-         self.osfps += [(addr, i)]
          addr += addrOffset
          bus += busOffset
          for _ in range(ledLanes):
             ledAddr += ledAddrOffsetFn(i)
 
-   def addOsfpSlot(self, addr, name, isHwLpModeAvail=True, isHwModSelAvail=True,
+   def addOsfpSlot(self, xcvrId, addr, isHwLpModeAvail=True, isHwModSelAvail=True,
                    **kwargs):
+      name = 'osfp%d' % xcvrId
       lpModeDesc = GpioDesc("%s_lp_mode" % name, addr=addr, bit=6)
       modSelDesc = GpioDesc("%s_modsel" % name, addr=addr, bit=8, activeLow=True)
       resetDesc = ResetDesc("%s_reset" % name, addr=addr, bit=7)
 
+      self.osfps += [(addr, xcvrId)]
+
       return self._addXcvrSlot(
-         addr=addr,
          cls=OsfpSlot,
          name=name,
+         xcvrId=xcvrId,
+         addr=addr,
          lpMode=self.addXcvrGpio(lpModeDesc) if isHwLpModeAvail else None,
          modSel=self.addXcvrGpio(modSelDesc) if isHwModSelAvail else None,
          reset=self.addXcvrReset(resetDesc),
@@ -545,8 +554,14 @@ class Scd(PciComponent):
       for i, addr in enumerate(addrs, 0):
          self.addUartPort(addr, i)
 
-   def getResets(self):
-      return self.resets
+   def getResets(self, xcvrs=True):
+      resets = self.resets
+      if xcvrs:
+         resets += [self.inventory.getReset('qsfp%d_reset' % xcvrId)
+                    for _, xcvrId in self.qsfps]
+         resets += [self.inventory.getReset('osfp%d_reset' % xcvrId)
+                    for _, xcvrId in self.osfps]
+      return resets
 
    def resetOut(self):
       super(Scd, self).resetOut()

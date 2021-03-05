@@ -20,7 +20,6 @@ class SprucefishCpu(Cpu):
       cpld.addSfpSlot(
          addr=0x5010,
          bus=3,
-         name="sfp1",
          xcvrId=1,
          ledAddr=None,
          ledAddrOffsetFn=None,
