@@ -12,7 +12,10 @@ class Eeprom(EepromDecoder):
    Platform-specific Eeprom class
    """
 
-   # Work in progress
-   def __init__(self, prefdl):
-      EepromDecoder.__init__(self)
+   def __init__(self, prefdl, **kwargs):
+      EepromDecoder.__init__(self, path=None, eepromFormat=None, start=0, status='',
+                             readOnly=True, **kwargs)
       self._prefdl = prefdl
+
+   def read_eeprom(self):
+      return self._prefdl
