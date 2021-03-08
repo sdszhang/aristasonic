@@ -17,6 +17,12 @@ from ..power import PowerDomain
 logging = getLogger(__name__)
 
 class DenaliCard(Card):
+   # Connect supes 1 and 2 via Plx upstream ports 0 and 2
+   PCIE_SWITCH_UPSTREAM_PORTS = {
+      1: 0,
+      2: 2,
+   }
+
    def __init__(self, *args, **kwargs):
       self.scd = None
       self.pca = None
@@ -34,6 +40,9 @@ class DenaliCard(Card):
       except Exception: # pylint: disable=broad-except
          logging.debug("%s: failed to read eeprom", self)
          return {}
+
+   def getUpstreamPort(self):
+      return self.PCIE_SWITCH_UPSTREAM_PORTS[self.slot.parent.getSlotId()]
 
    def createGpio1(self):
       self.gpio1 = None
@@ -96,15 +105,15 @@ class DenaliCard(Card):
       assert self.gpio1, "gpio1 is not created yet."
       if on:
          assert self.poweredOn(), "Card is not turned on."
-         self.setPlxPcieUpstreamLink(True)
          self.gpio1.pcieReset(False)
          waitFor(self.plx.smbusPing, "Can't take Plx out of reset.")
          self.setupPlx()
+         self.enablePlxPcieUpstreamLink(True)
          self.gpio1.statusRed(False)
          self.gpio1.statusGreen(True)
       else:
+         self.enablePlxPcieUpstreamLink(False)
          self.gpio1.pcieReset(True)
-         self.setPlxPcieUpstreamLink(False)
          self.gpio1.statusRed(False)
          self.gpio1.statusGreen(False)
 
@@ -158,22 +167,18 @@ class DenaliCard(Card):
       assert self.gpio1, "gpio1 is not created yet."
       self.gpio1.powerCycle(True)
 
-   def setPlxPcieUpstreamLink(self, bind):
+   def enablePlxPcieUpstreamLink(self, bind):
+      self.plx.disableUpstreamPort(self.getUpstreamPort(), True)
       if bind:
-         return self.slot.parent.pciSwitch.bind(self.slot.slotId)
+         self.slot.parent.pciSwitch.bind(self.slot.slotId)
+         self.plx.disableUpstreamPort(self.getUpstreamPort(), False)
       else:
-         return self.slot.parent.pciSwitch.unbind(self.slot.slotId)
-
-   def enablePlxDownstreamHotplug(self):
-      # Enabling hot plug for plx and reset it.
-      self.plx.enableHotPlug()
-      self.gpio1.pcieReset(True)
-      waitFor(lambda: (not self.plx.smbusPing()), "Can't take Plx in reset")
-      self.gpio1.pcieReset(False)
-      waitFor(self.plx.smbusPing, "Can't take Plx out of reset")
+         self.slot.parent.pciSwitch.unbind(self.slot.slotId)
 
    def setupPlx(self):
-      self.enablePlxDownstreamHotplug()
+      self.plx.enableHotPlug()
+      self.plx.setUpstreamPort(self.getUpstreamPort())
+      self.plx.enableNt(False)
 
    def setupIdentification(self):
       self.pca.takeOwnership()
