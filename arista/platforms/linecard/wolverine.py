@@ -1,5 +1,6 @@
 
 from ...core.platform import registerPlatform
+from ...core.port import PortLayout
 from ...core.utils import incrange
 
 from ...components.asic.dnx.jericho2c import Jericho2cPlus
@@ -41,24 +42,24 @@ class Wolverine(DenaliLinecard):
        (1 << 5))   # scd
    ]
 
+   PORTS = PortLayout(
+      osfps=incrange(1, 36),
+   )
+
    def createPorts(self):
-      osfpRange = incrange(1, 36)
-      self.inventory.addPorts(osfps=osfpRange)
-
-      for osfpId in osfpRange:
-         name = 'osfp%d' % osfpId
-
-         ledAddr = 0x6100 + (osfpId - 1) * 0x10
-         self.scd.addLedGroup(name, [(ledAddr, name)])
-
-         # IRQ2 -> port 32:1 (bit 31:0)
-         # IRQ3 -> port 36:33 (bit 3:0)
-         intReg = self.scd.getInterrupt(osfpId // 32 + 2)
-         intr = intReg.getInterruptBit(name, (osfpId - 1) % 32)
-         osfpAddr = 0xA010 + (osfpId - 1) * 0x10
-         bus = self.XCVR_BUS_OFFSET + osfpId - 1
-         self.scd.addOsfp(osfpAddr, osfpId, bus, interruptLine=intr,
-                          leds=self.scd.inventory.getLedGroup(name))
+      intrRegs = [self.scd.getInterrupt(intId) for intId in incrange(0, 6)]
+      # IRQ2 -> port 32:1 (bit 31:0)
+      # IRQ3 -> port 36:33 (bit 3:0)
+      self.scd.addOsfpSlotBlock(
+         osfpRange=self.PORTS.osfpRange,
+         addr=0xA010,
+         bus=self.XCVR_BUS_OFFSET,
+         ledAddr=0x6100,
+         intrRegs=intrRegs,
+         intrRegIdxFn=lambda xcvrId: xcvrId // 32 + 2,
+         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
+         isHwModSelAvail=False,
+      )
 
       for riserId in incrange(1, 18):
          bus = 64 + riserId - 1
