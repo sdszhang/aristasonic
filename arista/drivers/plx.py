@@ -339,6 +339,22 @@ class PlxPex8700I2cDevDriver(Driver):
       self.regs.hotPlugSurprise(True)
       self.regs.hotPlugCapable(True)
 
+   def disableUpstreamPort(self, port, off):
+      portDisableReg = self.regs.portDisable()
+      if off:
+          self.regs.portDisable(portDisableReg | (1 << port))
+      else:
+          self.regs.portDisable(portDisableReg & ~(1 << port))
+
+   def setUpstreamPort(self, port):
+      self.regs.upstreamPort(port)
+
+   def setNtPort(self, port):
+      self.regs.ntPort(port)
+
+   def enableNt(self, on):
+      self.regs.ntEnable(on)
+
    def vsPortVec(self, vsId, value=None):
       return [
          self.regs.vs0PortVec,

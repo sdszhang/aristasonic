@@ -2,7 +2,7 @@
 from collections import namedtuple
 
 from .common import I2cComponent
-from ..core.register import RegisterMap, Register, RegBitField
+from ..core.register import RegisterMap, Register, RegBitField, RegBitRange
 from ..drivers.plx import PlxPex8700I2cDevDriver
 
 PlxPortDesc = namedtuple('PlxPortDesc', [
@@ -52,6 +52,14 @@ class Plx8700RegisterMap(RegisterMap):
       RegBitField(6, 'hotPlugCapable', ro=False),
    )
 
+   PortDisable = Register(0x208, name="portDisable")
+
+   Vs0Upstream = Register(0x360,
+      RegBitRange(0, 4, 'upstreamPort', ro=False),
+      RegBitRange(8, 12, 'ntPort', ro=False),
+      RegBitField(13, 'ntEnable', ro=False),
+   )
+
    Vs0PortVec = Register(0x380, name="vs0PortVec")
    Vs1PortVec = Register(0x384, name="vs1PortVec")
 
@@ -67,8 +75,20 @@ class PlxPex8700(Plx):
    def enableHotPlug(self):
       self.drivers['PlxPex8700I2cDevDriver'].enableHotPlug()
 
+   def disableUpstreamPort(self, port, off=True):
+      self.drivers['PlxPex8700I2cDevDriver'].disableUpstreamPort(port, off)
+
+   def setUpstreamPort(self, port=0):
+      self.drivers['PlxPex8700I2cDevDriver'].setUpstreamPort(port)
+
+   def setNtPort(self, port=2):
+      self.drivers['PlxPex8700I2cDevDriver'].setNtPort(port)
+
+   def enableNt(self, on=False):
+      self.drivers['PlxPex8700I2cDevDriver'].enableNt(on)
+
    def smbusPing(self):
       return self.drivers['PlxPex8700I2cDevDriver'].smbusPing()
 
-   def vsPortVec( self, vsId, value=None ):
+   def vsPortVec(self, vsId, value=None):
       return self.drivers['PlxPex8700I2cDevDriver'].vsPortVec(vsId, value)
