@@ -50,6 +50,44 @@ class RegBitField(HardwareHandle):
       self.parent = parent
       return self.readWrite
 
+class RegBitRange(HardwareHandle):
+   def __init__(self, bitstart, bitend, name, ro=True, flip=False, parent=None):
+      '''Parent of this class is Register'''
+      self.parent = parent
+      # bit start and end in range are inclusive
+      self.bitstart = bitstart
+      self.bitend = bitend
+      self.name = name
+      self.ro = ro
+      self.flip = flip
+
+   def __str__(self):
+      return '%s BitRange(%d, %d, %s, ro=%s)' % (self.parent,
+             self.bitstart, self.bitend, self.name, self.ro)
+
+   def read(self):
+      value = self.parent.readBits(self.bitstart, self.bitend)
+      if self.flip:
+         mask = (1 << (self.bitend - self.bitstart + 1)) - 1
+         value = ~value & mask
+      return value
+
+   def write(self, value):
+      assert not self.ro
+      if self.flip:
+         mask = (1 << (self.bitend - self.bitstart + 1)) - 1
+         value = ~value & mask
+      return self.parent.writeBits(self.bitstart, self.bitend, value)
+
+   def readWrite(self, value=None):
+      if value is None:
+         return self.read()
+      return self.write(value)
+
+   def getAttribute(self, parent=None):
+      self.parent = parent
+      return self.readWrite
+
 class Register(HardwareHandle):
    def __init__(self, addr, *fields, **kwargs):
       self.parent = kwargs.get('parent')
@@ -85,6 +123,15 @@ class Register(HardwareHandle):
          regval |= (1 << bitpos)
       else:
          regval &= ~(1 << bitpos)
+      return self.write(regval)
+
+   def readBits(self, bitstart, bitend):
+      mask = (1 << (bitend - bitstart + 1)) - 1
+      return (self.read() >> bitstart) & mask
+
+   def writeBits(self, bitstart, bitend, value):
+      mask = (1 << (bitend - bitstart + 1)) - 1
+      regval = (self.read() & ~(mask << bitstart)) | (value << bitstart)
       return self.write(regval)
 
    def generateFieldAttributes(self, attrs, field):

@@ -8,6 +8,7 @@ from ..register import (
    RegisterMap,
    Register,
    RegBitField,
+   RegBitRange,
    SetClearRegister,
 )
 
@@ -39,6 +40,10 @@ class FakeRegisterMap(RegisterMap):
       RegBitField(1, name='interrupt1', ro=False),
    )
    # 0x08 is implicitely reserverd by SetClearRegister
+   BIT_RANGE = Register(0x09,
+      RegBitRange(0, 3, name='range03', ro=False),
+      RegBitRange(5, 6, name='range56', ro=False, flip=True),
+   )
 
 class FakeDriver(object):
    def __init__(self):
@@ -51,6 +56,7 @@ class FakeDriver(object):
          0x06: 0, # clear on read
          0x07: 0, # set
          0x08: 0, # clear returns value of 0x07
+         0x09: 0, # bit range reg
       }
 
    def read(self, reg):
@@ -199,6 +205,17 @@ class CoreRegisterTest(unittest.TestCase):
       self.assertEqual(driver.regmap[addr], 0x00)
       self.assertEqual(regs.interrupt0(), 0)
       self.assertEqual(regs.interrupt1(), 0)
+
+   def testBitRange(self):
+      self.assertEqual(self.regs.range03(), 0)
+      val = 0b1011
+      self.regs.range03(val)
+      self.assertEqual(self.regs.range03(), val)
+
+      self.assertEqual(self.regs.range56(), 0b11)
+      val = 0b1
+      self.regs.range56(val)
+      self.assertEqual(self.regs.range56(), val)
 
 if __name__ == '__main__':
    unittest.main()
