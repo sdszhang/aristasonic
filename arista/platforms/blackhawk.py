@@ -6,7 +6,7 @@ from ..core.utils import incrange
 
 from ..components.cpu.rook import TehamaFanCpld
 from ..components.asic.xgs.tomahawk3 import Tomahawk3
-from ..components.dpm import Ucd90320, UcdGpi
+from ..components.dpm.ucd import Ucd90320, UcdGpi
 from ..components.max6581 import Max6581
 from ..components.psu.delta import DPS1600AB, DPS1600CB
 from ..components.scd import Scd

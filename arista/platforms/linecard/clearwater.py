@@ -6,7 +6,7 @@ from ...core.utils import incrange, HwApi
 from ...components.asic.dnx.jericho2 import Jericho2
 from ...components.denali.desc import DenaliAsicDesc
 from ...components.denali.linecard import DenaliLinecard, GpioRegisterMap
-from ...components.dpm import Ucd90320
+from ...components.dpm.ucd import Ucd90320
 from ...components.eeprom import At24C512
 from ...components.lm73 import Lm73
 from ...components.lm75 import Tmp75

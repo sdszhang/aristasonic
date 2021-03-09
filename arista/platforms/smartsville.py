@@ -5,7 +5,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.common import SwitchChip
-from ..components.dpm import Ucd90320, UcdGpi
+from ..components.dpm.ucd import Ucd90320, UcdGpi
 from ..components.phy.babbage import Babbage
 from ..components.phy.b52 import B52
 from ..components.psu.delta import DPS1500AB, DPS1600CB, DPS500AB

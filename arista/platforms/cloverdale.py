@@ -8,7 +8,7 @@ from ..core.utils import incrange
 from ..components.asic.xgs.trident2 import Trident2
 from ..components.cpu.amd.k10temp import K10Temp
 from ..components.cpu.raven import RavenFanComplex
-from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi, UcdMon
+from ..components.dpm.ucd import Ucd90120A, Ucd90160, UcdGpi, UcdMon
 from ..components.lm73 import Lm73
 from ..components.max6658 import Max6658
 from ..components.psu.artesyn import DS460

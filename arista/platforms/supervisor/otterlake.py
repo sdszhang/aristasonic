@@ -3,7 +3,7 @@ from __future__ import absolute_import, division
 
 from ...components.denali.psu import DenaliPsuSlotDesc
 from ...components.denali.supervisor import DenaliSupervisor
-from ...components.dpm import Ucd90120A, Ucd90160, UcdMon, UcdGpi
+from ...components.dpm.ucd import Ucd90120A, Ucd90160, UcdMon, UcdGpi
 from ...components.eeprom import At24C512
 from ...components.microsemi import MicrosemiPortDesc
 

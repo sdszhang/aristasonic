@@ -3,20 +3,20 @@ from __future__ import with_statement
 import datetime
 from collections import namedtuple
 
-from ..core.cause import (
+from ...core.cause import (
    ReloadCauseEntry,
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
-from ..core.component import Priority
-from ..core.utils import inSimulation
-from ..core.log import getLogger
+from ...core.component import Priority
+from ...core.utils import inSimulation
+from ...core.log import getLogger
 
-from ..drivers.dpm import UcdI2cDevDriver
+from ...drivers.dpm.ucd import UcdI2cDevDriver
 
-from ..libs.date import datetimeToStr
+from ...libs.date import datetimeToStr
 
-from .common import I2cComponent
+from ..common import I2cComponent
 
 logging = getLogger(__name__)
 

@@ -5,7 +5,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident3 import Trident3
-from ..components.dpm import Ucd90320, UcdGpi
+from ..components.dpm.ucd import Ucd90320, UcdGpi
 from ..components.psu.delta import DPS500AB
 from ..components.psu.artesyn import CSU500DP
 from ..components.scd import Scd

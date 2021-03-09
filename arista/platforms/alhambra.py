@@ -5,7 +5,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.bfn.tofino import Tofino
-from ..components.dpm import Ucd90120A, UcdGpi
+from ..components.dpm.ucd import Ucd90120A, UcdGpi
 from ..components.max6658 import Max6658
 from ..components.psu.delta import DPS750AB, DPS1900AB
 from ..components.psu.emerson import DS750PED

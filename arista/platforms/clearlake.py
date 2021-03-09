@@ -5,7 +5,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident2 import Trident2
-from ..components.dpm import Ucd90120A, UcdGpi
+from ..components.dpm.ucd import Ucd90120A, UcdGpi
 from ..components.max6658 import Max6658
 from ..components.psu.delta import DPS495CB
 from ..components.psu.artesyn import DS495SPE

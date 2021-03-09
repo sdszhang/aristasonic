@@ -6,7 +6,7 @@ from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk import Tomahawk
 from ..components.cpu.crow import KoiCpldRegisters
-from ..components.dpm import Ucd90120A, UcdGpi
+from ..components.dpm.ucd import Ucd90120A, UcdGpi
 from ..components.max6697 import Max6697
 from ..components.psu.delta import DPS495CB, DPS750AB
 from ..components.psu.artesyn import DS495SPE

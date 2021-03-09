@@ -11,7 +11,7 @@ from ...components.cpu.rook import (
    RookStatusLeds,
    RookSysCpld,
 )
-from ...components.dpm import Ucd90160, UcdGpi, UcdPriority
+from ...components.dpm.ucd import Ucd90160, UcdGpi, UcdPriority
 from ...components.lm73 import Lm73
 from ...components.max6658 import Max6658
 from ...components.scd import Scd

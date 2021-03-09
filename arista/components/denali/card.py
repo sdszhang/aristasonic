@@ -9,7 +9,7 @@ from ...core.linecard import Linecard
 from ...core.log import getLogger
 from ...libs.wait import waitFor
 
-from ..dpm import Ucd90320
+from ..dpm.ucd import Ucd90320
 from ..eeprom import At24C512
 from ..pca9541 import Pca9541
 from ..power import PowerDomain

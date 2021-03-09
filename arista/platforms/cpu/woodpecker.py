@@ -4,7 +4,7 @@ from ...core.types import PciAddr
 from ...core.utils import incrange
 
 from ...components.cpu.amd.k10temp import K10Temp
-from ...components.dpm import Ucd90160, UcdGpi, UcdPriority
+from ...components.dpm.ucd import Ucd90160, UcdGpi, UcdPriority
 from ...components.max6658 import Max6658
 from ...components.scd import Scd
 

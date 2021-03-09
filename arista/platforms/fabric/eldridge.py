@@ -5,7 +5,7 @@ from ...core.utils import incrange, HwApi
 
 from ...components.asic.dnx.ramon import Ramon
 from ...components.denali.fabric import DenaliFabric
-from ...components.dpm import Ucd90320
+from ...components.dpm.ucd import Ucd90320
 from ...components.max31790 import Max31790
 from ...components.max6658 import Max6658
 from ...components.pca9555 import Pca9555
