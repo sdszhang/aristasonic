@@ -13,8 +13,8 @@ class Eeprom(EepromDecoder):
    """
 
    def __init__(self, prefdl, **kwargs):
-      EepromDecoder.__init__(self, path=None, eepromFormat=None, start=0, status='',
-                             readOnly=True, **kwargs)
+      EepromDecoder.__init__(self, path=None, format=None, start=0, status='',
+                             readonly=True, **kwargs)
       self._prefdl = prefdl
 
    def read_eeprom(self):
