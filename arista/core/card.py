@@ -96,18 +96,18 @@ class CardSlot(SlotComponent):
             return
 
          eeprom = self.getEeprom()
-         sku = eeprom.get('SKU')
-         if sku is None:
+         sid = eeprom.get('SID')
+         if sid is None:
             logging.error('Unknown card in slot %d, eeprom is invalid', self.slotId)
             return
 
          try:
-            cls = getPlatformCls(sku)
+            cls = getPlatformCls(sid)
             # add some Config() for noStandby
             logging.info('Loading card %s in slot %d', cls.__name__, self.slotId)
             card = cls(self, **kwargs)
          except UnknownPlatformError:
-            logging.warning('Unsupported card %s for slot %d', sku, self.slotId)
+            logging.warning('Unsupported card %s for slot %d', sid, self.slotId)
             return
 
       self.card = card
