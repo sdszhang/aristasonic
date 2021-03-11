@@ -1,40 +1,14 @@
-from ...core.driver import Driver
-from ...core.i2c_utils import I2cMsg
-from ...core.utils import inSimulation, SMBus
+
 from ...core.log import getLogger
+from ...core.utils import inSimulation
+
+from .pmbus import PmbusUserDriver
 
 logging = getLogger(__name__)
 
-SMBUS_BLOCK_MAX_SZ = 32
-
-class UcdI2cDevDriver(Driver):
-   def __init__(self, registers=None, addr=None, **kwargs):
-      self.bus = None
-      self.busMsg = I2cMsg(addr)
-      self.registers = registers
-      self.addr = addr
-      super(UcdI2cDevDriver, self).__init__(**kwargs)
-
-   def __enter__(self):
-      self.bus = SMBus(self.addr.bus)
-      if not inSimulation():
-         self.busMsg.open()
-      return self
-
-   def __exit__(self, *args):
-      self.busMsg.close()
-      self.bus.close()
-
+class UcdUserDriver(PmbusUserDriver):
    def dumpReg(self, name, data):
       logging.debug('%s reg: %s', name, ' '.join('%02x' % s for s in data))
-
-   def getBlock(self, reg):
-      size = self.bus.read_byte_data(self.addr.address, reg) + 1
-      data = self.busMsg.read_bytes(self.addr.address, [reg], size)
-      return data[1:data[0]+1]
-
-   def setBlock(self, reg, data):
-      self.busMsg.write_bytes(self.addr.address, [reg, len(data)] + data)
 
    def getVersion(self):
       if inSimulation():

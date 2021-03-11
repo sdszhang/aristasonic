@@ -1,40 +1,38 @@
 from __future__ import with_statement
 
 import datetime
-from collections import namedtuple
 
 from ...core.cause import (
    ReloadCauseEntry,
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
-from ...core.component import Priority
 from ...core.utils import inSimulation
 from ...core.log import getLogger
 
-from ...drivers.dpm.ucd import UcdI2cDevDriver
+from ...drivers.dpm.ucd import UcdUserDriver
 
 from ...libs.date import datetimeToStr
 
-from ..common import I2cComponent
+from .pmbus import PmbusComponent
 
 logging = getLogger(__name__)
 
 class UcdPriority(object):
-    NONE = 0
-    LOW = 10
-    NORMAL = 20
-    HIGH = 30
+   NONE = 0
+   LOW = 10
+   NORMAL = 20
+   HIGH = 30
 
 class UcdGpi(object):
-    def __init__(self, bit, priority=UcdPriority.NORMAL):
-        self.bit = bit
-        self.priority = priority
+   def __init__(self, bit, priority=UcdPriority.NORMAL):
+      self.bit = bit
+      self.priority = priority
 
 class UcdMon(object):
-    def __init__(self, val, priority=UcdPriority.NORMAL):
-        self.val = val
-        self.priority = priority
+   def __init__(self, val, priority=UcdPriority.NORMAL):
+      self.val = val
+      self.priority = priority
 
 class UcdReloadCauseEntry(ReloadCauseEntry):
    pass
@@ -47,9 +45,13 @@ class UcdReloadCauseProvider(ReloadCauseProviderHelper):
    def process(self):
       self.causes = self.ucd.getReloadCauses()
 
-class Ucd(I2cComponent):
-   class Registers(object):
+class Ucd(PmbusComponent):
+
+   DRIVER = UcdUserDriver
+
+   class Registers(PmbusComponent.Registers):
       RUN_TIME_CLOCK = 0xd7
+
       LOGGED_FAULTS = 0xea
       LOGGED_FAULT_DETAIL_INDEX = 0xeb
       LOGGED_FAULT_DETAIL = 0xec
@@ -57,7 +59,6 @@ class Ucd(I2cComponent):
       LOGGED_FAULTS_COUNT = 13
       LOGGED_FAULT_DETAIL_COUNT = 10
 
-      MFR_SERIAL = 0x9e
       DEVICE_ID = 0xfd
 
       def __str__(self):
@@ -69,34 +70,13 @@ class Ucd(I2cComponent):
    faultTimeBase = datetime.datetime(1970, 1, 1)
    daysOffset = 0
 
-   def __init__(self, addr, drivers=None, causes=None, priority=Priority.BACKGROUND,
-                **kwargs):
-      drivers = drivers or [UcdI2cDevDriver(addr=addr, registers=self.Registers)]
+   def __init__(self, addr=None, causes=None, **kwargs):
+      super(Ucd, self).__init__(addr=addr, **kwargs)
       self.causes = causes or {}
       self.oldestTime = datetime.datetime(1970, 1, 1)
-      super(Ucd, self).__init__(addr=addr, drivers=drivers, priority=priority,
-                                **kwargs)
       self.inventory.addReloadCauseProvider(UcdReloadCauseProvider(self))
 
-   def __str__(self):
-      return '%s(addr=%s)' % (self.__class__.__name__, self.addr)
-
-   def setup(self):
-      with self.drivers['UcdI2cDevDriver'] as drv:
-         try:
-            serial = drv.getVersion()
-            logging.info('%s version: %s', self, serial)
-         except Exception:
-            logging.error('%s: failed to version information', self)
-
-         # DPM run time clock needs to be updated
-         try:
-            self._setRunTimeClock(drv)
-            logging.info('%s time: %s', self, self._getRunTimeClock(drv))
-         except Exception:
-            logging.error('%s: failed to set run time clock', self)
-
-   def _setRunTimeClock(self, drv):
+   def setRunTimeClock(self):
       diff = datetime.datetime.now() - self.oldestTime
       msecsInt = int(diff.seconds * 1000 + diff.microseconds / 1000)
       daysInt = diff.days
@@ -111,14 +91,17 @@ class Ucd(I2cComponent):
       daysByte4 = daysInt & 0xff
       data = [msecsByte1, msecsByte2, msecsByte3, msecsByte4,
               daysByte1, daysByte2, daysByte3, daysByte4]
-      drv.setBlock(self.Registers.RUN_TIME_CLOCK, data)
+      self.driver.setBlock(self.Registers.RUN_TIME_CLOCK, data)
 
-   def _getRunTimeClock(self, drv):
-      res = drv.getBlock(self.Registers.RUN_TIME_CLOCK)
+   def getRunTimeClock(self):
+      res = self.driver.getBlock(self.Registers.RUN_TIME_CLOCK)
       msecs = res[3] | (res[2] << 8) | (res[1] << 16) | (res[0] << 24)
       days = res[7] | (res[6] << 8) | (res[5] << 16) | (res[4] << 24)
       days -= self.daysOffset
       return self.oldestTime + datetime.timedelta(days=days, milliseconds=msecs)
+
+   def getVersion(self):
+      return self.driver.getVersion()
 
    def _getGpiFaults(self, reg):
       causes = []
@@ -227,7 +210,7 @@ class Ucd(I2cComponent):
       if inSimulation():
          return []
 
-      with self.drivers['UcdI2cDevDriver'] as drv:
+      with self.driver as drv:
          causes = self._getReloadCauses(drv)
          logging.debug('clearing faults')
          drv.clearFaults()

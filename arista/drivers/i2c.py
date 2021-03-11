@@ -3,20 +3,22 @@ from contextlib import closing
 
 from .user import GpioFuncImpl
 
-from ..core.driver import Driver
 from ..core import utils
+from ..core.driver import UserDriver
 from ..core.log import getLogger
+from ..core.i2c_utils import I2cMsg
 from ..core.utils import SMBus
 
 logging = getLogger(__name__)
 
-class I2cDevDriver(Driver):
+class I2cDevDriver(UserDriver):
 
    REGISTER_CLS = None
 
    def __init__(self, name=None, addr=None, registerCls=None, **kwargs):
       super(I2cDevDriver, self).__init__(**kwargs)
       self.bus_ = None
+      self.msg_ = None
       self.name = name
       self.addr = addr
       registerCls = registerCls or self.REGISTER_CLS
@@ -33,10 +35,26 @@ class I2cDevDriver(Driver):
          self.bus_ = utils.SMBus(self.addr.bus)
       return self.bus_
 
+   @property
+   def msg(self):
+      if self.msg_ is None:
+         self.msg_ = I2cMsg(self.addr)
+         self.msg_.open()
+      return self.msg_
+
+   def __enter__(self):
+      return self
+
+   def __exit__(self, *args):
+      self.close()
+
    def close(self):
       if self.bus_ is not None:
          self.bus_.close()
          self.bus_ = None
+      if self.msg_ is not None:
+         self.msg_.close()
+         self.msg_ = None
 
    def smbusPing(self):
       try:
@@ -52,14 +70,26 @@ class I2cDevDriver(Driver):
    def write_byte_data(self, reg, data):
       return self.bus.write_byte_data(self.addr.address, reg, data)
 
+   def write_block_data(self, reg, data):
+      return self.bus.write_block_data(self.addr.address, reg, data)
+
    def read_block_data(self, reg):
       if self.addr.supportSmbusBlock:
          return self.bus.read_block_data(self.addr.address, reg)
-      data = self.bus.read_i2c_block_data(self.addr.address, reg)
+      data = self.read_i2c_block_data(reg)
       return data[1:data[0] + 1]
+
+   def read_i2c_block_data(self, reg, length=32):
+      return self.bus.read_i2c_block_data(self.addr.address, reg, length)
 
    def read_block_data_str(self, reg):
       return ''.join(chr(c) for c in self.read_block_data(reg))
+
+   def read_bytes(self, cmd, datalen):
+      return self.msg.read_bytes(self.addr.address, cmd, datalen)
+
+   def write_bytes(self, cmd):
+      return self.msg.write_bytes(self.addr.address, cmd)
 
    def read(self, reg):
       res = self.read_byte_data(reg)
@@ -81,6 +111,7 @@ class I2cDevDriver(Driver):
 
    def __diag__(self, ctx):
       return {
+         "addr": str(self.addr),
          "name": self.name,
          "regs": self.regs.__diag__(ctx) if self.regs else None,
       }

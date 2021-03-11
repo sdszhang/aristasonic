@@ -175,3 +175,6 @@ class KernelDriver(Driver):
 
    def getHwmonEntry(self, entry):
       return os.path.join(self.getHwmonPath(), entry)
+
+class UserDriver(Driver):
+   pass
