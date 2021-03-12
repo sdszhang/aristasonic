@@ -19,3 +19,25 @@ class Eeprom(EepromDecoder):
 
    def read_eeprom(self):
       return self._prefdl
+
+   def set_eeprom(self, e, cmd_args):
+      raise NotImplementedError
+
+   def decode_eeprom(self, e):
+      return e.show()
+
+   def is_checksum_valid(self, e):
+      return (e.isCrcValid(), e.getCrc())
+
+   def serial_number_str(self, e):
+      return e.getField('SerialNumber')
+
+   def base_mac_addr(self, e):
+      return e.getField('MAC')
+
+   def get_eeprom_dict(self, e):
+      return {'Data': e.toDict()}
+
+   def modelstr(self, e):
+      return e.getField('SKU')
+
