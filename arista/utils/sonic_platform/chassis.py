@@ -34,8 +34,10 @@ class Chassis(ChassisBase):
    REBOOT_CAUSE_DICT = {
       'unknown':ChassisBase.REBOOT_CAUSE_NON_HARDWARE,
       'powerloss': ChassisBase.REBOOT_CAUSE_POWER_LOSS,
+      'powerloss2': ChassisBase.REBOOT_CAUSE_POWER_LOSS,
       'overtemp': ChassisBase.REBOOT_CAUSE_THERMAL_OVERLOAD_OTHER,
       'reboot': ChassisBase.REBOOT_CAUSE_NON_HARDWARE,
+      'reboot2': ChassisBase.REBOOT_CAUSE_NON_HARDWARE,
       'watchdog': ChassisBase.REBOOT_CAUSE_WATCHDOG,
       'under-voltage': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
       'over-voltage': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,

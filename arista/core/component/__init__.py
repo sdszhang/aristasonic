@@ -11,6 +11,7 @@ class Priority(object):
    THERMAL = 0
    COOLING = 0
    BACKGROUND = 1
+   DPM = 1
    POWER = 1
    LED = 1
 

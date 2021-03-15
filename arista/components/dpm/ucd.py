@@ -7,6 +7,7 @@ from ...core.cause import (
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
+from ...core.component import Priority
 from ...core.utils import inSimulation
 from ...core.log import getLogger
 
@@ -48,6 +49,7 @@ class UcdReloadCauseProvider(ReloadCauseProviderHelper):
 class Ucd(PmbusComponent):
 
    DRIVER = UcdUserDriver
+   PRIORITY = Priority.DPM
 
    class Registers(PmbusComponent.Registers):
       RUN_TIME_CLOCK = 0xd7

@@ -85,6 +85,15 @@ class I2cDevDriver(UserDriver):
    def read_block_data_str(self, reg):
       return ''.join(chr(c) for c in self.read_block_data(reg))
 
+   def _isCharPrintable(self, c):
+      return 0x20 <= c <= 0x7e
+
+   def _bytesToStr(self, data):
+      return ''.join(chr(c) for c in data if self._isCharPrintable(c))
+
+   def read_bytes_str(self, cmd, datalen):
+      return self._bytesToStr(self.read_bytes(cmd, datalen)[1:])
+
    def read_bytes(self, cmd, datalen):
       return self.msg.read_bytes(self.addr.address, cmd, datalen)
 
