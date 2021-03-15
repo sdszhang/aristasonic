@@ -44,7 +44,7 @@ class Sfp(SfpBase):
       return True
 
    def get_status(self):
-      return self.get_presence() and self.get_transceiver_bulk_status()
+      return self.get_presence() and bool(self.get_transceiver_bulk_status())
 
    def get_lpmode(self):
       try:
