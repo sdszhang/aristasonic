@@ -177,6 +177,11 @@ class FanSysfsImpl(Fan):
       self.lastSpeed = speed
       return self.pwm.write(speed)
 
+   def getRpm(self):
+      if self.input.exists():
+         return self.input.read()
+      return None
+
    def getPresence(self):
       if self.present.exists():
          return self.present.read()

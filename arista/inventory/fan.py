@@ -15,6 +15,10 @@ class Fan(InventoryInterface):
    def getModel(self):
       raise NotImplementedError
 
+   @diagmethod('rpm')
+   def getRpm(self):
+      raise NotImplementedError
+
    @diagmethod('speed', io=True)
    def getSpeed(self):
       raise NotImplementedError

@@ -56,7 +56,8 @@ class ShowEnvironment(Renderer):
          ('Name', 'name', 10),
          ('Model', 'model', 15),
          ('Status', 'status', 6),
-         ('Speed', 'speed', 4),
+         ('Speed', 'speed', 5),
+         ('Rpm', 'rpm', 5)
       ]
       psuHdr = [
          ('Name', 'name', 10),
