@@ -567,19 +567,6 @@ class Scd(PciComponent):
                     for _, xcvrId in self.osfps]
       return resets
 
-   def resetOut(self):
-      super(Scd, self).resetOut()
-      for xcvrSlot in self.inventory.getXcvrSlots().values():
-         try:
-            xcvrSlot.setModuleSelect(True)
-         except NotImplementedError:
-            pass
-         xcvrSlot.setTxDisable(False)
-         try:
-            xcvrSlot.setLowPowerMode(False)
-         except NotImplementedError:
-            pass
-
    def uioMapInit(self):
       for uio in os.listdir(SYS_UIO_PATH):
          with open(os.path.join(SYS_UIO_PATH, uio, 'name')) as uioName:

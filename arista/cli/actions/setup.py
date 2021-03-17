@@ -28,6 +28,18 @@ def forkForLateInitialization(platform):
          platform.waitForIt()
          os._exit(0) # pylint: disable=protected-access
 
+def setupXcvrs(platform):
+   for xcvrSlot in platform.getInventory().getXcvrSlots().values():
+      try:
+         xcvrSlot.setModuleSelect(True)
+      except NotImplementedError:
+         pass
+      xcvrSlot.setTxDisable(False)
+      try:
+         xcvrSlot.setLowPowerMode(False)
+      except NotImplementedError:
+         pass
+
 @registerAction(setupParser)
 def doSetup(ctx, args):
    platform = ctx.platform
@@ -48,6 +60,8 @@ def doSetup(ctx, args):
       if args.reset:
          logging.debug('taking devices out of reset')
          platform.resetOut()
+         logging.debug('initializing xcvrs')
+         setupXcvrs(platform)
 
       if args.late or not args.early:
          if args.background:

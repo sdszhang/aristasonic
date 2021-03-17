@@ -24,7 +24,7 @@ class Config(object):
          cls.instance_.lock_file = '/var/lock/arista.lock'
          cls.instance_.linecard_standby_only = True
          cls.instance_.linecard_cpu_enable = False
-         cls.instance_.use_metainventory = False
+         cls.instance_.use_metainventory = True
          cls.instance_.write_hw_thresholds = True
          cls.instance_.report_hw_thresholds = False
          cls.instance_.api_use_sfpoptoe = False
