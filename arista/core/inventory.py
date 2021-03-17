@@ -12,9 +12,6 @@ class Inventory(object):
       self.osfpRange = []
       self.allXcvrsRange = []
 
-      self.portStart = None
-      self.portEnd = None
-
       self.leds = {}
       self.ledGroups = {}
 
@@ -66,8 +63,9 @@ class Inventory(object):
 
       self.allXcvrsRange = sorted(self.sfpRange + self.qsfpRange +
                                   self.osfpRange)
-      self.portStart = self.allXcvrsRange[0]
-      self.portEnd = self.allXcvrsRange[-1]
+
+   def getXcvrsRange(self):
+      return self.allXcvrsRange
 
    def getXcvrs(self):
       xcvrs = {}
@@ -328,8 +326,6 @@ class Inventory(object):
          "sfp": self.sfpRange,
          "qsfp": self.qsfpRange,
          "osfp": self.osfpRange,
-         "port_start": self.portStart,
-         "port_end": self.portEnd,
          # objects
          "leds": [l.genDiag(ctx) for l in self.leds.values()],
          # TODO led groups

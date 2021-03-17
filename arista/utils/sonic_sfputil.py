@@ -15,11 +15,11 @@ def getSfpUtil():
     class SfpUtilCommon(SfpUtilBase):
         @property
         def port_start(self):
-            return inventory.portStart
+            return inventory.getXcvrsRange()[0]
 
         @property
         def port_end(self):
-            return inventory.portEnd
+            return inventory.getXcvrsRange()[-1]
 
         @property
         def osfp_ports(self):

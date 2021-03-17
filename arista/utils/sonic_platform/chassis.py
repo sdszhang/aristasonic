@@ -72,11 +72,14 @@ class Chassis(ChassisBase):
             self._fan_drawer_list.append(FanDrawerLegacy(fan))
       for slot in self._inventory.getPsuSlots():
          self._psu_list.append(Psu(slot))
+
       self._sfp_list = []
-      if self._inventory and self._inventory.portEnd:
-         self._sfp_list = [None] * (self._inventory.portEnd)
+      xcvrsRange = self._inventory.getXcvrsRange()
+      if xcvrsRange:
+         self._sfp_list = [None] * len(xcvrsRange)
          for index, slot in self._inventory.getXcvrSlots().items():
             self._sfp_list[index - 1] = Sfp(index, slot)
+
       for thermal in self._inventory.getTemps():
          self._thermal_list.append(Thermal(thermal))
 
