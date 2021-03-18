@@ -73,3 +73,6 @@ class Psu(PsuBase):
 
    def get_interrupt_file(self):
       return None
+
+   def get_maximum_supplied_power(self):
+      return float(self._slot.getPsu().getCapacity())

@@ -31,6 +31,7 @@ class DeltaPsu(PsuModel):
 
 
 class DPS495CB(DeltaPsu):
+   CAPACITY = 500
    IDENTIFIERS = [
       PsuIdent('DPS-495CB A',   'PWR-500AC-F', Airflow.FORWARD),
       PsuIdent('DPS-495CB-1 A', 'PWR-500AC-R', Airflow.REVERSE),
@@ -39,6 +40,7 @@ class DPS495CB(DeltaPsu):
    ]
 
 class DPS500AB(DeltaPsu):
+   CAPACITY = 500
    IDENTIFIERS = [
       PsuIdent('DPS-500AB-40 A', 'PWR-511-AC-RED', Airflow.FORWARD),
       PsuIdent('DPS-500AB-41 A', 'PWR-511-DC-RED', Airflow.FORWARD),
@@ -47,6 +49,7 @@ class DPS500AB(DeltaPsu):
    ]
 
 class DPS750AB(DeltaPsu):
+   CAPACITY = 750
    IDENTIFIERS = [
       PsuIdent('DPS-750AB-24 A', 'PWR-745AC-F', Airflow.FORWARD),
       PsuIdent('DPS-750AB-24 B', 'PWR-745AC-F', Airflow.FORWARD),
@@ -57,12 +60,14 @@ class DPS750AB(DeltaPsu):
    ]
 
 class DPS1500AB(DeltaPsu):
+   CAPACITY = 1500
    IDENTIFIERS = [
       PsuIdent('DPS-1500AB-7 A', 'PWR-1511-AC-RED', Airflow.FORWARD),
       PsuIdent('DPS-1500AB-9 A', 'PWR-1511-DC-RED', Airflow.FORWARD),
    ]
 
 class DPS1600AB(DeltaPsu):
+   CAPACITY = 1600
    IDENTIFIERS = [
       PsuIdent('DPS-1600AB-14 A', 'PWR-1611-DC-RED', Airflow.FORWARD),
    ]
@@ -85,6 +90,7 @@ class DPS1600AB(DeltaPsu):
    )
 
 class DPS1600CB(DPS1600AB):
+   CAPACITY = 1600
    IDENTIFIERS = [
       PsuIdent('DPS-1600CB P', 'PWR-1611-AC-RED', Airflow.FORWARD),
       PsuIdent('DPS-1600CB N', 'PWR-1600AC-F', Airflow.FORWARD),
@@ -92,6 +98,7 @@ class DPS1600CB(DPS1600AB):
 
 class DPS1900AB(DeltaPsu):
    DRIVER = 'dps1900'
+   CAPACITY = 1900
    IDENTIFIERS = [
       PsuIdent('DPS-1900AB A',   'PWR-1900AC-F', Airflow.FORWARD),
       PsuIdent('DPS-1900AB-1 A', 'PWR-1900AC-R', Airflow.REVERSE),
@@ -99,12 +106,14 @@ class DPS1900AB(DeltaPsu):
 
 class ECD16020102(DeltaPsu):
    DRIVER = 'dps800'
+   CAPACITY = 3000
    IDENTIFIERS = [
       PsuIdent('ECD16020102', 'PWR-3001-AC-RED', Airflow.FORWARD),
    ]
 
 class ECD26020037(DeltaPsu):
    DRIVER = 'dps800'
+   CAPACITY = 3000
    IDENTIFIERS = [
       PsuIdent('ECD26020037', 'PWR-3001-DC-RED', Airflow.FORWARD),
    ]
@@ -112,6 +121,17 @@ class ECD26020037(DeltaPsu):
 class ECD16020097(DeltaPsu):
    PMBUS_ADDR = 0x40
    DRIVER = 'dps800'
+   CAPACITY = 3000
+   DUAL_INPUT = True
    IDENTIFIERS = [
       PsuIdent('ECD16020097', 'PWR-D1-3041-AC-BLUE', Airflow.REVERSE),
+   ]
+
+class ECD16020035(DeltaPsu):
+   PMBUS_ADDR = 0x40
+   DRIVER = 'dps800'
+   CAPACITY = 3000
+   DUAL_INPUT = True
+   IDENTIFIERS = [
+      PsuIdent('ECD16020035', 'PWR-D2-3041-DC-BLUE', Airflow.REVERSE),
    ]

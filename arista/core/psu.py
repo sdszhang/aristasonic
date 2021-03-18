@@ -32,6 +32,9 @@ class PsuImpl(PsuInv):
    def getStatus(self):
       return self.slot.getStatus()
 
+   def getCapacity(self):
+      return self.model.CAPACITY
+
 class PsuSlotImpl(PsuSlotInv):
    def __init__(self, slot):
       self.slot = slot
@@ -227,6 +230,9 @@ class PsuModel(object):
    IDENTIFIERS = []
    IPMI_ADDR = 0x50
    PMBUS_ADDR = None
+
+   DUAL_INPUT = False
+   CAPACITY = 0 # in Watts
 
    PMBUS_CLS = None
    DRIVER = None

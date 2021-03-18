@@ -29,11 +29,16 @@ class EmersonPsu(PsuModel):
    )
 
 class DS750PED(EmersonPsu):
+   CAPACITY = 750
    IDENTIFIERS = [
-      PsuIdent('DS750PED-3', 'PWR-745AC-F', Airflow.FORWARD),
+      PsuIdent('DS750PED-3',     'PWR-745AC-F', Airflow.FORWARD),
+      PsuIdent('DS750PED-3-001', 'PWR-745AC-R', Airflow.REVERSE),
+      PsuIdent('DS750PED-3-402', 'PWR-745AC-R', Airflow.REVERSE),
+      PsuIdent('DS750PED-3-403', 'PWR-745AC-F', Airflow.FORWARD),
    ]
 
 class CSU500DP3(EmersonPsu):
+   CAPACITY = 500
    IDENTIFIERS = [
       PsuIdent('CSU500DP-3', 'PWR-511-AC-RED', Airflow.FORWARD),
       PsuIdent('CSU500DP-3-001', 'PWR-511-AC-BLUE', Airflow.REVERSE),

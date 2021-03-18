@@ -30,6 +30,7 @@ class LiteonPsu(PsuModel):
 
 class PS2102(LiteonPsu):
    DRIVER = 'dps800'
+   CAPACITY = 1000
    IDENTIFIERS = [
       PsuIdent('PS-2102-1A ', 'PWR-1011-AC-RED',  Airflow.FORWARD),
       PsuIdent('DD-2102-1A ', 'PWR-1011-DC-RED',  Airflow.FORWARD),

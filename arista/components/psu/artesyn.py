@@ -13,6 +13,7 @@ class ArtesynPsu(PsuModel):
    PMBUS_ADDR = 0x58
 
 class DS495SPE(ArtesynPsu):
+   CAPACITY = 500
    IDENTIFIERS = [
       PsuIdent('DS495SPE-3-401 ', 'PWR-500AC-F', Airflow.FORWARD),
       PsuIdent('DS495SPE-3-402 ', 'PWR-500AC-R', Airflow.REVERSE),
@@ -37,6 +38,7 @@ class DS495SPE(ArtesynPsu):
    )
 
 class DS460(ArtesynPsu):
+   CAPACITY = 460
    IDENTIFIERS = [
       # NOTE: that first entry is a workaround for insufficient information exposed
       # through the pmbus MFR_*. Proper identification would require IPMI eeprom
@@ -62,6 +64,7 @@ class DS460(ArtesynPsu):
    )
 
 class CSU500DP(DS495SPE):
+   CAPACITY = 500
    IDENTIFIERS = [
       PsuIdent('CSU500DP-3    ', 'PWR-511-AC-RED', Airflow.FORWARD),
       PsuIdent('CSU500DP-3-001', 'PWR-511-AC-BLUE', Airflow.REVERSE),

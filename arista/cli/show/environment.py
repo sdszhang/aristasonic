@@ -61,8 +61,9 @@ class ShowEnvironment(Renderer):
       ]
       psuHdr = [
          ('Name', 'name', 10),
-         ('Model', 'psu.model', 15),
+         ('Model', 'psu.model', 19),
          ('Serial', 'psu.serial', 15),
+         ('Max', 'psu.capacity', 5),
          ('Status', 'status', 6),
       ]
 

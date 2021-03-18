@@ -44,3 +44,7 @@ class Psu(InventoryInterface):
    @diagmethod('status', io=True)
    def getStatus(self):
       raise NotImplementedError
+
+   @diagmethod('capacity')
+   def getCapacity(self):
+      raise NotImplementedError

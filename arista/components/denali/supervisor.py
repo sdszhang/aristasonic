@@ -8,7 +8,7 @@ from ...descs.gpio import GpioDesc
 from ..eeprom import At24C64
 from ..microsemi import Microsemi
 from ..pca9541 import Pca9541
-from ..psu.delta import ECD16020097
+from ..psu.delta import ECD16020097, ECD16020035
 from ..scd import Scd
 
 from .card import (
@@ -154,6 +154,7 @@ class DenaliSupervisor(Supervisor):
                self.scd.inventory.getGpio('%s_ac_b_ok' % name),
             ],
             psus=[
+               ECD16020035,
                ECD16020097,
             ],
          )
