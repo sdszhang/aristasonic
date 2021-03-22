@@ -18,6 +18,7 @@ from ..core import utils
 from ..core.config import Config
 from ..core.backtrace import loadBacktraceHook
 from ..core.log import setupLogging, getLogger, LoggerError
+from ..core.version import getVersionInfo
 
 logging = getLogger(__name__)
 
@@ -77,6 +78,8 @@ def main(args):
       setupSimulation()
 
    logging.debug(args)
+   logging.debug('Library info: %s',
+                 ' '.join('%s=%s' % x for x in getVersionInfo().items()))
 
    try:
       root.runAction(CliContext(), args)

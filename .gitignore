@@ -36,3 +36,4 @@ __pycache__/
 /debian/python-sonic-platform-arista/
 /debian/python3-sonic-platform-arista/
 /debian/sonic-platform-arista/
+/arista/__version__.py
