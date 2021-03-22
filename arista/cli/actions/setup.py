@@ -12,6 +12,11 @@ from ...core.log import getLogger
 
 logging = getLogger(__name__)
 
+def reportPlatformInfo(platform):
+   keys = ['SKU', 'SID', 'SerialNumber']
+   fields = ['%s=%s' % (k, v) for k, v in platform.getEeprom().items() if k in keys]
+   logging.debug('Platform info: %s', ' '.join(fields))
+
 def forkForLateInitialization(platform):
    try:
       pid = os.fork()
@@ -29,6 +34,8 @@ def doSetup(ctx, args):
 
    if args.debug:
       utils.debug = True
+
+   reportPlatformInfo(platform)
 
    with utils.FileLock(Config().lock_file):
       if args.early or not args.late:
