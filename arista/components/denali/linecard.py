@@ -143,7 +143,7 @@ class DenaliLinecard(DenaliLinecardBase):
          self.plx.vsPortVec(1, self.PLX_LCPU_MODE[1])
 
    def setupPlx(self):
-      self.enablePlxDownstreamHotplug()
+      super(DenaliLinecard, self).setupPlx()
       self.setupPlxLcpuMode()
 
 class GpioRegisterMap(RegisterMap):
