@@ -88,7 +88,12 @@ class DenaliLinecard(DenaliLinecardBase):
          if not sramContent.write(addr, byte):
             logging.error('%s: Could not write further content to the SRAM', self)
             break
-      self.syscpld.sram(sramContent)
+      try:
+         self.syscpld.sram(sramContent)
+      except IOError:
+         logging.error('Failed to populate linecard SRAM content FPGA image likely '
+                       'outdated')
+         raise
 
    def provisionIs(self, provisionStatus):
       config = ProvisionConfig(self.slot.slotId)
