@@ -8,7 +8,7 @@ from ...core.platform import getSysEeprom
 from ...core.provision import ProvisionConfig, ProvisionMode
 from ...core.register import Register, RegisterMap, RegBitField, SetClearRegister
 from ...core.types import PciAddr
-from ...core.utils import inSimulation
+from ...core.utils import getCmdlineDict
 
 from ...drivers.pca9555 import GpioRegister
 from ...drivers.scd.register import (
@@ -56,10 +56,10 @@ class DenaliLinecard(DenaliLinecardBase):
 
    def createCpu(self):
       assert self.CPU_CLS
-      self.slot = DenaliLinecardSlot(self, 0, PciAddr(bus=0x04), None, card=self)
+      slotId = int(getCmdlineDict().get('slot_id', 0))
+      self.slot = DenaliLinecardSlot(self, slotId, PciAddr(bus=0x04), None,
+                                     card=self)
       self.cpu = self.newComponent(self.CPU_CLS, self.slot)
-      if not inSimulation():
-         self.slot.slotId = self.cpu.syscpld.regs.slotId()
       self.eeprom = getSysEeprom()
 
    def powerStandbyDomainIs(self, on):
