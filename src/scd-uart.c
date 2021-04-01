@@ -187,6 +187,19 @@ static void scd_uart_transmit_chars(struct uart_port *port)
       scd_uart_stop_tx(port);
 }
 
+static void scd_uart_flush_rx_queue(struct uart_port *port)
+{
+   struct scd_uart_port *sp = to_scd_uart_port(port);
+   union uart_rx_sm_res res = scd_read_rx_sm_res(sp);
+
+   uart_dbg(port, "flushing %u chars from rx queue\n", res.nrs);
+
+   while (res.nrs != 0) {
+      scd_read_rx_sm_res(sp);
+      res.nrs--;
+   }
+}
+
 static void scd_uart_receive_chars(struct uart_port *port)
 {
    struct tty_port *tp = &port->state->port;
@@ -247,6 +260,8 @@ static int scd_uart_startup(struct uart_port *port)
       uart_warn(port, "uart unsupported on this platform\n");
       return -ENOPROTOOPT;
    }
+
+   scd_uart_flush_rx_queue(&sp->port);
 
    hrtimer_init(&sp->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
    hrtimer_start(&sp->timer, sp->poll_interval, HRTIMER_MODE_REL);
