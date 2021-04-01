@@ -26,14 +26,12 @@ class Psu(PsuBase):
       return self._slot.getName()
 
    def get_model(self):
-      if not self.get_presence():
-         return "N/A"
-      return self._slot.getPsu().getModel()
+      psu = self._slot.getPsu()
+      return psu.getModel() if psu else "N/A"
 
    def get_serial(self):
-      if not self.get_presence():
-         return "N/A"
-      return self._slot.getPsu().getSerial()
+      psu = self._slot.getPsu()
+      return psu.getSerial() if psu else "N/A"
 
    def get_position_in_parent(self):
       return self._slot.getId()
@@ -75,4 +73,5 @@ class Psu(PsuBase):
       return None
 
    def get_maximum_supplied_power(self):
-      return float(self._slot.getPsu().getCapacity())
+      psu = self._slot.getPsu()
+      return float(psu.getCapacity()) if psu else 0.
