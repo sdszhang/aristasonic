@@ -45,6 +45,7 @@ struct scd_uart_port {
    u32 id;
    speed_t baud;
    int no_rx_since;
+   bool tx_started;
 };
 
 #define PORT_SCD 42 // Value available in include/uapi/linux/serial_core.h

@@ -146,7 +146,9 @@ static unsigned int scd_uart_get_mctrl(struct uart_port *port)
 
 static void scd_uart_stop_tx(struct uart_port *port)
 {
+   struct scd_uart_port *sp = to_scd_uart_port(port);
    uart_dbg(port, "stop tx\n");
+   sp->tx_started = false;
 }
 
 static void scd_uart_transmit_chars(struct uart_port *port)
@@ -220,7 +222,11 @@ static void scd_uart_receive_chars(struct uart_port *port)
 
 static void scd_uart_start_tx(struct uart_port *port)
 {
+   struct scd_uart_port *sp = to_scd_uart_port(port);
+
    uart_dbg(port, "start tx\n");
+   sp->tx_started = true;
+
    scd_uart_transmit_chars(port);
 }
 
@@ -245,6 +251,11 @@ static enum hrtimer_restart scd_uart_port_timer_callback(struct hrtimer *timer)
 {
    struct scd_uart_port *sp = container_of(timer, struct scd_uart_port, timer);
    uart_dbg(&sp->port, "timer callback interval=%lld\n", sp->poll_interval);
+   if (sp->tx_started) {
+      spin_lock(&sp->port.lock);
+      scd_uart_transmit_chars(&sp->port);
+      spin_unlock(&sp->port.lock);
+   }
    scd_uart_receive_chars(&sp->port);
    hrtimer_forward(timer, timer->base->get_time(), scd_uart_poll_interval(sp));
    return HRTIMER_RESTART;
@@ -436,6 +447,7 @@ int scd_uart_add(struct scd_context *ctx, u32 addr, u32 id)
    port->id = id;
    port->baud = 9600;
    port->no_rx_since = 1;
+   port->tx_started = false;
    scd_uart_poll_interval(port);
 
    spin_lock_init(&port->port.lock);
