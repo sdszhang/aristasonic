@@ -135,6 +135,56 @@ class WolverineO(Wolverine):
    SKU = ['7800R3A-36P-LC']
 
 @registerPlatform()
+class WolverineOBk(Wolverine):
+   SID = ['WolverineOBk']
+   SKU = ['7800R3AK-36P-LC']
+
+@registerPlatform()
+class WolverineOMs(Wolverine):
+   SID = ['WolverineOMs']
+   SKU = ['7800R3A-36PM-LC']
+
+@registerPlatform()
+class WolverineOBkMs(Wolverine):
+   SID = ['WolverineOBkMs']
+   SKU = ['7800R3AK-36PM-LC']
+
+@registerPlatform()
 class WolverineQ(Wolverine):
    SID = ['WolverineQ']
    SKU = ['7800R3A-36D-LC']
+
+@registerPlatform()
+class WolverineQBk(Wolverine):
+   SID = ['WolverineQBk']
+   SKU = ['7800R3AK-36D-LC']
+
+@registerPlatform()
+class WolverineQMs(Wolverine):
+   SID = ['WolverineQMs']
+   SKU = ['7800R3A-36DM-LC']
+
+@registerPlatform()
+class WolverineQBkMs(Wolverine):
+   SID = ['WolverineQBkMs']
+   SKU = ['7800R3AK-36DM-LC']
+
+@registerPlatform()
+class WolverineQCpu(Wolverine):
+   SID = ['WolverineQCpu']
+   SKU = ['7800R3A-36D2-LC']
+
+@registerPlatform()
+class WolverineQCpuBk(Wolverine):
+   SID = ['WolverineQCpuBk']
+   SKU = ['7800R3AK-36D2-LC']
+
+@registerPlatform()
+class WolverineQCpuMs(Wolverine):
+   SID = ['WolverineQCpuMs']
+   SKU = ['7800R3A-36DM2-LC']
+
+@registerPlatform()
+class WolverineQCpuBkMs(Wolverine):
+   SID = ['WolverineQCpuBkMs']
+   SKU = ['7800R3AK-36DM2-LC']

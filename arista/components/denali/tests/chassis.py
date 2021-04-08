@@ -8,7 +8,11 @@ from ....platforms.fabric.eldridge import Eldridge
 from ....platforms.fabric.dragonfly import Dragonfly
 from ....platforms.linecard.clearwater import Clearwater, ClearwaterMs
 from ....platforms.linecard.clearwater2 import Clearwater2, Clearwater2Ms
-from ....platforms.linecard.wolverine import WolverineO, WolverineQ
+from ....platforms.linecard.wolverine import (
+   WolverineO,
+   WolverineQCpu,
+   WolverineQCpuBkMs,
+)
 from ....platforms.supervisor.otterlake import OtterLake
 
 from ....tests.testing import unittest
@@ -66,7 +70,8 @@ class DenaliChassisTest(unittest.TestCase):
          1: Clearwater2,
          2: Clearwater2Ms,
          3: WolverineO,
-         4: WolverineQ,
+         4: WolverineQCpu,
+         5: WolverineQCpuBkMs,
       })
 
 if __name__ == '__main__':
