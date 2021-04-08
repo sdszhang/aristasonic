@@ -10,7 +10,7 @@ class Position(object):
 
 class SensorDesc(HwDesc):
    def __init__(self, diode, name, position, target, overheat, critical,
-                low=-10.0, lcritical=-20.0, **kwargs):
+                low=0.0, lcritical=-5.0, **kwargs):
       super(SensorDesc, self).__init__(**kwargs)
       self.diode = diode
       self.fmt = name

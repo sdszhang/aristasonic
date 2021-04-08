@@ -256,6 +256,7 @@ class TempSysfsImpl(Temp):
       self.tempId = desc.diode + 1
       self.driver = driver
       self.desc = desc
+      self.reportHwThresh = False
       self.__dict__.update(**kwargs)
       self.input = SysfsEntryFloat(self, 'temp%d_input' % self.tempId)
       self.max = SysfsEntryFloat(self, 'temp%d_max' % self.tempId)
@@ -289,7 +290,7 @@ class TempSysfsImpl(Temp):
       return self.input.read()
 
    def getLowThreshold(self):
-      if self.min.exists():
+      if self.reportHwThresh and self.min.exists():
          return self.min.read()
       return self.desc.low
 
@@ -300,7 +301,7 @@ class TempSysfsImpl(Temp):
       return False
 
    def getHighThreshold(self):
-      if self.max.exists():
+      if self.reportHwThresh and self.max.exists():
          return self.max.read()
       return self.desc.overheat
 
@@ -311,12 +312,12 @@ class TempSysfsImpl(Temp):
       return False
 
    def getHighCriticalThreshold(self):
-      if self.crit.exists():
+      if self.reportHwThresh and self.crit.exists():
          return self.crit.read()
       return self.desc.critical
 
    def getLowCriticalThreshold(self):
-      if self.lcrit.exists():
+      if self.reportHwThresh and self.lcrit.exists():
          return self.lcrit.read()
       return self.desc.lcritical
 
