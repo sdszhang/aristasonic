@@ -155,6 +155,9 @@ class MockPsuSlot(PsuSlot):
       self.led = led
       self.psu = psu
 
+   def getId(self):
+      return self.slotId
+
    def getName(self):
       return self.name
 
@@ -557,6 +560,9 @@ class MockTemp(Temp):
    def getLowCriticalThreshold(self):
       return self.desc.lcritical
 
+   def setLowCriticalThreshold(self, value):
+      self.desc.lcritical = value
+
    def getHighThreshold(self):
       return self.desc.overheat
 
@@ -565,6 +571,12 @@ class MockTemp(Temp):
 
    def getHighCriticalThreshold(self):
       return self.desc.critical
+
+   def setHighCriticalThreshold(self, value):
+      self.desc.critical = value
+
+   def refreshHardwareThresholds(self):
+      pass
 
    def __eq__(self, value):
       return isinstance(value, MockTemp) and self.diode == value.diode

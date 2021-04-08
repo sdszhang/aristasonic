@@ -48,8 +48,11 @@ class SysfsEntry(object):
    def _write(self, value):
       if utils.inSimulation():
          return True
-      with open(self.entryPath, 'w') as f:
-         f.write(value)
+      try:
+         with open(self.entryPath, 'w') as f:
+            f.write(value)
+      except Exception: # pylint: disable=broad-except
+         return False
       return True
 
    def read(self):
@@ -316,10 +319,28 @@ class TempSysfsImpl(Temp):
          return self.crit.read()
       return self.desc.critical
 
+   def setHighCriticalThreshold(self, value):
+      if self.crit.exists():
+         self.crit.write(value)
+         return True
+      return False
+
    def getLowCriticalThreshold(self):
       if self.reportHwThresh and self.lcrit.exists():
          return self.lcrit.read()
       return self.desc.lcritical
+
+   def setLowCriticalThreshold(self, value):
+      if self.lcrit.exists():
+         self.lcrit.write(value)
+         return True
+      return False
+
+   def refreshHardwareThresholds(self):
+      self.setLowThreshold(self.desc.low)
+      self.setLowCriticalThreshold(self.desc.lcritical)
+      self.setHighThreshold(self.desc.overheat)
+      self.setHighCriticalThreshold(self.desc.critical)
 
 class ResetSysfsImpl(Reset):
    def __init__(self, driver, desc, **kwargs):

@@ -2,6 +2,10 @@
 from . import Component as LegacyComponent
 from . import Priority
 
+from ..log import getLogger
+
+logging = getLogger(__name__)
+
 class Component(LegacyComponent):
 
    DRIVER = None
@@ -27,6 +31,13 @@ class Component(LegacyComponent):
       )
       assert len(self.drivers) == 1, "New style components can only have one driver"
       self.driver = next(iter(self.drivers.values()))
+      # FIXME: This is required until metainventory is in place
+      #        we need to refresh the hardware thresholds of the temp sensors once
+      #        the component is initialized, however this can only work on the temp
+      #        sensors of the current components. Until metainventory is enabled, we
+      #        need to store a local collection per component that stores only its
+      #        own temp sensors
+      self._tempSensorsWorkaround = []
       self.addObjects(**kwargs)
 
    def addObjects(self, fans=None, leds=None, sensors=None, **kwargs):
@@ -56,7 +67,9 @@ class Component(LegacyComponent):
       return [self.addLed(desc, **kwargs) for desc in descs]
 
    def addTempSensor(self, desc, **kwargs):
-      return self.inventory.addTemp(self.driver.getTempSensor(desc, **kwargs))
+      ts = self.inventory.addTemp(self.driver.getTempSensor(desc, **kwargs))
+      self._tempSensorsWorkaround.append(ts)
+      return ts
 
    def addTempSensors(self, descs, **kwargs):
       return [self.addTempSensor(desc, **kwargs) for desc in descs]
@@ -72,3 +85,12 @@ class Component(LegacyComponent):
 
    def addGpios(self, descs, **kwargs):
       return [self.addGpio(desc, **kwargs) for desc in descs]
+
+   def finish(self, filters=Priority.defaultFilter):
+      super(Component, self).finish(filters=filters)
+      for ts in self._tempSensorsWorkaround:
+         try:
+            ts.refreshHardwareThresholds()
+         except Exception: # pylint: disable=broad-except
+            logging.exception("%s: failed to refresh hardware thresholds for %s" % (
+                              self, ts))

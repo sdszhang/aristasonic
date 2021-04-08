@@ -45,5 +45,14 @@ class Temp(InventoryInterface):
    def setLowThreshold(self, value):
       raise NotImplementedError
 
+   def setLowCriticalThreshold(self, value):
+      raise NotImplementedError
+
    def setHighThreshold(self, value):
+      raise NotImplementedError
+
+   def setHighCriticalThreshold(self, value):
+      raise NotImplementedError
+
+   def refreshHardwareThresholds(self):
       raise NotImplementedError
