@@ -155,17 +155,17 @@ class MockPlatformTest(unittest.TestCase):
 
    def _testSfp(self, sfp):
       self.assertIsInstance(sfp, Sfp)
-      self.assertEquals(sfp.getType(), "sfp")
+      self.assertEqual(sfp.getType(), "sfp")
       self._testXcvr(sfp)
 
    def _testQsfp(self, qsfp):
       self.assertIsInstance(qsfp, Qsfp)
-      self.assertEquals(qsfp.getType(), "qsfp")
+      self.assertEqual(qsfp.getType(), "qsfp")
       self._testXcvr(qsfp)
 
    def _testOsfp(self, osfp):
       self.assertIsInstance(osfp, Osfp)
-      self.assertEquals(osfp.getType(), "osfp")
+      self.assertEqual(osfp.getType(), "osfp")
       self._testXcvr(osfp)
 
    def _testXcvrSlot(self, slot):
