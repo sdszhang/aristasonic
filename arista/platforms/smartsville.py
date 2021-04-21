@@ -129,7 +129,6 @@ class Smartsville(FixedSystem):
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - self.qsfpRange[0],
-         isHwLpModeAvail=False,
          isHwModSelAvail=False
       )
 
