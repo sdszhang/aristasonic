@@ -6,6 +6,7 @@ import time
 
 try:
    from sonic_platform_base.sfp_base import SfpBase
+   from arista.utils.sonic_platform.thermal import SfpThermal
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
 
@@ -27,6 +28,7 @@ class Sfp(SfpBase):
       self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
                                             sfp.getI2cAddr().address)
       self.sfp_type = sfp.getType().upper()
+      self._thermal_list.append(SfpThermal(self))
 
    def get_id(self):
       return self._index
@@ -85,6 +87,10 @@ class Sfp(SfpBase):
          return False
       return True
 
+   def get_temperature(self):
+      bulkStatus = self.get_transceiver_bulk_status()
+      return bulkStatus["temperature"] if bulkStatus else None
+
    def clear_interrupt(self):
       intr = self._slot.getInterruptLine()
       if not intr:
@@ -109,11 +115,29 @@ class Sfp(SfpBase):
    def get_transceiver_info(self):
       return self._get_sfputil().get_transceiver_info_dict(self._index)
 
+   def _format_temps(self, val):
+      # XXX: hack to format temps for supporting sfp thermals. Won't be needed
+      # after sfp refactor is complete.
+      if val.endswith('C'):
+         temp = val.rstrip('C')
+         numDecimals = len(temp.split('.')[1])
+         if numDecimals > 3:
+            temp = "{:.3f}".format(float(temp))
+         return float(temp)
+      return val
+
    def get_transceiver_bulk_status(self):
-      return self._get_sfputil().get_transceiver_dom_info_dict(self._index)
+      bulkStatus = self._get_sfputil().get_transceiver_dom_info_dict(self._index)
+      if isinstance(bulkStatus, dict):
+         bulkStatus = {k: self._format_temps(v) for k, v in bulkStatus.items()}
+      return bulkStatus
 
    def get_transceiver_threshold_info(self):
-      return self._get_sfputil().get_transceiver_dom_threshold_info_dict(self._index)
+      threshInfo = self._get_sfputil().get_transceiver_dom_threshold_info_dict(
+                    self._index)
+      if isinstance(threshInfo, dict):
+         threshInfo = {k: self._format_temps(v) for k, v in threshInfo.items()}
+      return threshInfo
 
    def read_eeprom(self, offset, num_bytes):
       try:
