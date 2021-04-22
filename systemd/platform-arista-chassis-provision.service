@@ -1,6 +1,7 @@
 [Unit]
 Description=Service to provision linecards
 Before=platform-arista-linecard.service
+After=platform-arista-chassis-network.service
 PartOf=platform-arista.target
 ConditionKernelCommandLine=Aboot
 ConditionKernelCommandLine=sonic.mode=supervisor
