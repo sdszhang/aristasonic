@@ -25,6 +25,8 @@ class Config(object):
          cls.instance_.linecard_standby_only = True
          cls.instance_.linecard_cpu_enable = False
          cls.instance_.use_metainventory = False
+         cls.instance_.write_hw_thresholds = True
+         cls.instance_.report_hw_thresholds = False
          cls.instance_._parseConfig()
          cls.instance_._parseCmdline()
       return cls.instance_

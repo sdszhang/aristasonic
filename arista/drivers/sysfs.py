@@ -2,8 +2,9 @@ from __future__ import division, print_function, with_statement
 
 import os
 
-from ..core.driver import Driver
 from ..core import utils
+from ..core.config import Config
+from ..core.driver import Driver
 from ..core.log import getLogger
 
 from ..descs.led import LedColor
@@ -259,7 +260,7 @@ class TempSysfsImpl(Temp):
       self.tempId = desc.diode + 1
       self.driver = driver
       self.desc = desc
-      self.reportHwThresh = False
+      self.reportHwThresh = Config().report_hw_thresholds
       self.__dict__.update(**kwargs)
       self.input = SysfsEntryFloat(self, 'temp%d_input' % self.tempId)
       self.max = SysfsEntryFloat(self, 'temp%d_max' % self.tempId)

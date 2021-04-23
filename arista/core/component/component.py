@@ -1,4 +1,5 @@
 
+from ..config import Config
 from . import Component as LegacyComponent
 from . import Priority
 
@@ -88,9 +89,10 @@ class Component(LegacyComponent):
 
    def finish(self, filters=Priority.defaultFilter):
       super(Component, self).finish(filters=filters)
-      for ts in self._tempSensorsWorkaround:
-         try:
-            ts.refreshHardwareThresholds()
-         except Exception: # pylint: disable=broad-except
-            logging.exception("%s: failed to refresh hardware thresholds for %s" % (
-                              self, ts))
+      if Config().write_hw_thresholds:
+         for ts in self._tempSensorsWorkaround:
+            try:
+               ts.refreshHardwareThresholds()
+            except Exception: # pylint: disable=broad-except
+               logging.exception("%s: failed to refresh hardware thresholds for %s"
+                                 % (self, ts))
