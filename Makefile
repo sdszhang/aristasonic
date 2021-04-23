@@ -1,3 +1,5 @@
+INTERACTIVE := $(shell [ -t 0 ] && echo 1)
+
 # tools
 PYTHON2 ?= python2
 PYTHON3 ?= python3
@@ -40,6 +42,7 @@ PY3_BUILD_ARGS ?= $(PY_BUILD_ARGS) --build-base=$(BUILD_DIR)/python3
 PYLINTRC ?= $(BASE_DIR)/.pylintrc
 PYLINT_BLACKLIST ?= $(shell "cat $(BASE_DIR)/.pylint_blacklist | tr '\n' ','")
 PYLINT_JOBS ?= 4
+PYTEST_ARGS ?=
 
 # scd
 ARISTA_SCD_DRIVER_CONFIG ?= m
@@ -57,6 +60,10 @@ __VERSION__ = "$(PACKAGE_VERSION)"
 __DATE__ = "$(PACKAGE_DATE)"
 endef
 export library_version
+
+ifndef INTERACTIVE
+PYTEST_ARGS ?= '-v'
+endif
 
 all:
 	@echo "Nothing to do."
@@ -138,10 +145,10 @@ install: install-py2 install-py3 install-drivers install-fs
 test-py: test-py3
 
 test-py2:
-	$(PYTHON2) -m pytest
+	$(PYTHON2) -m pytest $(PYTEST_ARGS)
 
 test-py3:
-	$(PYTHON3) -m pytest
+	$(PYTHON3) -m pytest $(PYTEST_ARGS)
 
 pylint:
 	# NOTE: for now we only check py2/py3 compatibility.
