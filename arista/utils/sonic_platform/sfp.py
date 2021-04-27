@@ -5,12 +5,20 @@ from __future__ import print_function
 import time
 
 try:
-   from sonic_platform_base.sfp_base import SfpBase
    from arista.utils.sonic_platform.thermal import SfpThermal
+   from sonic_platform_base.sonic_sfp.qsfp_dd import qsfp_dd_Dom
+   from sonic_platform_base.sfp_base import SfpBase
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
 
 EEPROM_PATH = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
+
+OSFP_TYPE = 'OSFP'
+
+OSFP_TEMP_OFFSET = 14
+OSFP_TEMP_WIDTH = 2
+OSFP_THRESHOLD_OFFSET = 384
+OSFP_THRESHOLD_WIDTH = 72
 
 class Sfp(SfpBase):
    """
@@ -126,15 +134,46 @@ class Sfp(SfpBase):
          return float(temp)
       return val
 
+   def _format_bytes(self, data):
+      # XXX: hack for converting bytes read from read_eeprom into format expected by
+      # sonic_sfp parsers
+      return ['%02x' % x for x in data]
+
    def get_transceiver_bulk_status(self):
-      bulkStatus = self._get_sfputil().get_transceiver_dom_info_dict(self._index)
+      # XXX: Hack to support thermals on OSFP/QSFP-DD modules
+      if self.sfp_type == OSFP_TYPE:
+         tempRaw = self.read_eeprom(OSFP_TEMP_OFFSET, OSFP_TEMP_WIDTH)
+         if not tempRaw:
+            return None
+         parser = qsfp_dd_Dom()
+         domTemp = parser.parse_temperature(self._format_bytes(tempRaw), 0)
+         bulkStatus = {
+            'temperature': domTemp['data']['Temperature']['value']
+         }
+      else:
+         bulkStatus = self._get_sfputil().get_transceiver_dom_info_dict(self._index)
       if isinstance(bulkStatus, dict):
          bulkStatus = {k: self._format_temps(v) for k, v in bulkStatus.items()}
       return bulkStatus
 
    def get_transceiver_threshold_info(self):
-      threshInfo = self._get_sfputil().get_transceiver_dom_threshold_info_dict(
-                    self._index)
+      # XXX: Hack to support thermals on OSFP/QSFP-DD modules
+      if self.sfp_type == OSFP_TYPE:
+         threshRaw = self.read_eeprom(OSFP_THRESHOLD_OFFSET, OSFP_THRESHOLD_WIDTH)
+         if not threshRaw:
+            return None
+         parser = qsfp_dd_Dom()
+         domThresh = parser.parse_module_threshold_values(
+                     self._format_bytes(threshRaw), 0)
+         threshInfo = {
+            'temphighalarm': domThresh['data']['TempHighAlarm']['value'],
+            'temphighwarning': domThresh['data']['TempHighWarning']['value'],
+            'templowalarm': domThresh['data']['TempLowAlarm']['value'],
+            'templowwarning': domThresh['data']['TempLowWarning']['value']
+         }
+      else:
+         threshInfo = self._get_sfputil().get_transceiver_dom_threshold_info_dict(
+                      self._index)
       if isinstance(threshInfo, dict):
          threshInfo = {k: self._format_temps(v) for k, v in threshInfo.items()}
       return threshInfo
