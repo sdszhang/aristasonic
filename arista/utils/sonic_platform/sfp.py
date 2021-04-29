@@ -13,6 +13,7 @@ except ImportError as e:
 
 EEPROM_PATH = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
 
+SFP_TYPE = 'SFP'
 OSFP_TYPE = 'OSFP'
 
 OSFP_TEMP_OFFSET = 14
@@ -97,7 +98,7 @@ class Sfp(SfpBase):
 
    def get_temperature(self):
       bulkStatus = self.get_transceiver_bulk_status()
-      return bulkStatus["temperature"] if bulkStatus else None
+      return bulkStatus["temperature"] if bulkStatus else 0.0
 
    def clear_interrupt(self):
       intr = self._slot.getInterruptLine()
@@ -140,8 +141,11 @@ class Sfp(SfpBase):
       return ['%02x' % x for x in data]
 
    def get_transceiver_bulk_status(self):
+      # XXX: SFP modules currently not supported
+      if self.sfp_type == SFP_TYPE:
+         return None
       # XXX: Hack to support thermals on OSFP/QSFP-DD modules
-      if self.sfp_type == OSFP_TYPE:
+      elif self.sfp_type == OSFP_TYPE:
          tempRaw = self.read_eeprom(OSFP_TEMP_OFFSET, OSFP_TEMP_WIDTH)
          if not tempRaw:
             return None
@@ -157,8 +161,11 @@ class Sfp(SfpBase):
       return bulkStatus
 
    def get_transceiver_threshold_info(self):
+      # XXX SFP modules currently not supported
+      if self.sfp_type == SFP_TYPE:
+         return None
       # XXX: Hack to support thermals on OSFP/QSFP-DD modules
-      if self.sfp_type == OSFP_TYPE:
+      elif self.sfp_type == OSFP_TYPE:
          threshRaw = self.read_eeprom(OSFP_THRESHOLD_OFFSET, OSFP_THRESHOLD_WIDTH)
          if not threshRaw:
             return None
