@@ -265,7 +265,8 @@ class SfpSlot(XcvrSlot):
       self.xcvr = self.inventory.addSfp(SfpImpl(self.addrFunc, self.sfpSlotInv))
       self.newComponent(
          cls=Sfp,
-         addr=self.xcvr.getI2cAddr()
+         addr=self.xcvr.getI2cAddr(),
+         portName=self.name
       )
 
    def getTxDisable(self):
@@ -294,7 +295,8 @@ class QsfpSlot(XcvrSlot):
       self.xcvr = self.inventory.addQsfp(QsfpImpl(self.addrFunc, self.qsfpSlotInv))
       self.newComponent(
          cls=Qsfp,
-         addr=self.xcvr.getI2cAddr()
+         addr=self.xcvr.getI2cAddr(),
+         portName=self.name
       )
 
    def getReset(self):
@@ -334,7 +336,8 @@ class OsfpSlot(XcvrSlot):
       self.xcvr = self.inventory.addOsfp(OsfpImpl(self.addrFunc, self.osfpSlotInv))
       self.newComponent(
          cls=Osfp,
-         addr=self.xcvr.getI2cAddr()
+         addr=self.xcvr.getI2cAddr(),
+         portName=self.name
       )
 
    def getReset(self):
