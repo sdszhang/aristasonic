@@ -152,8 +152,14 @@ class Sfp(SfpBase):
          parser = qsfp_dd_Dom()
          domTemp = parser.parse_temperature(self._format_bytes(tempRaw), 0)
          bulkStatus = {
-            'temperature': domTemp['data']['Temperature']['value']
+            'temperature': domTemp['data']['Temperature']['value'],
          }
+         # Needed to avoid failing xcvrd
+         bulkStatus['voltage'] = 'N/A'
+         for i in range(1, 9):
+            bulkStatus['rx%spower' % i] = 'N/A'
+            bulkStatus['tx%spower' % i] = 'N/A'
+            bulkStatus['tx%sbias' % i] = 'N/A'
       else:
          bulkStatus = self._get_sfputil().get_transceiver_dom_info_dict(self._index)
       if isinstance(bulkStatus, dict):
@@ -178,6 +184,12 @@ class Sfp(SfpBase):
             'templowalarm': domThresh['data']['TempLowAlarm']['value'],
             'templowwarning': domThresh['data']['TempLowWarning']['value']
          }
+         # Needed to avoid failing xcvrd
+         otherFields = ['vcc', 'rxpower', 'txpower', 'txbias']
+         thresholds = ['highalarm', 'highwarning', 'lowalarm', 'lowwarning']
+         for field in otherFields:
+            for thresh in thresholds:
+               threshInfo['%s%s' % (field, thresh)] = 'N/A'
       else:
          threshInfo = self._get_sfputil().get_transceiver_dom_threshold_info_dict(
                       self._index)
