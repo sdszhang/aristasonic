@@ -11,6 +11,7 @@ from ...components.cpu.rook import (
    RookStatusLeds,
    RookSysCpld,
 )
+from ...components.dpm import Ucd90160, UcdGpi
 from ...components.lm73 import Lm73
 from ...components.max6658 import Max6658
 from ...components.scd import Scd
@@ -84,6 +85,14 @@ class RookCpu(Cpu):
 
       self.syscpld = self.newComponent(RookSysCpld, cpld.i2cAddr(8, 0x23),
                                        registerCli=cpldRegisterCls)
+
+   def addCpuDpm(self, addr=None, causes=None):
+      addr = addr or self.cpuDpmAddr()
+      return self.cpld.newComponent(Ucd90160, addr=addr, causes=causes or {
+         'overtemp': UcdGpi(3),
+         'procerror': UcdGpi(4),
+         'fansmissing': UcdGpi(5),
+      })
 
    def cpuDpmAddr(self, addr=0x4e, t=3, **kwargs):
       return self.cpld.i2cAddr(1, addr, t=t, **kwargs)

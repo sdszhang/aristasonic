@@ -5,7 +5,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk2 import Tomahawk2
-from ..components.dpm import Ucd90120A, Ucd90160, UcdGpi
+from ..components.dpm import Ucd90120A, UcdGpi
 from ..components.max6658 import Max6658
 from ..components.psu.delta import DPS750AB, DPS1900AB
 from ..components.psu.emerson import DS750PED
@@ -61,7 +61,7 @@ class Gardena(FixedSystem):
       ])
 
       cpu = self.newComponent(RookCpu)
-      cpu.cpld.newComponent(Ucd90160, cpu.cpuDpmAddr())
+      cpu.addCpuDpm()
       cpu.cpld.newComponent(Ucd90120A, cpu.switchDpmAddr(0x34), causes={
          'powerloss': UcdGpi(1),
          'reboot': UcdGpi(2),
