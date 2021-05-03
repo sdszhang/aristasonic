@@ -5,7 +5,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident3 import Trident3
-from ..components.dpm import Ucd90160, Ucd90320, UcdGpi
+from ..components.dpm import Ucd90320, UcdGpi
 from ..components.psu.delta import DPS500AB
 from ..components.psu.artesyn import CSU500DP
 from ..components.scd import Scd
@@ -36,7 +36,7 @@ class Marysville(FixedSystem):
       scd = self.newComponent(Scd, addr=PciAddr(bus=0x02))
 
       self.cpu = self.newComponent(WoodpeckerCpu)
-      self.cpu.cpld.newComponent(Ucd90160, addr=self.cpu.cpuDpmAddr())
+      self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(), causes={
          'powerloss': UcdGpi(1),
          'reboot': UcdGpi(3),

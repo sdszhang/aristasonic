@@ -5,7 +5,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.common import SwitchChip
-from ..components.dpm import Ucd90160, Ucd90320, UcdGpi
+from ..components.dpm import Ucd90320, UcdGpi
 from ..components.phy.babbage import Babbage
 from ..components.phy.b52 import B52
 from ..components.psu.delta import DPS1500AB, DPS1600CB, DPS500AB
@@ -31,7 +31,7 @@ class Smartsville(FixedSystem):
       super(Smartsville, self).__init__()
 
       self.cpu = self.newComponent(WoodpeckerCpu)
-      self.cpu.cpld.newComponent(Ucd90160, self.cpu.cpuDpmAddr())
+      self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Ucd90320, self.cpu.switchDpmAddr(), causes={
          'powerloss': UcdGpi(1),
          'reboot': UcdGpi(2),
