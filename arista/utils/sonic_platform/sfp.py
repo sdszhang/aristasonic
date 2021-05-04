@@ -13,13 +13,29 @@ except ImportError as e:
 
 EEPROM_PATH = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
 
+# XXX Remove these constants after refactor
 SFP_TYPE = 'SFP'
 OSFP_TYPE = 'OSFP'
+QSFP_TYPE = 'QSFP'
 
+XCVR_TYPE_OFFSET = 0
+XCVR_TYPE_WIDTH = 1
 OSFP_TEMP_OFFSET = 14
 OSFP_TEMP_WIDTH = 2
 OSFP_THRESHOLD_OFFSET = 384
 OSFP_THRESHOLD_WIDTH = 72
+
+SFP_TYPE_CODE_LIST = [
+    '03' # SFP/SFP+/SFP28
+]
+QSFP_TYPE_CODE_LIST = [
+    '0d', # QSFP+ or later
+    '11' # QSFP28 or later
+]
+OSFP_TYPE_CODE_LIST = [
+    '18', # QSFP-DD Double Density 8X Pluggable Transceiver
+    '19' # OSFP 8X Pluggable Transceiver
+]
 
 class Sfp(SfpBase):
    """
@@ -36,8 +52,28 @@ class Sfp(SfpBase):
       sfp = slot.getXcvr()
       self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
                                             sfp.getI2cAddr().address)
-      self.sfp_type = sfp.getType().upper()
+      self._sfp_type = None
       self._thermal_list.append(SfpThermal(self))
+
+   @property
+   def sfp_type(self):
+      if self._sfp_type is None:
+         self._sfp_type = self._detect_sfp_type()
+
+      return self._sfp_type
+
+   def _detect_sfp_type(self):
+      sfp_type_raw = self.read_eeprom(XCVR_TYPE_OFFSET, XCVR_TYPE_WIDTH)
+      sfp_type = self._slot.getXcvr().getType().upper()
+      if sfp_type_raw:
+         sfp_type_code = self._format_bytes(sfp_type_raw)[0]
+         if sfp_type_code in SFP_TYPE_CODE_LIST:
+            sfp_type = SFP_TYPE
+         elif sfp_type in QSFP_TYPE_CODE_LIST:
+            sfp_type = QSFP_TYPE
+         elif sfp_type in OSFP_TYPE_CODE_LIST:
+            sfp_type = OSFP_TYPE
+      return sfp_type
 
    def get_id(self):
       return self._index
@@ -93,6 +129,10 @@ class Sfp(SfpBase):
       try:
          self._slot.getReset().resetOut()
       except: # pylint: disable-msg=W0702
+         return False
+      # XXX: Hack to handle SFP modules plugged into non-SFP ports, which could
+      # allow for a reset to "succeed" when it shouldn't
+      if self.sfp_type == SFP_TYPE:
          return False
       return True
 
