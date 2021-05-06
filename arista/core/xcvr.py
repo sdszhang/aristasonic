@@ -12,7 +12,7 @@ from .component import SlotComponent
 
 class SfpImpl(SfpInv):
    def __init__(self, addrFunc, slot):
-      self.addrFunc = addrFunc
+      self.addr = addrFunc(self.ADDR)
       self.slot = slot
 
    def getType(self):
@@ -25,11 +25,11 @@ class SfpImpl(SfpInv):
       return self.slot.getName()
 
    def getI2cAddr(self):
-      return self.addrFunc(self.ADDR)
+      return self.addr
 
 class QsfpImpl(QsfpInv):
    def __init__(self, addrFunc, slot):
-      self.addrFunc = addrFunc
+      self.addr = addrFunc(self.ADDR)
       self.slot = slot
 
    def getType(self):
@@ -42,11 +42,11 @@ class QsfpImpl(QsfpInv):
       return self.slot.getName()
 
    def getI2cAddr(self):
-      return self.addrFunc(self.ADDR)
+      return self.addr
 
 class OsfpImpl(OsfpInv):
    def __init__(self, addrFunc, slot):
-      self.addrFunc = addrFunc
+      self.addr = addrFunc(self.ADDR)
       self.slot = slot
 
    def getType(self):
@@ -59,7 +59,7 @@ class OsfpImpl(OsfpInv):
       return self.slot.getName()
 
    def getI2cAddr(self):
-      return self.addrFunc(self.ADDR)
+      return self.addr
 
 class SfpSlotImpl(SfpSlotInv):
    def __init__(self, slot):
