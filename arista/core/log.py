@@ -1,6 +1,7 @@
 import logging
-from logging import DEBUG, INFO, WARNING, ERROR
+from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
 import logging.handlers
+import os
 import re
 import sys
 
@@ -9,6 +10,7 @@ logLevelDict = {
    'INFO': INFO,
    'WARNING': WARNING,
    'ERROR': ERROR,
+   'CRITICAL': CRITICAL,
 }
 
 dateFmt = '%Y-%m-%d %H:%M:%S'
@@ -21,11 +23,33 @@ class LoggerError(Exception):
    def __str__(self):
       return 'LoggerError: %s (code %d)' % (self.msg, self.code)
 
+PURPLE = "0;35"
+BOLD_BLUE = "1;34"
+BOLD_YELLOW = "1;32"
+BOLD_RED = "1;31"
+BOLD_WHITE_ON_RED = "1;37;41"
+
+class ColorFormatter(logging.Formatter):
+   COLORS = {
+       DEBUG: PURPLE,
+       INFO: BOLD_BLUE,
+       WARNING: BOLD_YELLOW,
+       ERROR: BOLD_RED,
+       CRITICAL: BOLD_WHITE_ON_RED,
+   }
+
+   def formatMessage(self, record):
+      # NOTE: this will only work with python3, python2 does have this method
+      color = "\x1b[%sm" % self.COLORS[record.levelno]
+      reset = "\x1b[0m"
+      return '%s%s%s' % (color, self._style.format(record), reset)
+
 class LoggerManager(object):
    def __init__(self):
       self.cliVerbosityDict = {}
       self.logfile = None
       self.syslog = False
+      self.color = False
       self.loggers = {}
 
    def initLogger(self, logger, cliLevel, syslogLevel):
@@ -37,8 +61,10 @@ class LoggerManager(object):
 
       logger.setLevel(DEBUG)
       if cliLevel:
+         color = os.isatty(sys.stdout.fileno()) and self.color
+         fmtCls = ColorFormatter if color else logging.Formatter
          logOut = logging.StreamHandler(sys.stdout)
-         logOut.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+         logOut.setFormatter(fmtCls('%(levelname)s: %(message)s'))
          logOut.setLevel(cliLevel)
          logger.addHandler(logOut)
       else:
@@ -129,10 +155,11 @@ class Logger(object):
 def getLogger(name, cliLevel=INFO, syslogLevel=WARNING):
    return Logger(name, cliLevel=cliLevel, syslogLevel=syslogLevel)
 
-def setupLogging(verbosity=None, logfile=None, syslog=False):
+def setupLogging(verbosity=None, logfile=None, syslog=False, color=False):
    loggerManager.cliVerbosityDict = parseVerbosity(verbosity)
    loggerManager.logfile = logfile
    loggerManager.syslog = syslog
+   loggerManager.color = color
 
 def parseVerbosity(verbosity):
    verbosityDict = {}

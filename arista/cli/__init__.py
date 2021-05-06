@@ -92,7 +92,7 @@ def main(args):
    root, args = parseArgs(args)
 
    try:
-      setupLogging(args.verbosity, args.logfile, args.syslog)
+      setupLogging(args.verbosity, args.logfile, args.syslog, color=args.color)
    except LoggerError as e:
       print(e.msg)
       return e.code
