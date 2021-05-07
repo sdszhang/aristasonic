@@ -22,6 +22,28 @@ from ..core.version import getVersionInfo
 
 logging = getLogger(__name__)
 
+class HelpAllAction(argparse._HelpAction):
+   # pylint: disable=protected-access
+   def _printUsage(self, parser):
+      usage = parser.format_usage()
+      usage = ' '.join(l.strip() for l in usage.splitlines())
+      print(usage[7:])
+
+   def _printParser(self, parser):
+      self._printUsage(parser)
+      subparsers_actions = [
+          action for action in parser._actions
+          if isinstance(action, argparse._SubParsersAction)
+      ]
+
+      for subparsers_action in subparsers_actions:
+         for subparser in subparsers_action.choices.values():
+            self._printParser(subparser)
+
+   def __call__(self, parser, namespace, values, option_string=None):
+      self._printParser(parser)
+      parser.exit()
+
 def setupSimulation():
    utils.simulation = True
    assert utils.inSimulation()
@@ -42,6 +64,10 @@ def rootParser(parser):
                        help='force simulation mode')
    parser.add_argument('--syslog', action='store_true',
                        help='also send logs to syslog')
+   parser.add_argument('--color', action='store_true',
+                       help='color logs during an interactive session')
+   parser.add_argument('--help-all', action=HelpAllAction,
+                       help='display all available clis')
    addCommonArgs(parser)
 
 def parseArgs(args):

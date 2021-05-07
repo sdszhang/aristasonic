@@ -20,6 +20,9 @@ class CliLegacyTest(unittest.TestCase):
    def testPlatforms(self):
       self._runMain(['platforms'])
 
+   def testHelpAll(self):
+      self._runMain(['--help-all'])
+
    def _foreachPlatform(self, *args, **kwargs):
       code = kwargs.get('code', 0)
       loadPlatforms()
