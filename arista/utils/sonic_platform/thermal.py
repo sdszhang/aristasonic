@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 try:
+   from arista.libs.python import monotonicRaw
    from sonic_platform_base.thermal_base import ThermalBase
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
@@ -97,11 +98,15 @@ class Thermal(ThermalBase):
       return self._temp
 
 class SfpThermal(ThermalBase):
+   THRESH_DELAY = 1 # 1 second
+
    def __init__(self, sfp):
       ThermalBase.__init__(self)
       self._sfp = sfp
       self._minimum = None
       self._maximum = None
+      self._cachedThreshInfo = None
+      self._cachedThreshInfoTime = 0
 
    def get_name(self):
       return "%s %s temp sensor" % (self._sfp.sfp_type, self._sfp.get_id())
@@ -132,34 +137,41 @@ class SfpThermal(ThermalBase):
          self._maximum = value
       return value
 
+   def _get_threshold_info(self):
+      currTime = monotonicRaw()
+      if currTime - self._cachedThreshInfoTime > self.THRESH_DELAY:
+         self._cachedThreshInfoTime = currTime
+         self._cachedThreshInfo = self._sfp.get_transceiver_threshold_info()
+      return self._cachedThreshInfo
+
    def get_low_threshold(self):
-      sfpThreshInfo = self._sfp.get_transceiver_threshold_info()
-      if sfpThreshInfo:
-         return sfpThreshInfo.get("templowwarning")
+      threshInfo = self._get_threshold_info()
+      if threshInfo:
+         return threshInfo.get("templowwarning")
       raise NotImplementedError
 
    def set_low_threshold(self, temperature):
       return False
 
    def get_low_critical_threshold(self):
-      sfpThreshInfo = self._sfp.get_transceiver_threshold_info()
-      if sfpThreshInfo:
-         return sfpThreshInfo.get("templowalarm")
+      threshInfo = self._get_threshold_info()
+      if threshInfo:
+         return threshInfo.get("templowalarm")
       raise NotImplementedError
 
    def get_high_threshold(self):
-      sfpThreshInfo = self._sfp.get_transceiver_threshold_info()
-      if sfpThreshInfo:
-         return sfpThreshInfo.get("temphighwarning")
+      threshInfo = self._get_threshold_info()
+      if threshInfo:
+         return threshInfo.get("temphighwarning")
       raise NotImplementedError
 
    def set_high_threshold(self, temperature):
       return False
 
    def get_high_critical_threshold(self):
-      sfpThreshInfo = self._sfp.get_transceiver_threshold_info()
-      if sfpThreshInfo:
-         return sfpThreshInfo.get("temphighalarm")
+      threshInfo = self._get_threshold_info()
+      if threshInfo:
+         return threshInfo.get("temphighalarm")
       raise NotImplementedError
 
    def get_minimum_recorded(self):
