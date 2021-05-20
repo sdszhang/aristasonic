@@ -104,7 +104,7 @@ class CardSlot(SlotComponent):
          try:
             cls = getPlatformCls(sid)
             # add some Config() for noStandby
-            logging.info('Loading card %s in slot %d', cls.__name__, self.slotId)
+            logging.debug('Loading card %s in slot %d', cls.__name__, self.slotId)
             card = cls(self, **kwargs)
          except UnknownPlatformError:
             logging.warning('Unsupported card %s for slot %d', sid, self.slotId)
