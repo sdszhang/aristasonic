@@ -43,8 +43,12 @@ class SysfsEntry(object):
    def _read(self):
       if utils.inSimulation():
          return '1'
-      with open(self.entryPath, 'r') as f:
-         return f.read()
+      try:
+         with open(self.entryPath, 'r') as f:
+            return f.read()
+      except IOError:
+         logging.error("read sysfs failed on %s", self.entryPath)
+         return None
 
    def _write(self, value):
       if utils.inSimulation():
