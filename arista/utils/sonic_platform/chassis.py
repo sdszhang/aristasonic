@@ -25,6 +25,7 @@ try:
    )
    from arista.utils.sonic_platform.psu import Psu
    from arista.utils.sonic_platform.sfp import Sfp
+   from arista.utils.sonic_platform.sfp import SfpOptoe
    from arista.utils.sonic_platform.thermal import Thermal
    from arista.utils.sonic_platform.watchdog import Watchdog
 except ImportError as e:
@@ -84,9 +85,10 @@ class Chassis(ChassisBase):
       self._sfp_list = []
       xcvrSlots = self._inventory.getXcvrSlots()
       if xcvrSlots:
+         sfpCls = SfpOptoe if Config().api_use_sfpoptoe else Sfp
          self._sfp_list = [None] * len(xcvrSlots)
          for index, slot in xcvrSlots.items():
-            self._sfp_list[index - 1] = Sfp(index, slot)
+            self._sfp_list[index - 1] = sfpCls(index, slot)
 
       # TODO: index used here to allow thermal.get_position_in_parent() to return
       # unique values but we want a proper way of uniquely identifying sensors

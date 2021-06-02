@@ -27,6 +27,7 @@ class Config(object):
          cls.instance_.use_metainventory = False
          cls.instance_.write_hw_thresholds = True
          cls.instance_.report_hw_thresholds = False
+         cls.instance_.api_use_sfpoptoe = False
          cls.instance_._parseConfig()
          cls.instance_._parseCmdline()
       return cls.instance_

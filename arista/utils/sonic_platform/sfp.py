@@ -12,6 +12,11 @@ try:
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
 
+try:
+   from .sfp_optoe import SfpOptoe
+except ImportError as e:
+   SfpOptoe = None
+
 EEPROM_PATH = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
 
 # XXX Remove these constants after refactor
@@ -269,4 +274,3 @@ class Sfp(SfpBase):
       except (OSError, IOError):
          return False
       return True
-
