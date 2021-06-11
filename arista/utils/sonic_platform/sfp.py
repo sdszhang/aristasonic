@@ -7,6 +7,7 @@ import time
 try:
    from arista.utils.sonic_platform.thermal import SfpThermal
    from sonic_platform_base.sonic_sfp.qsfp_dd import qsfp_dd_Dom
+   from sonic_platform_base.sonic_sfp.sff8436 import sff8436Dom
    from sonic_platform_base.sfp_base import SfpBase
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
@@ -20,6 +21,11 @@ QSFP_TYPE = 'QSFP'
 
 XCVR_TYPE_OFFSET = 0
 XCVR_TYPE_WIDTH = 1
+QSFP_TEMP_OFFSET = 22
+QSFP_TEMP_WIDTH = 2
+QSFP_THRESHOLD_OFFSET = 512
+QSFP_THRESHOLD_WIDTH = 24
+
 OSFP_TEMP_OFFSET = 14
 OSFP_TEMP_WIDTH = 2
 OSFP_THRESHOLD_OFFSET = 384
@@ -69,9 +75,9 @@ class Sfp(SfpBase):
          sfp_type_code = self._format_bytes(sfp_type_raw)[0]
          if sfp_type_code in SFP_TYPE_CODE_LIST:
             sfp_type = SFP_TYPE
-         elif sfp_type in QSFP_TYPE_CODE_LIST:
+         elif sfp_type_code in QSFP_TYPE_CODE_LIST:
             sfp_type = QSFP_TYPE
-         elif sfp_type in OSFP_TYPE_CODE_LIST:
+         elif sfp_type_code in OSFP_TYPE_CODE_LIST:
             sfp_type = OSFP_TYPE
       return sfp_type
 
@@ -186,24 +192,31 @@ class Sfp(SfpBase):
          return None
       # XXX: Hack to support thermals on OSFP/QSFP-DD modules
       elif self.sfp_type == OSFP_TYPE:
-         tempRaw = self.read_eeprom(OSFP_TEMP_OFFSET, OSFP_TEMP_WIDTH)
-         if not tempRaw:
-            return None
+         offset = OSFP_TEMP_OFFSET
+         width = OSFP_TEMP_WIDTH
          parser = qsfp_dd_Dom()
-         domTemp = parser.parse_temperature(self._format_bytes(tempRaw), 0)
-         bulkStatus = {
-            'temperature': domTemp['data']['Temperature']['value'],
-         }
-         # Needed to avoid failing xcvrd
-         bulkStatus['voltage'] = 'N/A'
-         for i in range(1, 9):
-            bulkStatus['rx%spower' % i] = 'N/A'
-            bulkStatus['tx%spower' % i] = 'N/A'
-            bulkStatus['tx%sbias' % i] = 'N/A'
+         numChannels = 8
       else:
-         bulkStatus = self._get_sfputil().get_transceiver_dom_info_dict(self._index)
-      if isinstance(bulkStatus, dict):
-         bulkStatus = {k: self._format_temps(v) for k, v in bulkStatus.items()}
+         offset = QSFP_TEMP_OFFSET
+         width = QSFP_TEMP_WIDTH
+         parser = sff8436Dom()
+         numChannels = 4
+
+      tempRaw = self.read_eeprom(offset, width)
+      if not tempRaw:
+         return None
+      domTemp = parser.parse_temperature(self._format_bytes(tempRaw), 0)
+      bulkStatus = {
+         'temperature': domTemp['data']['Temperature']['value'],
+      }
+      # Needed to avoid failing xcvrd
+      bulkStatus['voltage'] = 'N/A'
+      for i in range(1, numChannels + 1):
+         bulkStatus['rx%spower' % i] = 'N/A'
+         bulkStatus['tx%spower' % i] = 'N/A'
+         bulkStatus['tx%sbias' % i] = 'N/A'
+
+      bulkStatus = {k: self._format_temps(v) for k, v in bulkStatus.items()}
       return bulkStatus
 
    def get_transceiver_threshold_info(self):
@@ -212,29 +225,32 @@ class Sfp(SfpBase):
          return None
       # XXX: Hack to support thermals on OSFP/QSFP-DD modules
       elif self.sfp_type == OSFP_TYPE:
-         threshRaw = self.read_eeprom(OSFP_THRESHOLD_OFFSET, OSFP_THRESHOLD_WIDTH)
-         if not threshRaw:
-            return None
+         offset = OSFP_THRESHOLD_OFFSET
+         width = OSFP_THRESHOLD_WIDTH
          parser = qsfp_dd_Dom()
-         domThresh = parser.parse_module_threshold_values(
-                     self._format_bytes(threshRaw), 0)
-         threshInfo = {
-            'temphighalarm': domThresh['data']['TempHighAlarm']['value'],
-            'temphighwarning': domThresh['data']['TempHighWarning']['value'],
-            'templowalarm': domThresh['data']['TempLowAlarm']['value'],
-            'templowwarning': domThresh['data']['TempLowWarning']['value']
-         }
-         # Needed to avoid failing xcvrd
-         otherFields = ['vcc', 'rxpower', 'txpower', 'txbias']
-         thresholds = ['highalarm', 'highwarning', 'lowalarm', 'lowwarning']
-         for field in otherFields:
-            for thresh in thresholds:
-               threshInfo['%s%s' % (field, thresh)] = 'N/A'
       else:
-         threshInfo = self._get_sfputil().get_transceiver_dom_threshold_info_dict(
-                      self._index)
-      if isinstance(threshInfo, dict):
-         threshInfo = {k: self._format_temps(v) for k, v in threshInfo.items()}
+         offset = QSFP_THRESHOLD_OFFSET
+         width = QSFP_THRESHOLD_WIDTH
+         parser = sff8436Dom()
+
+      threshRaw = self.read_eeprom(offset, width)
+      if not threshRaw:
+         return None
+      domThresh = parser.parse_module_threshold_values(
+                  self._format_bytes(threshRaw), 0)
+      threshInfo = {
+         'temphighalarm': domThresh['data']['TempHighAlarm']['value'],
+         'temphighwarning': domThresh['data']['TempHighWarning']['value'],
+         'templowalarm': domThresh['data']['TempLowAlarm']['value'],
+         'templowwarning': domThresh['data']['TempLowWarning']['value']
+      }
+      # Needed to avoid failing xcvrd
+      otherFields = ['vcc', 'rxpower', 'txpower', 'txbias']
+      thresholds = ['highalarm', 'highwarning', 'lowalarm', 'lowwarning']
+      for field in otherFields:
+         for thresh in thresholds:
+            threshInfo['%s%s' % (field, thresh)] = 'N/A'
+      threshInfo = {k: self._format_temps(v) for k, v in threshInfo.items()}
       return threshInfo
 
    def read_eeprom(self, offset, num_bytes):
