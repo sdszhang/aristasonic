@@ -107,7 +107,7 @@ class CardSlot(SlotComponent):
             logging.debug('Loading card %s in slot %d', cls.__name__, self.slotId)
             card = cls(self, **kwargs)
          except UnknownPlatformError:
-            logging.warning('Unsupported card %s for slot %d', sid, self.slotId)
+            logging.debug('Unsupported card %s for slot %d', sid, self.slotId)
             return
 
       self.card = card
