@@ -49,6 +49,7 @@ class Chassis(ChassisBase):
       self._platform = platform
       self._eeprom = Eeprom(readPrefdl())
       self._inventory = platform.getInventory()
+      self._chassis = None
       if isinstance(platform, Supervisor):
          chassis = platform.getChassis()
          for supervisor in chassis.iterSupervisors(presentOnly=False):
@@ -60,6 +61,12 @@ class Chassis(ChassisBase):
          chassis.loadLinecards()
          for fabric in chassis.iterLinecards(presentOnly=False):
             self._module_list.append(LinecardModule(fabric))
+         for slot in chassis.iterPsus():
+            self._psu_list.append(Psu(slot.psuSlot))
+         self._chassis = chassis
+      else:
+         for slot in self._inventory.getPsuSlots():
+            self._psu_list.append(Psu(slot))
 
       if self._inventory.getFanSlots():
          for slot in self._inventory.getFanSlots():
@@ -70,8 +77,6 @@ class Chassis(ChassisBase):
             self._fan_list.append(Fan(None, fan))
          for fan in self._fan_list:
             self._fan_drawer_list.append(FanDrawerLegacy(fan))
-      for slot in self._inventory.getPsuSlots():
-         self._psu_list.append(Psu(slot))
 
       self._sfp_list = []
       xcvrsRange = self._inventory.getXcvrsRange()
