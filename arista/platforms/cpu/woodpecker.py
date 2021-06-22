@@ -4,7 +4,7 @@ from ...core.types import PciAddr
 from ...core.utils import incrange
 
 from ...components.cpu.amd.k10temp import K10Temp
-from ...components.dpm import Ucd90160, UcdGpi
+from ...components.dpm import Ucd90160, UcdGpi, UcdPriority
 from ...components.max6658 import Max6658
 from ...components.scd import Scd
 
@@ -59,7 +59,7 @@ class WoodpeckerCpu(Cpu):
       return self.cpld.newComponent(Ucd90160, addr=addr, causes=causes or {
          'fansmissing': UcdGpi(5),
          'overtemp': UcdGpi(6),
-         'procerror': UcdGpi(7),
+         'procerror': UcdGpi(7, priority=UcdPriority.LOW),
       })
 
    def cpuDpmAddr(self, addr=0x4e, t=3, **kwargs):

@@ -20,8 +20,21 @@ from .common import I2cComponent
 
 logging = getLogger(__name__)
 
-UcdGpi = namedtuple( 'UcdGpi', [ 'bit' ] )
-UcdMon = namedtuple( 'UcdMon', [ 'val' ] )
+class UcdPriority(object):
+    NONE = 0
+    LOW = 10
+    NORMAL = 20
+    HIGH = 30
+
+class UcdGpi(object):
+    def __init__(self, bit, priority=UcdPriority.NORMAL):
+        self.bit = bit
+        self.priority = priority
+
+class UcdMon(object):
+    def __init__(self, val, priority=UcdPriority.NORMAL):
+        self.val = val
+        self.priority = priority
 
 class UcdReloadCauseEntry(ReloadCauseEntry):
    pass
@@ -116,7 +129,8 @@ class Ucd(I2cComponent):
             causes.append(UcdReloadCauseEntry(
                cause=name,
                rcDesc='gpi fault',
-               score=ReloadCauseScore.LOGGED,
+               score=ReloadCauseScore.LOGGED |
+                     ReloadCauseScore.getPriority(typ.priority),
             ))
       return causes
 
@@ -156,7 +170,8 @@ class Ucd(I2cComponent):
                   cause=name,
                   rcTime=datetimeToStr(time),
                   rcDesc='gpi detailed fault',
-                  score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED,
+                  score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
+                        ReloadCauseScore.getPriority(typ.priority),
                ))
       elif paged and ftype in [ 0, 1, 2 ]:
          # this is a Mon
@@ -168,7 +183,8 @@ class Ucd(I2cComponent):
                   cause=name,
                   rcTime=datetimeToStr(time),
                   rcDesc='mon detailed fault',
-                  score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED,
+                  score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
+                        ReloadCauseScore.getPriority(typ.priority),
                ))
                found = True
          if not found:
@@ -177,7 +193,8 @@ class Ucd(I2cComponent):
                cause=name,
                rcTime=datetimeToStr(time),
                rcDesc='%s on rail %d' % (name, page + 1),
-               score=ReloadCauseScore.EVENT | ReloadCauseScore.DETAILED,
+               score=ReloadCauseScore.EVENT | ReloadCauseScore.DETAILED |
+                     ReloadCauseScore.getPriority(UcdPriority.NONE),
             )
             logging.debug('found: %s', cause.description)
             causes.append(cause)
