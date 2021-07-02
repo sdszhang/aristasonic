@@ -22,10 +22,11 @@ class DeltaPsu(PsuModel):
                     name='Power supply %(psuId)d inlet temp sensor',
                     position=Position.INLET,
                     target=55, overheat=70, critical=75),
-         SensorDesc(diode=2,
-                    name='Power supply %(psuId)d exhaust temp sensor',
-                    position=Position.OUTLET,
-                    target=80, overheat=108, critical=113),
+         # TODO: Issue with dps1900 driver that doesn't instantiate the third temp
+         #SensorDesc(diode=2,
+         #           name='Power supply %(psuId)d exhaust temp sensor',
+         #           position=Position.OUTLET,
+         #           target=80, overheat=108, critical=113),
       ]
    )
 
