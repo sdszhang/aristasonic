@@ -147,8 +147,10 @@ class SfpThermal(ThermalBase):
    def get_low_threshold(self):
       threshInfo = self._get_threshold_info()
       if threshInfo:
-         return threshInfo.get("templowwarning")
-      raise NotImplementedError
+         lowThreshold = threshInfo.get("templowwarning")
+      if not threshInfo or lowThreshold == "N/A":
+         raise NotImplementedError
+      return lowThreshold
 
    def set_low_threshold(self, temperature):
       return False
@@ -156,14 +158,18 @@ class SfpThermal(ThermalBase):
    def get_low_critical_threshold(self):
       threshInfo = self._get_threshold_info()
       if threshInfo:
-         return threshInfo.get("templowalarm")
-      raise NotImplementedError
+         lowCritThreshold = threshInfo.get("templowalarm")
+      if not threshInfo or lowCritThreshold == "N/A":
+         raise NotImplementedError
+      return lowCritThreshold
 
    def get_high_threshold(self):
       threshInfo = self._get_threshold_info()
       if threshInfo:
-         return threshInfo.get("temphighwarning")
-      raise NotImplementedError
+         highThreshold = threshInfo.get("temphighwarning")
+      if not threshInfo or highThreshold == "N/A":
+         raise NotImplementedError
+      return highThreshold
 
    def set_high_threshold(self, temperature):
       return False
@@ -171,8 +177,10 @@ class SfpThermal(ThermalBase):
    def get_high_critical_threshold(self):
       threshInfo = self._get_threshold_info()
       if threshInfo:
-         return threshInfo.get("temphighalarm")
-      raise NotImplementedError
+         highCritThreshold = threshInfo.get("temphighalarm")
+      if not threshInfo or highCritThreshold == "N/A":
+         raise NotImplementedError
+      return highCritThreshold
 
    def get_minimum_recorded(self):
       self.get_temperature()
