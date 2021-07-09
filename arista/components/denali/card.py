@@ -160,12 +160,14 @@ class DenaliCard(Card):
          self.powerStandbyDomainIs(False)
 
    def poweredOn(self):
-      return self.gpio1.powerGood()
-
-   def powerCycleStandbyDomain(self):
-      '''Power cycle standby domain.'''
-      assert self.gpio1, "gpio1 is not created yet."
-      self.gpio1.powerCycle(True)
+      if self.gpio1 is None:
+         # Linecard is likely unsupported or not loaded
+         return False
+      try:
+         return self.gpio1.powerGood()
+      except Exception: # broad-except
+         logging.debug('%s: failed to read power good', self)
+         return False
 
    def enablePlxPcieUpstreamLink(self, bind):
       self.plx.disableUpstreamPort(self.getUpstreamPort(), True)

@@ -62,24 +62,56 @@ class DenaliLinecard(DenaliLinecardBase):
       self.cpu = self.newComponent(self.CPU_CLS, self.slot)
       self.eeprom = getSysEeprom()
 
+   def waitForStandbyPowerOn(self):
+      try:
+         if not self.pca.ping():
+            return False
+         self.pca.takeOwnership()
+         if not self.gpio1.powerCycle() and self.gpio1.standbyPowerGood():
+            return True
+      except IOError:
+         pass
+      return False
+
+   def powerStandbyDomainOn(self, cycle=False):
+      if not self.gpio1.standbyPowerGood() or cycle:
+         logging.debug('%s: power cycling standby', self)
+         self.gpio1.powerCycle(True)
+         waitFor(self.waitForStandbyPowerOn, "standby power good")
+
+      self.gpio1.cpEcbOn(True)
+      time.sleep(0.2)
+      self.gpio1.dpEcbOn(True)
+      time.sleep(0.1)
+      self.gpio1.scdReset(False)
+      self.gpio1.pcieUpstream(False)
+      waitFor(self.poweredOn, "card to turn on")
+
+   def powerStandbyDomainOff(self):
+      self.gpio1.dpEcbOn(False)
+      self.gpio1.cpEcbOn(False)
+      self.gpio1.scdReset(True)
+      self.gpio1.pcieUpstream(True)
+      waitFor(lambda: (not self.poweredOn()), "card to turn off")
+
    def powerStandbyDomainIs(self, on):
       '''Turn on card Ecbs. On Denali linecard, we expect
          Dpms will then be turned on as well as Pols by hardware. So no need to
          do anything with Dpm. When all is done, power good is asserted.'''
       assert self.gpio1, "gpio1 is not created yet."
       if on:
-         self.gpio1.cpEcbOn(True)
-         self.gpio1.dpEcbOn(True)
-         self.gpio1.scdReset(False)
-         self.gpio1.pcieUpstream(False)
-         waitFor(self.poweredOn, "Card failed to be turned on.")
+         for i in range(3):
+            try:
+               self.powerStandbyDomainOn(cycle=i > 0)
+               return
+            except Exception: # pylint: broad-except
+               logging.exception('%s: issue when trying to power on', self)
       else:
-         self.gpio1.cpEcbOn(False)
-         self.gpio1.dpEcbOn(False)
-         self.gpio1.scdReset(True)
-         self.gpio1.pcieUpstream(True)
-         # In Denali fabric card, we should not turn off Ecb fans
-         waitFor(lambda: (not self.poweredOn()), "Card failed to be turned off.")
+         try:
+            self.powerStandbyDomainOff()
+            return
+         except Exception: # pylint: broad-except
+            logging.exception('%s: issue when trying to power off', self)
 
    def populateSramFromPrefdl(self):
       sramContent = SramContent()
@@ -153,6 +185,7 @@ class DenaliLinecard(DenaliLinecardBase):
 
 class GpioRegisterMap(RegisterMap):
    BANK0 = GpioRegister(0x0,
+      RegBitField(1, 'standbyPowerGood', ro=True),
       RegBitField(1, 'tempAlert', flip=True),
       RegBitField(2, 'powerGood'),
       RegBitField(4, 'powerCycle', ro=False),

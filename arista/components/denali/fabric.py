@@ -18,9 +18,10 @@ class Gpio1Registers(RegisterMap):
       RegBitField(0, 'ecbOn', ro=False),
       RegBitField(1, 'statusGreen', flip=True, ro=False),
       RegBitField(2, 'statusRed', flip=True, ro=False),
+      RegBitField(3, 'pcieUpstream', ro=False),
       RegBitField(5, 'ejectorClosed', flip=True),
       RegBitField(6, 'pcieReset', flip=True, ro=False),
-      RegBitField(7, 'ecbFanOn', ro=False),
+      RegBitField(7, 'fanFull', ro=False),
    )
 
 class DenaliFabric(DenaliFabricBase):
@@ -39,12 +40,9 @@ class DenaliFabric(DenaliFabricBase):
          do anything with Dpm. When all is done, power good is asserted.'''
       assert self.gpio1, "gpio1 is not created yet."
       if on:
-         self.gpio1.ecbFanOn(True)
          self.gpio1.ecbOn(True)
-         waitFor(lambda: self.gpio1.powerGood(),
-                 "Card fails to be turned on.")
+         waitFor(lambda: self.gpio1.powerGood(), "card to turn on")
       else:
          self.gpio1.ecbOn(False)
-         # In Denali fabric card, we should not turn off Ecb fans
-         waitFor(lambda: (not self.gpio1.powerGood()),
-                 "Card fails to be turned off." )
+         # NOTE: Disabling power good check for Dragonfly
+         # waitFor(lambda: (not self.gpio1.powerGood()), "cart to turn off" )
