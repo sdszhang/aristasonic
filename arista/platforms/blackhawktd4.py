@@ -5,6 +5,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident4 import Trident4
+from ..components.dpm.adm1266 import Adm1266, AdmPin
 from ..components.psu.delta import DPS1500AB, DPS1600AB, DPS1600CB
 from ..components.scd import Scd
 from ..components.tmp468 import Tmp468
@@ -30,6 +31,14 @@ class BlackhawkTD4(FixedSystem):
       self.inventory.addPorts(osfps=self.osfpRange, sfps=self.sfpRange)
 
       self.cpu = self.newComponent(LorikeetCpu)
+      self.cpu.addCpuDpm()
+      self.cpu.cpld.newComponent(Adm1266, addr=self.cpu.switchDpmAddr(), causes={
+         'overtemp': AdmPin(1, AdmPin.GPIO),
+         'watchdog': AdmPin(3, AdmPin.GPIO),
+         'powerloss': AdmPin(4, AdmPin.GPIO),
+         'powerloss2': AdmPin(5, AdmPin.GPIO),
+         'reboot': AdmPin(9, AdmPin.GPIO),
+      })
 
       scd = self.newComponent(Scd, addr=PciAddr(bus=0x01))
       self.scd = scd
