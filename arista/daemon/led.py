@@ -67,11 +67,11 @@ class StatusLedFeature(PollDaemonFeature):
          try:
             color = policy(self.daemon.platform, led)
          except Exception: # pylint: disable=broad-except
-            logging.error("failed apply policy for led %s", led)
+            logging.error("%s: failed apply policy for led %s", self, led)
             continue
 
          try:
             led.setColor(color)
          except Exception: # pylint: disable=broad-except
-            logging.error("failed to set led color %s for %s", color, led)
+            logging.error("%s: failed to set led color %s for %s", self, color, led)
             continue

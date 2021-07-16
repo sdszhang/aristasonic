@@ -193,7 +193,7 @@ class StorageDaemonFeature(PollDaemonFeature):
       PollDaemonFeature.init(self)
       self.devices = self._getStorageDevices()
       for device in self.devices:
-         logging.debug('monitoring disk %s', device)
+         logging.debug('%s: monitoring disk %s', self, device)
 
    def callback(self, elapsed):
       for device in self.devices:
