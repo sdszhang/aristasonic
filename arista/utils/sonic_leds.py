@@ -16,6 +16,7 @@ class LedControlCommon(led_control_base.LedControlBase):
    def __init__(self):
       self.portMapping = parsePortConfig()
       self.inventory = getInventory()
+      self.intfRe_ = re.compile(r'Ethernet\d+')
 
    def _setIntfColor(self, port, idx, color):
       raise NotImplementedError('Missing override of _setIntfColor')
@@ -26,7 +27,7 @@ class LedControlCommon(led_control_base.LedControlBase):
       many subsequent LEDs should be affected (hardcoded by the port_config)
       '''
       p = self.portMapping.get(port)
-      if not p:
+      if not p and not self.intfRe_.fullmatch(p.name):
          return
       for idx in range(p.lanes):
          if state == 'up':
