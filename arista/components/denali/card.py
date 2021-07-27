@@ -7,6 +7,8 @@ from ...core.card import Card, CardSlot
 from ...core.fabric import Fabric
 from ...core.linecard import Linecard
 from ...core.log import getLogger
+from ...core.types import PciAddr
+from ...libs.pci import readSecondaryBus
 from ...libs.wait import waitFor
 
 from ..dpm.ucd import Ucd90320
@@ -22,6 +24,8 @@ class DenaliCard(Card):
       1: 0,
       2: 2,
    }
+
+   ASIC_PLX_DOWNSTREAM_PORTS = {}
 
    def __init__(self, *args, **kwargs):
       self.scd = None
@@ -117,6 +121,12 @@ class DenaliCard(Card):
          self.gpio1.statusRed(False)
          self.gpio1.statusGreen(False)
 
+   def getAsicPciAddr(self, asicId, asic):
+      plxDownstreamAddr = PciAddr(bus=self.plxDownstreamBus,
+                                  device=self.ASIC_PLX_DOWNSTREAM_PORTS[asicId])
+      asicUpstreamBus = readSecondaryBus(plxDownstreamAddr)
+      return PciAddr(bus=asicUpstreamBus)
+
    def powerMainPowerDomainIs(self, on):
       if on:
          for asicId, asic in enumerate(self.asics):
@@ -134,9 +144,12 @@ class DenaliCard(Card):
 
       if on:
          self.slot.enablePciPort()
-         # Check chip visiblity in pci domain
-         for asic in self.asics:
-            asic.waitForIt()
+         # PLX is up. We now can get PLX downtream bus to asics, and
+         # achieve asics' PCI addr.
+         self.updateAsicAddr()
+         # Verify asic presence
+         for asicId, asic in enumerate(self.asics):
+            self.asics[asicId].waitForIt()
 
    def powerOnIs(self, on, lcpuCtx=None):
       if on:
@@ -186,6 +199,11 @@ class DenaliCard(Card):
       self.pca.takeOwnership()
       self.pca.setup()
       self.eeprom.setup()
+
+   def updateAsicAddr(self):
+      self.plxDownstreamBus = readSecondaryBus(self.slot.pci)
+      for asicId, asic in enumerate(self.asics):
+         self.asics[asicId].addr = self.getAsicPciAddr(asicId, asic)
 
 class DenaliCardSlot(CardSlot):
 

@@ -5,6 +5,8 @@ from ...core.types import PciAddr
 
 from ...descs.gpio import GpioDesc
 
+from ...libs.pci import readSecondaryBus
+
 from ..eeprom import At24C64
 from ..microsemi import Microsemi
 from ..pca9541 import Pca9541
@@ -19,6 +21,7 @@ from .card import (
 )
 
 class DenaliSupervisor(Supervisor):
+   CPU_PCI_ROOT = '0000:00:03.0'
    LINECARD_PORTS = []
    FABRIC_PORTS = []
    PSUS = []
@@ -71,23 +74,33 @@ class DenaliSupervisor(Supervisor):
       ]
 
    def createPciSwitch(self):
-      self.pciSwitch = self.newComponent(self.pciSwitchCls,
-                                         addr=PciAddr(bus=0x05, device=0x00, func=1))
+      pciSwitchUpstreamBus = readSecondaryBus(self.CPU_PCI_ROOT)
+      pciSwitchUpstreamAddr = PciAddr(bus=pciSwitchUpstreamBus, device=0x00, func=0)
 
+      # Management endpoint for configuring the switch
+      pciSwitchManagementAddr = PciAddr(bus=pciSwitchUpstreamBus, device=0x00, func=1)
+      self.pciSwitch = self.newComponent(self.pciSwitchCls,
+                                         addr=pciSwitchManagementAddr)
+
+      pciSwitchDownstreamBus = readSecondaryBus(pciSwitchUpstreamAddr)
       for idx, portDesc in enumerate(self.LINECARD_PORTS):
+         pciSwitchDownstreamAddr = PciAddr(bus=pciSwitchDownstreamBus, device=portDesc.dsp - 1)
+         cardUpstreamBus = readSecondaryBus(pciSwitchDownstreamAddr)
          self.pciSwitch.addPciPort(
             portId=DenaliLinecardBase.ABSOLUTE_CARD_OFFSET + idx,
             desc=portDesc,
-            addr=PciAddr(bus=0x06, device=0x7 + idx),
-            upstreamAddr=PciAddr(bus=0x46 + 0xb * idx),
+            addr=pciSwitchDownstreamAddr,
+            upstreamAddr=PciAddr(bus=cardUpstreamBus),
          )
 
       for idx, portDesc in enumerate(self.FABRIC_PORTS):
+         pciSwitchDownstreamAddr = PciAddr(bus=pciSwitchDownstreamBus, device=portDesc.dsp - 1)
+         cardUpstreamBus = readSecondaryBus(pciSwitchDownstreamAddr)
          self.pciSwitch.addPciPort(
             portId=DenaliFabricBase.ABSOLUTE_CARD_OFFSET + idx,
             desc=portDesc,
-            addr=PciAddr(bus=0x06, device=idx),
-            upstreamAddr=PciAddr(bus=0x07 + 0xa * idx),
+            addr=PciAddr(bus=pciSwitchDownstreamBus, device=portDesc.dsp - 1),
+            upstreamAddr=PciAddr(bus=cardUpstreamBus),
          )
 
    def createLinecards(self):
@@ -98,8 +111,8 @@ class DenaliSupervisor(Supervisor):
             GpioDesc("%s_present" % name, 0x4100, lcId, ro=True),
             GpioDesc("%s_present_changed" % name, 0x4100, 16 + lcId),
          ])
+         pci = self.pciSwitch.ports[slotId].upstreamAddr
          bus = self.scd.getSmbus(self.linecardSmbus[lcId])
-         pci = PciAddr(bus=0x47 + 0xb * lcId)
          presenceGpio = self.scd.inventory.getGpio("%s_present" % name)
          self.linecardSlots.append(DenaliLinecardSlot(self, slotId, pci, bus,
                                                       presenceGpio=presenceGpio))
@@ -115,8 +128,8 @@ class DenaliSupervisor(Supervisor):
             GpioDesc("%s_present" % name, 0x4110, fcId, ro=True),
             GpioDesc("%s_present_changed" % name, 0x4110, 16 + fcId),
          ])
+         pci = self.pciSwitch.ports[slotId].upstreamAddr
          bus = self.scd.getSmbus(self.fabricSmbus[fcId])
-         pci = PciAddr(bus=0x07 + 0xa * fcId)
          presenceGpio = self.scd.inventory.getGpio("%s_present" % name)
          self.fabricSlots.append(DenaliFabricSlot(self, slotId, pci, bus,
                                                   presenceGpio=presenceGpio))

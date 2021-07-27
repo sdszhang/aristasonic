@@ -44,19 +44,18 @@ class Eldridge(DenaliFabric):
    SID = ['Eldridge']
    SKU = ['DCS-7808-FM', '7808R3-FM']
 
-   ASIC_BUSES = [
-      0x02,
-      0x04,
-      0x05,
-   ]
+   # PLX downstream ports for asics 0, 1, 2
+   ASIC_PLX_DOWNSTREAM_PORTS = {
+      0 : 1,
+      1 : 3,
+      2 : 4,
+   }
 
    def createGpio2(self):
       self.gpio2 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x21),
                                          registerCls=Gpio2Registers)
 
    def createAsics(self):
-      asicAddrs = [self.slot.pciAddr(bus=bus) for bus in self.ASIC_BUSES]
-
       asicResetGpios = {
          0 : (self.gpio2.ramon0SysReset, self.gpio2.ramon0PcieReset),
          1 : (self.gpio2.ramon1SysReset, self.gpio2.ramon1PcieReset),
@@ -64,7 +63,12 @@ class Eldridge(DenaliFabric):
       }
 
       self.asics = []
-      for i, addr in enumerate(asicAddrs):
+      for i in self.ASIC_PLX_DOWNSTREAM_PORTS.keys():
+         # We may not have PCI addr for asic yet until the card is powered on
+         # and PLX is out of reset and scanned by kernel. So, use card PCI
+         # (upstream) address instead, and update the correct address later
+         # for the asic when we power on the card.
+         addr = self.slot.pciAddr()
          self.asics.append(self.main.newComponent(
                            Ramon, addr,
                            resetGpio=asicResetGpios[i][0],

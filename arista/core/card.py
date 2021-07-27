@@ -61,6 +61,9 @@ class Card(Sku):
    def hasCpuModule(self):
       return self.CPU_CLS is not None
 
+   def updateAsicAddr(self):
+      pass
+
    def setup(self, filters=Priority.defaultFilter):
       super(Card, self).setup()
       super(Card, self).finish(filters=filters)

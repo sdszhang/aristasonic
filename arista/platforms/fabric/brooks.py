@@ -12,10 +12,10 @@ class Brooks(Eldridge):
    SID = ['Brooks']
    SKU = ['DCS-7804-FM']
 
-   ASIC_BUSES = [
-      0x02,
-      0x09,
-   ]
+   ASIC_PLX_DOWNSTREAM_PORTS = {
+      0 : 1,
+      1 : 3,
+   }
 
    def createStandbyFans(self):
       chip = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d),

@@ -10,10 +10,10 @@ class Dragonfly(Eldridge):
    SID = ['Dragonfly']
    SKU = ['7808R3A-FM']
 
-   ASIC_BUSES = [
-      0x02,
-      0x04,
-   ]
+   ASIC_PLX_DOWNSTREAM_PORTS = {
+      0 : 1,
+      1 : 3,
+   }
 
    def createStandbySensors(self):
       self.pca.newComponent(Tmp464, self.pca.i2cAddr(0x48), sensors=[
