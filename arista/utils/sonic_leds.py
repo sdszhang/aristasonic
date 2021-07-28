@@ -27,7 +27,7 @@ class LedControlCommon(led_control_base.LedControlBase):
       many subsequent LEDs should be affected (hardcoded by the port_config)
       '''
       p = self.portMapping.get(port)
-      if not p and not self.intfRe_.fullmatch(p.name):
+      if not p or not self.intfRe_.fullmatch(port):
          return
       for idx in range(p.lanes):
          if state == 'up':
