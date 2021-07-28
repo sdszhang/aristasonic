@@ -23,7 +23,7 @@ class Alhambra(FixedSystem):
    SID = ['Alhambra', 'AlhambraSsd']
    SKU = ['DCS-7170-64C', 'DCS-7170-64C-M']
 
-   def __init__(self, ports=64):
+   def __init__(self, ports=64, hasLmSensor=True, psus=None):
       super(Alhambra, self).__init__()
 
       self.qsfpRange = incrange(1, ports)
@@ -89,7 +89,7 @@ class Alhambra(FixedSystem):
          ledAddr=0x7200
       )
 
-      cpu = self.newComponent(RookCpu)
+      cpu = self.newComponent(RookCpu, hasLmSensor=hasLmSensor)
       cpu.addCpuDpm()
       cpu.cpld.newComponent(Ucd90120A, cpu.switchDpmAddr(), causes={
          'powerloss': UcdGpi(1),
@@ -112,7 +112,7 @@ class Alhambra(FixedSystem):
             inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
             outputOkGpio=scd.inventory.getGpio("%s_status" % name),
             led=cpu.leds.inventory.getLed('%s_status' % name),
-            psus=[
+            psus=psus or [
                DPS750AB,
                DPS1900AB,
                DS750PED,
