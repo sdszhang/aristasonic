@@ -13,7 +13,7 @@ try:
    from arista.core.cause import getReloadCauseManager
    from arista.core.config import Config
    from arista.core.onie import OnieEeprom
-   from arista.core.platform import readPrefdl
+   from arista.core.platform import getPlatform, readPrefdl
    from arista.core.supervisor import Supervisor
    from arista.utils.sonic_platform.eeprom import Eeprom
    from arista.utils.sonic_platform.fan import Fan
@@ -46,14 +46,15 @@ class Chassis(ChassisBase):
    # Intervals in milliseconds
    POLL_INTERVAL = 1000.
 
-   def __init__(self, platform):
+   def __init__(self, platform=None):
+      platform = platform or getPlatform()
       ChassisBase.__init__(self)
       self._platform = platform
       self._eeprom = Eeprom(readPrefdl())
       self._inventory = platform.getInventory()
       self._chassis = None
-      if isinstance(platform, Supervisor):
-         chassis = platform.getChassis()
+      if isinstance(self._platform, Supervisor):
+         chassis = self._platform.getChassis()
          for supervisor in chassis.iterSupervisors(presentOnly=False):
             if supervisor is not None:
                self._module_list.append(SupervisorModule(supervisor))
@@ -297,3 +298,9 @@ class Chassis(ChassisBase):
 
    def is_replaceable(self):
       return False
+
+   # NOTE: yes there is a typo in the function name and it's not part of the
+   #       API. But eh, that's how `show system-health` works
+   #       Not doing anything in this call for now, we already have some logic
+   def initizalize_system_led(self):
+       pass
