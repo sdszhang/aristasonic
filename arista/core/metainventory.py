@@ -18,7 +18,10 @@ class LazyInventory(Inventory):
 
 class MetaInventory(object):
    def __init__(self, invs=None):
-      self.invs = invs or []
+      # NOTE: invs could have been an iterator but it can only be used one
+      #       for dynamic inventory list, use a function that returns
+      #       inventories.
+      self.invs = list(invs) if invs is not None else []
 
    def __getattr__(self, key):
       func = getattr(Inventory, key)
