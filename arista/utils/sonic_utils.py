@@ -69,5 +69,8 @@ def portConfigPath():
    return os.path.join("/usr/share/sonic/device", platform, hwSku,
                         "port_config.ini")
 
+def getPlatform():
+   return platform.getPlatform()
+
 def getInventory():
-   return platform.getPlatform().getInventory()
+   return getPlatform().getInventory()

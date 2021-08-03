@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -23,13 +24,13 @@ class Lodoga(FixedSystem):
    SID = ['Lodoga', 'LodogaSsd']
    SKU = ['DCS-7050CX3-32S', 'DCS-7050CX3-32S-SSD']
 
+   PORTS = PortLayout(
+      qsfps=incrange(1, 32),
+      sfps=incrange(33, 34),
+   )
+
    def __init__(self):
       super(Lodoga, self).__init__()
-
-      self.sfpRange = incrange(33, 34)
-      self.qsfp100gRange = incrange(1, 32)
-
-      self.inventory.addPorts(sfps=self.sfpRange, qsfps=self.qsfp100gRange)
 
       self.newComponent(Trident3, PciAddr(bus=0x01))
 
@@ -106,7 +107,7 @@ class Lodoga(FixedSystem):
       ]
 
       scd.addSfpSlotBlock(
-         sfpRange=self.sfpRange,
+         sfpRange=self.PORTS.sfpRange,
          addr=0xA010,
          bus=16,
          ledAddr=0x6120,
@@ -116,7 +117,7 @@ class Lodoga(FixedSystem):
       )
 
       scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfp100gRange,
+         qsfpRange=self.PORTS.qsfpRange,
          addr=0xA050,
          bus=24,
          ledAddr=0x6140,

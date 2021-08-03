@@ -1,6 +1,7 @@
 from ..core.fan import FanSlot
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -29,14 +30,16 @@ class Cloverdale(FixedSystem):
    SID = ['Cloverdale', 'CloverdaleSsd']
    SKU = ['DCS-7050QX-32']
 
+   PORTS = PortLayout(
+      qsfps=incrange(1, 32),
+   )
+
    def __init__(self):
       super(Cloverdale, self).__init__()
 
+      # FIXME: cleanup later
       self.qsfp40gAutoRange = incrange(1, 24)
       self.qsfp40gOnlyRange = incrange(25, 32)
-      self.allQsfps = sorted(self.qsfp40gAutoRange + self.qsfp40gOnlyRange)
-
-      self.inventory.addPorts(qsfps=self.allQsfps)
 
       self.newComponent(Trident2, PciAddr(bus=0x02))
 

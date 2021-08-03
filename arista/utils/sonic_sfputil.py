@@ -1,7 +1,7 @@
 import select
 import time
 
-from .sonic_utils import getInventory
+from .sonic_utils import getPlatform
 
 try:
     from sonic_sfp.sfputilbase import SfpUtilBase
@@ -10,31 +10,32 @@ except ImportError as e:
 
 
 def getSfpUtil():
-    inventory = getInventory()
+    platform = getPlatform()
+    inventory = platform.getInventory()
 
     class SfpUtilCommon(SfpUtilBase):
         @property
         def port_start(self):
-            return inventory.getXcvrsRange()[0]
+            return platform.PORTS.allRange[0]
 
         @property
         def port_end(self):
-            return inventory.getXcvrsRange()[-1]
+            return platform.PORTS.allRange[-1]
 
         @property
         def osfp_ports(self):
-            return inventory.osfpRange
+            return platform.PORTS.osfpRange
 
         @property
         def qsfp_ports(self):
-            return inventory.qsfpRange
+            return platform.PORTS.qsfpRange
 
         # XXX: defining the sfp_ports property currently can't be done as
         #      it affect the code logic of the sfputil tool by preventing
         #      the qsfp ports from being detected
         #@property
         #def sfp_ports(self):
-        #    return inventory.sfpRange
+        #    return platform.PORTS.sfpRange
 
         @property
         def port_to_eeprom_mapping(self):

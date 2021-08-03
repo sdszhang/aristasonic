@@ -1,5 +1,6 @@
 
 from .component import Component
+from .port import PortLayout
 from .utils import HwApi
 
 class Sku(Component):
@@ -9,6 +10,8 @@ class Sku(Component):
    SKU = None
 
    DEFAULT_HWAPI = (0, 0)
+
+   PORTS = PortLayout()
 
    def __init__(self, *args, **kwargs):
       self.hwApi = kwargs.pop('hwApi', None)

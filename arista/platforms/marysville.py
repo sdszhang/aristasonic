@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -23,13 +24,13 @@ class Marysville(FixedSystem):
    SID = ['Marysville']
    SKU = ['DCS-7050SX3-48YC8']
 
+   PORTS = PortLayout(
+      sfps=incrange(1, 48),
+      qsfps=incrange(49, 56),
+   )
+
    def __init__(self):
       super(Marysville, self).__init__()
-
-      self.sfpRange = incrange(1, 48)
-      self.qsfp100gRange = incrange(49, 56)
-
-      self.inventory.addPorts(sfps=self.sfpRange, qsfps=self.qsfp100gRange)
 
       self.newComponent(Trident3, addr=PciAddr(bus=0x01))
 
@@ -105,7 +106,7 @@ class Marysville(FixedSystem):
       ]
 
       scd.addSfpSlotBlock(
-         sfpRange=self.sfpRange,
+         sfpRange=self.PORTS.sfpRange,
          addr=0xA000,
          bus=8,
          ledAddr=0x6100,
@@ -115,7 +116,7 @@ class Marysville(FixedSystem):
       )
 
       scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfp100gRange,
+         qsfpRange=self.PORTS.qsfpRange,
          addr=0xA300,
          bus=56,
          ledAddr=0x6400,

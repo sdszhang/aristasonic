@@ -29,12 +29,6 @@ from .mockinv import (
 
 class InventoryTest(unittest.TestCase):
    def _populateTestInventory(self, inv):
-      inv.addPorts(
-         sfps=list(range(0, 2)),
-         qsfps=list(range(2, 4)),
-         osfps=list(range(4, 6)),
-      )
-
       sfps = [MockSfp(0, 'SFP-1G-SX'), MockSfp(1, 'CAB-SFP-SFP-1M')]
       for sfp in sfps:
          name = sfp.getName()

@@ -7,11 +7,6 @@ from ..inventory.slot import Slot
 
 class Inventory(object):
    def __init__(self):
-      self.sfpRange = []
-      self.qsfpRange = []
-      self.osfpRange = []
-      self.allXcvrsRange = []
-
       self.leds = {}
       self.ledGroups = {}
 
@@ -52,20 +47,6 @@ class Inventory(object):
       self.gpios = {}
 
       self.causeProviders = []
-
-   def addPorts(self, sfps=None, qsfps=None, osfps=None):
-      if sfps:
-         self.sfpRange = sfps
-      if qsfps:
-         self.qsfpRange = qsfps
-      if osfps:
-         self.osfpRange = osfps
-
-      self.allXcvrsRange = sorted(self.sfpRange + self.qsfpRange +
-                                  self.osfpRange)
-
-   def getXcvrsRange(self):
-      return self.allXcvrsRange
 
    def getXcvrs(self):
       xcvrs = {}
@@ -322,10 +303,6 @@ class Inventory(object):
       return {
          "version": 1,
          "name": self.__class__.__name__,
-         # vars
-         "sfp": self.sfpRange,
-         "qsfp": self.qsfpRange,
-         "osfp": self.osfpRange,
          # objects
          "leds": [l.genDiag(ctx) for l in self.leds.values()],
          # TODO led groups

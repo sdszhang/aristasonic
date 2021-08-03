@@ -1,5 +1,6 @@
 
 from ...core.platform import registerPlatform
+from ...core.port import PortLayout
 from ...core.types import MdioSpeed
 from ...core.utils import incrange, HwApi
 
@@ -29,15 +30,16 @@ class ClearwaterBase(DenaliLinecard):
    GPIO1_CLS = Pca9555
    PHY_CLS = Babbage
 
-   def createPorts(self):
-      qsfpRange = incrange(1, 48)
-      self.inventory.addPorts(qsfps=qsfpRange)
+   PORTS = PortLayout(
+      qsfps=incrange(1, 48),
+   )
 
+   def createPorts(self):
       intrRegs = [self.scd.getInterrupt(intId) for intId in incrange(0, 6)]
       # IRQ2 -> port 32:1 (bit 31:0)
       # IRQ3 -> port 48:33 (bit 15:0)
       self.scd.addQsfpSlotBlock(
-         qsfpRange=qsfpRange,
+         qsfpRange=self.PORTS.qsfpRange,
          addr=0xA010,
          bus=self.XCVR_BUS_OFFSET,
          ledAddr=0x6100,

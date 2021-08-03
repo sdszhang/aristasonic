@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -22,13 +23,13 @@ class BlackhawkTD4(FixedSystem):
    SID = ['BlackhawkT4O']
    SKU = ['DCS-7050PX4-32S']
 
+   PORTS = PortLayout(
+      osfps=incrange(1, 32),
+      sfps=incrange(33, 34),
+   )
+
    def __init__(self):
       super(BlackhawkTD4, self).__init__()
-
-      self.osfpRange = incrange(1, 32)
-      self.sfpRange = incrange(33, 34)
-
-      self.inventory.addPorts(osfps=self.osfpRange, sfps=self.sfpRange)
 
       self.cpu = self.newComponent(LorikeetCpu)
       self.cpu.addCpuDpm()
@@ -86,7 +87,7 @@ class BlackhawkTD4(FixedSystem):
       ]
 
       scd.addOsfpSlotBlock(
-         osfpRange=self.osfpRange,
+         osfpRange=self.PORTS.osfpRange,
          addr=0xA010,
          bus=16,
          ledAddr=0x6100,
@@ -97,7 +98,7 @@ class BlackhawkTD4(FixedSystem):
       )
 
       scd.addSfpSlotBlock(
-         sfpRange=self.sfpRange,
+         sfpRange=self.PORTS.sfpRange,
          addr=0xA210,
          bus=48,
          ledAddr=0x6900,

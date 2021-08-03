@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -27,6 +28,11 @@ class Smartsville(FixedSystem):
 
    PHY = Babbage
 
+   PORTS = PortLayout(
+      qsfps=incrange(1, 32),
+      osfps=incrange(33, 36),
+   )
+
    def __init__(self):
       super(Smartsville, self).__init__()
 
@@ -38,11 +44,6 @@ class Smartsville(FixedSystem):
          'watchdog': UcdGpi(3),
          'overtemp': UcdGpi(4),
       })
-
-      self.qsfpRange = incrange(1, 32)
-      self.osfpRange = incrange(33, 36)
-
-      self.inventory.addPorts(qsfps=self.qsfpRange, osfps=self.osfpRange)
 
       self.newComponent(SwitchChip, PciAddr(bus=0x05))
 
@@ -121,26 +122,26 @@ class Smartsville(FixedSystem):
       ]
 
       scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfpRange,
+         qsfpRange=self.PORTS.qsfpRange,
          addr=0xA010,
          bus=8,
          ledAddr=0x6100,
          ledLanes=4,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
-         intrBitFn=lambda xcvrId: xcvrId - self.qsfpRange[0],
+         intrBitFn=lambda xcvrId: xcvrId - self.PORTS.qsfpRange[0],
          isHwModSelAvail=False
       )
 
       scd.addOsfpSlotBlock(
-         osfpRange=self.osfpRange,
+         osfpRange=self.PORTS.osfpRange,
          addr=0xA210,
          bus=40,
          ledAddr=0x6900,
          ledAddrOffsetFn=lambda x: 0x40,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 2,
-         intrBitFn=lambda xcvrId: xcvrId - self.osfpRange[0],
+         intrBitFn=lambda xcvrId: xcvrId - self.PORTS.osfpRange[0],
          isHwModSelAvail=False
       )
 

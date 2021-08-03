@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -24,13 +25,13 @@ class Upperlake(FixedSystem):
    SID = ['Upperlake', 'UpperlakeES', 'UpperlakeSsd']
    SKU = ['DCS-7060CX-32S', 'DCS-7060CX-32S-ES', 'DCS-7060CX-32S-SSD']
 
+   PORTS = PortLayout(
+      qsfps=incrange(1, 32),
+      sfps=incrange(33, 34),
+   )
+
    def __init__(self):
       super(Upperlake, self).__init__()
-
-      self.sfpRange = incrange(33, 34)
-      self.qsfp100gRange = incrange(1, 32)
-
-      self.inventory.addPorts(sfps=self.sfpRange, qsfps=self.qsfp100gRange)
 
       self.newComponent(Tomahawk, PciAddr(bus=0x01))
 
@@ -112,10 +113,10 @@ class Upperlake(FixedSystem):
          scd.createInterrupt(addr=0x3030, num=1),
       ]
 
-      scd.addSfpSlotBlock(sfpRange=self.sfpRange, addr=0x5010, bus=8, ledAddr=0x6100)
+      scd.addSfpSlotBlock(sfpRange=self.PORTS.sfpRange, addr=0x5010, bus=8, ledAddr=0x6100)
 
       scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfp100gRange,
+         qsfpRange=self.PORTS.qsfpRange,
          addr=0x5050,
          bus=16,
          ledAddr=0x6140,

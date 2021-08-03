@@ -82,10 +82,10 @@ class Chassis(ChassisBase):
             self._fan_drawer_list.append(FanDrawerLegacy(fan))
 
       self._sfp_list = []
-      xcvrsRange = self._inventory.getXcvrsRange()
-      if xcvrsRange:
-         self._sfp_list = [None] * len(xcvrsRange)
-         for index, slot in self._inventory.getXcvrSlots().items():
+      xcvrSlots = self._inventory.getXcvrSlots()
+      if xcvrSlots:
+         self._sfp_list = [None] * len(xcvrSlots)
+         for index, slot in xcvrSlots.items():
             self._sfp_list[index - 1] = Sfp(index, slot)
 
       # TODO: index used here to allow thermal.get_position_in_parent() to return

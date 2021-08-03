@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -24,15 +25,17 @@ class Clearlake(FixedSystem):
    SID = ['Clearlake', 'ClearlakeSsd']
    SKU = ['DCS-7050QX-32S', 'DCS-7050QX-32S-SSD']
 
+   PORTS = PortLayout(
+      sfps=incrange(1, 4),
+      qsfps=incrange(5, 36),
+   )
+
    def __init__(self):
       super(Clearlake, self).__init__()
 
-      self.sfpRange = incrange(1, 4)
+      # FIXME: cleanup later
       self.qsfp40gAutoRange = incrange(5, 28)
       self.qsfp40gOnlyRange = incrange(29, 36)
-      self.allQsfps = sorted(self.qsfp40gAutoRange + self.qsfp40gOnlyRange)
-
-      self.inventory.addPorts(sfps=self.sfpRange, qsfps=self.allQsfps)
 
       self.newComponent(Trident2, PciAddr(bus=0x01))
 
@@ -131,7 +134,7 @@ class Clearlake(FixedSystem):
       )
 
       scd.addSfpSlotBlock(
-         sfpRange=self.sfpRange,
+         sfpRange=self.PORTS.sfpRange,
          addr=0x5210,
          bus=40,
          ledAddr=0x6900

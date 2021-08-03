@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -23,13 +24,13 @@ class Gardena(FixedSystem):
    SID = ['Gardena', 'GardenaE']
    SKU = ['DCS-7260CX3-64', 'DCS-7260CX3-64E']
 
+   PORTS = PortLayout(
+      qsfps=incrange(1, 64),
+      sfps=incrange(65, 66),
+   )
+
    def __init__(self):
       super(Gardena, self).__init__()
-
-      self.sfpRange = incrange(65, 66)
-      self.qsfpRange = incrange(1, 64)
-
-      self.inventory.addPorts(qsfps=self.qsfpRange, sfps=self.sfpRange)
 
       self.newComponent(Tomahawk2, PciAddr(bus=0x07))
 
@@ -96,7 +97,7 @@ class Gardena(FixedSystem):
       ]
 
       scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfpRange,
+         qsfpRange=self.PORTS.qsfpRange,
          addr=0xA010,
          bus=8,
          ledAddr=0x6100,
@@ -108,7 +109,7 @@ class Gardena(FixedSystem):
       )
 
       scd.addSfpSlotBlock(
-         sfpRange=self.sfpRange,
+         sfpRange=self.PORTS.sfpRange,
          addr=0xA410,
          bus=6,
          ledAddr=0x7100

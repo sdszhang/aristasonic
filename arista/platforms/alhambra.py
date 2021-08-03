@@ -1,5 +1,6 @@
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
+from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -23,13 +24,13 @@ class Alhambra(FixedSystem):
    SID = ['Alhambra', 'AlhambraSsd']
    SKU = ['DCS-7170-64C', 'DCS-7170-64C-M']
 
-   def __init__(self, ports=64, hasLmSensor=True, psus=None):
+   PORTS = PortLayout(
+      qsfps=incrange(1, 64),
+      sfps=incrange(65, 66),
+   )
+
+   def __init__(self, hasLmSensor=True, psus=None):
       super(Alhambra, self).__init__()
-
-      self.qsfpRange = incrange(1, ports)
-      self.sfpRange = incrange(ports + 1, ports + 2)
-
-      self.inventory.addPorts(qsfps=self.qsfpRange, sfps=self.sfpRange)
 
       self.newComponent(Tofino, PciAddr(bus=0x07))
 
@@ -71,7 +72,7 @@ class Alhambra(FixedSystem):
       ]
 
       scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfpRange,
+         qsfpRange=self.PORTS.qsfpRange,
          addr=0xA010,
          bus=8,
          ledAddr=0x6100,
@@ -83,7 +84,7 @@ class Alhambra(FixedSystem):
       )
 
       scd.addSfpSlotBlock(
-         sfpRange=self.sfpRange,
+         sfpRange=self.PORTS.sfpRange,
          addr=0xA500,
          bus=72,
          ledAddr=0x7200
