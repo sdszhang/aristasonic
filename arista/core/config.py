@@ -69,7 +69,7 @@ class Config(object):
 
       try:
          with open(CONFIG_PATH, 'r') as f:
-            data = yaml.load(f)
+            data = yaml.safe_load(f)
       except IOError as e:
          logging.warning('cannot open file %s: %s', CONFIG_PATH, e)
          return
