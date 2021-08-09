@@ -27,7 +27,7 @@ class Config(object):
          cls.instance_.use_metainventory = True
          cls.instance_.write_hw_thresholds = True
          cls.instance_.report_hw_thresholds = False
-         cls.instance_.api_use_sfpoptoe = False
+         cls.instance_.api_use_sfpoptoe = True
          cls.instance_.flash_path = '/host'
          cls.instance_.tmpfs_path = '/var/run/platform_cache/arista'
          cls.instance_.etc_path = '/etc/sonic'
