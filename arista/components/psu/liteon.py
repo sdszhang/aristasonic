@@ -37,3 +37,13 @@ class PS2102(LiteonPsu):
       PsuIdent('PS-2102-1AR', 'PWR-1011-AC-BLUE', Airflow.REVERSE),
       PsuIdent('DD-2102-1AR', 'PWR-1011-DC-BLUE', Airflow.REVERSE),
    ]
+
+class PS2242(LiteonPsu):
+   DRIVER = 'dps800'
+   CAPACITY = 2400
+   IDENTIFIERS = [
+      PsuIdent('PS-2242-3A ', 'PWR-2411-AC-RED',  Airflow.FORWARD),
+      PsuIdent('DD-2242-3A ', 'PWR-2411-DC-RED',  Airflow.FORWARD),
+      PsuIdent('PS-2242-3AR', 'PWR-2411-AC-BLUE', Airflow.REVERSE),
+      PsuIdent('DD-2242-3AR', 'PWR-2411-DC-BLUE', Airflow.REVERSE),
+   ]
