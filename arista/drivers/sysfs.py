@@ -478,3 +478,4 @@ class LedSysfsDriver(SysfsDriver):
       if value in self.inverseColorDict:
          value = self.inverseColorDict[value]
       self.write(led.name, str(value), path=path)
+      return True
