@@ -25,7 +25,8 @@ class MetaInventory(object):
 
    def __getattr__(self, key):
       func = getattr(Inventory, key)
-      def callback():
+
+      def callbackCol():
          data = None
          count = 0
          for inv in self.invs:
@@ -44,4 +45,19 @@ class MetaInventory(object):
          if count == 0:
             return copy.deepcopy(getattr(_TEMPLATE_INVENTORY, key)())
          return data
+
+      def callbackItem(*args):
+         for inv in self.invs:
+            try:
+               res = func(inv, *args)
+            except KeyError: # NOTE: could be enhanced via a has* call
+               continue
+            return res
+         raise KeyError(*args)
+
+      def callback(*args):
+         if args:
+            return callbackItem(*args)
+         return callbackCol()
+
       return callback
