@@ -6,5 +6,5 @@ from ....show.environment import ShowEnvironment
 @registerAction(environmentParser)
 def doShowEnvironment(ctx, args):
    for linecard in ctx.linecards:
-      ctx.show.addInventory(linecard.inventory)
+      ctx.show.addInventory(linecard.getInventory())
    ctx.show.render(ShowEnvironment())
