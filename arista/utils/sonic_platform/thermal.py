@@ -131,6 +131,8 @@ class SfpThermal(ThermalBase):
 
    def get_temperature(self):
       value = self._sfp.get_temperature()
+      if value == 'N/A':
+         raise NotImplementedError
       if self._minimum is None or self._minimum > value:
          self._minimum = value
       if self._maximum is None or self._maximum < value:
