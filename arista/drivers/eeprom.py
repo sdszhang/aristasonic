@@ -1,6 +1,9 @@
 
 import os
 
+from ..core.utils import inSimulation
+from ..libs.wait import waitFor
+
 from .kernel import I2cKernelDriver
 
 class EepromKernelDriver(I2cKernelDriver):
@@ -13,6 +16,12 @@ class EepromKernelDriver(I2cKernelDriver):
    def read(self, size=-1):
       with open(self.eepromPath(), 'rb') as f:
          return bytearray(f.read(size))
+
+   def setup(self):
+       super(EepromKernelDriver, self).setup()
+       if not inSimulation():
+           waitFor(lambda: os.path.exists(self.eepromPath()),
+                   description="eeprom sysfs entry")
 
 class At24KernelDriver(EepromKernelDriver):
    MODULE = 'at24'
