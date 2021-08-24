@@ -57,11 +57,6 @@ class Eldridge(DenaliFabric):
    def createAsics(self):
       asicAddrs = [self.slot.pciAddr(bus=bus) for bus in self.ASIC_BUSES]
 
-      # FIXME: IO should not happen in the constructor. Move this to setup.
-      # Always enable 2 pins to access Ramon and Pol via Smbus
-      self.gpio2.ramonSmbusEnable(True)
-      self.gpio2.polSmbusEnable(True)
-
       asicResetGpios = {
          0 : (self.gpio2.ramon0SysReset, self.gpio2.ramon0PcieReset),
          1 : (self.gpio2.ramon1SysReset, self.gpio2.ramon1PcieReset),
@@ -150,3 +145,11 @@ class Eldridge(DenaliFabric):
          SensorDesc(diode=4, name='Ramon 2 Core (secondary)',
                     position=Position.OTHER, target=75, overheat=85, critical=95),
       ])
+
+   def powerStandbyDomainIs(self, on):
+      super(Eldridge, self).powerStandbyDomainIs(on)
+      if on:
+         # Always enable 2 pins to access Ramon and Pol via Smbus
+         self.gpio2.ramonSmbusEnable(True)
+         self.gpio2.polSmbusEnable(True)
+
