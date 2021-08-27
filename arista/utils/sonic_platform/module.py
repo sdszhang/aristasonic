@@ -117,9 +117,23 @@ class FabricModule(Module):
    def is_midplane_reachable(self):
       return False
 
+   def get_all_asics(self):
+      self._asic_list = []
+      starting_index = self._sku.getRelativeSlotId() * len(self._sku.asics)
+      for asic_index, asic in enumerate(self._sku.asics):
+         global_asic_index = starting_index + asic_index
+         self._asic_list.append((global_asic_index, str(asic.addr)))
+      return self._asic_list
+
 class LinecardModule(Module):
    def get_name(self):
       return '%s%s' % (self.MODULE_TYPE_LINE, self._sku.getRelativeSlotId())
 
    def get_type(self):
       return self.MODULE_TYPE_LINE
+
+   def get_all_asics(self):
+      self._asic_list = []
+      for asic_index, asic in enumerate(self._sku.asics):
+         self._asic_list.append((asic_index, str(asic.addr)))
+      return self._asic_list
