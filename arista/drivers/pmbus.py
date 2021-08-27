@@ -1,6 +1,7 @@
 
 from .i2c import I2cDevDriver
 from .kernel import I2cKernelDriver
+from .user import GpioFuncImpl
 
 class PsuPmbusDetect(I2cDevDriver):
 
@@ -85,3 +86,21 @@ class PsuPmbusDetect(I2cDevDriver):
 class PmbusKernelDriver(I2cKernelDriver):
    MODULE = 'pmbus'
    NAME = 'pmbus'
+
+   def getInputOkGpio(self):
+      def _isGood(value=None):
+         try:
+            with open(self.getHwmonEntry('power1_input')) as f:
+               return 1 if int(f.read()) else 0
+         except Exception: # pylint: disable=broad-except
+            return 0
+      return GpioFuncImpl(self, _isGood, name='input_ok')
+
+   def getOutputOkGpio(self, name=''):
+      def _isGood(value=None):
+         try:
+            with open(self.getHwmonEntry('power2_input')) as f:
+               return 1 if int(f.read()) else 0
+         except Exception: # pylint: disable=broad-except
+            return 0
+      return GpioFuncImpl(self, _isGood, name='output_ok')
