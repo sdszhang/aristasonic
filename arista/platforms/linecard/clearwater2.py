@@ -38,7 +38,7 @@ class ClearwaterCpuBase(ClearwaterBase):
 
       # Riser cards prefdl
       for riserId in incrange(1, 12):
-         bus = 96 + riserId
+         bus = 95 + riserId
          self.scd.newComponent(At24C512, addr=self.scd.i2cAddr(bus, 0x50),
                                label='card%d_riser%s' % (self.slot.slotId, riserId))
 
