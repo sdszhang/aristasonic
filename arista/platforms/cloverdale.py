@@ -114,6 +114,7 @@ class Cloverdale(FixedSystem):
             addrFunc=addrFunc,
             presentGpio=scd.inventory.getGpio("%s_present" % name),
             led=scd.inventory.getLed(name),
+            forcePsuLoad=True,
             psus=[
                DS460,
             ],
