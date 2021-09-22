@@ -66,7 +66,13 @@ class SfpOptoe(SfpOptoeBase):
       try:
          return self._slot.getLowPowerMode()
       except NotImplementedError:
-         return False
+         try:
+            override = self.get_xcvr_api().get_power_override()
+            if not override:
+               return False
+            return self.get_xcvr_api().get_power_set()
+         except: # pylint: disable-msg=W0702
+            return False
       except: # pylint: disable-msg=W0702
          return False
 
@@ -74,7 +80,10 @@ class SfpOptoe(SfpOptoeBase):
       try:
          self._slot.setLowPowerMode(lpmode)
       except NotImplementedError:
-         return False
+         try:
+            return self.get_xcvr_api().set_power_override(True, lpmode)
+         except: # pylint: disable-msg=W0702
+            return False
       except: # pylint: disable-msg=W0702
          return False
       return True
