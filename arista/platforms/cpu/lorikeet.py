@@ -35,7 +35,6 @@ class LorikeetCpu(Cpu):
 
       cpld.createPowerCycle()
       cpld.addSmbusMasterRange(0x8000, 2, 0x80, 4)
-      cpld.addFanGroup(0x9000, 3, 3)
 
       cpld.newComponent(Max6658, cpld.i2cAddr(0, 0x4c), sensors=[
          SensorDesc(diode=0, name='CPU board temp sensor',
@@ -60,3 +59,6 @@ class LorikeetCpu(Cpu):
 
    def switchDpmAddr(self, addr=0x4f, t=3, **kwargs):
       return self.cpld.i2cAddr(5, addr, t=t, **kwargs)
+
+   def addFanGroup(self, count=3):
+      self.cpld.addFanGroup(0x9000, 3, count)

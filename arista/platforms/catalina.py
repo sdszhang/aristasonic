@@ -36,6 +36,7 @@ class CatalinaP(FixedSystem):
       super(CatalinaP, self).__init__()
 
       self.cpu = self.newComponent(LorikeetCpu)
+      self.cpu.addFanGroup(4)
       self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(0x11),
                                  causes={
@@ -138,7 +139,7 @@ class CatalinaP(FixedSystem):
             presentGpio=scd.inventory.getGpio("%s_present" % name),
             inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
             outputOkGpio=scd.inventory.getGpio("%s_status" % name),
-            led=self.cpu.cpld.inventory.getLed('%s' % name),
+            led=scd.inventory.getLed('%s' % name),
             psus=[
                PS2242,
             ],

@@ -32,6 +32,7 @@ class BlackhawkTD4(FixedSystem):
       super(BlackhawkTD4, self).__init__()
 
       self.cpu = self.newComponent(LorikeetCpu)
+      self.cpu.addFanGroup(3)
       self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Adm1266, addr=self.cpu.switchDpmAddr(), causes={
          'overtemp': AdmPin(1, AdmPin.GPIO),
