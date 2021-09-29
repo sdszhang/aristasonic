@@ -44,6 +44,7 @@ PYLINTRC ?= $(BASE_DIR)/.pylintrc
 PYLINT_BLACKLIST ?= $(shell "cat $(BASE_DIR)/.pylint_blacklist | tr '\n' ','")
 PYLINT_JOBS ?= 4
 PYTEST_ARGS ?=
+PY_TARGETS ?= py3
 
 # scd
 ARISTA_SCD_DRIVER_CONFIG ?= m
@@ -86,7 +87,9 @@ build-py3:
 	echo "$$library_version" > $(BASE_DIR)/$(PACKAGE_NAME)/__version__.py
 	$(PYTHON3) setup.py build $(PY3_BUILD_ARGS)
 
-build: build-drivers build-py2 build-py3 build-libs
+build-py: $(addprefix build-,$(PY_TARGETS))
+
+build: build-drivers build-py build-libs
 
 #
 # clean targets
@@ -99,19 +102,21 @@ clean-drivers:
 
 clean-py2:
 	$(PYTHON2) setup.py clean $(PY2_BUILD_ARGS)
-	find $(BASE_DIR)/arista -name '*.pyc' -delete
+	find "$(BASE_DIR)/arista" -name '*.pyc' -delete
 
 clean-py3:
 	$(PYTHON3) setup.py clean $(PY3_BUILD_ARGS)
-	find $(BASE_DIR)/arista -name '__pycache__' -exec rm -rf {} +
+	find "$(BASE_DIR)/arista" -name '__pycache__' -exec rm -rf {} +
+
+clean-py: $(addprefix clean-,$(PY_TARGETS))
 
 clean-libs:
 	$(MAKE) -C lib clean
 
-clean: clean-py2 clean-py3 clean-drivers clean-libs
+clean: clean-py clean-drivers clean-libs
 
 distclean: clean
-	$(RM) -r $(BASE_DIR)/*.egg-info $(BASE_DIR)/build $(BASE_DIR)/install
+	$(RM) -r "$(BASE_DIR)/*.egg-info" "$(BASE_DIR)/build" "$(BASE_DIR)/install"
 
 #
 # install targets
@@ -146,19 +151,21 @@ install-libs:
 
 install-fs: install-bin install-systemd install-udev
 
-install: install-py2 install-py3 install-drivers install-libs install-fs
+install-py: $(addprefix install-,$(PY_TARGETS))
+
+install: install-py install-drivers install-libs install-fs
 
 #
 # test targets
 #
-
-test-py: test-py3
 
 test-py2:
 	$(PYTHON2) -m pytest $(PYTEST_ARGS)
 
 test-py3:
 	$(PYTHON3) -m pytest $(PYTEST_ARGS)
+
+test-py: $(addprefix test-,$(PY_TARGETS))
 
 pylint:
 	# NOTE: for now we only check py2/py3 compatibility.
@@ -173,7 +180,7 @@ pylint:
 pycoverage:
 	$(PYTHON3) -m pytest --cov-config=.coveragerc --cov-report term-missing:skip-covered --cov $(PACKAGE_NAME)
 
-test: test-py2 test-py3 pylint
+test: test-py pylint
 
 #
 # dev tools
