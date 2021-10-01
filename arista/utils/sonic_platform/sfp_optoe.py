@@ -19,7 +19,7 @@ class SfpOptoe(SfpOptoeBase):
 
    def __init__(self, index, slot):
       SfpOptoeBase.__init__(self)
-      self._index = index
+      self.index = index
       self._slot = slot
       sfp = slot.getXcvr()
       self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
@@ -45,13 +45,13 @@ class SfpOptoe(SfpOptoeBase):
       return sfp_type
 
    def get_id(self):
-      return self._index
+      return self.index
 
    def get_name(self):
       return self._slot.getName()
 
    def get_position_in_parent(self):
-      return self._index
+      return self.index
 
    def get_presence(self):
       return self._slot.getPresence()
@@ -124,3 +124,9 @@ class SfpOptoe(SfpOptoeBase):
 
    def get_eeprom_path(self):
       return self._eepromPath
+
+   def get_error_description(self):
+      if not self.get_presence():
+         return self.SFP_STATUS_UNPLUGGED
+
+      return self.SFP_STATUS_OK
