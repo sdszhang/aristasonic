@@ -1,6 +1,4 @@
 
-from __future__ import absolute_import, division, print_function
-
 from ..core.desc import HwDesc
 
 class Position(object):
@@ -9,7 +7,11 @@ class Position(object):
    OTHER = 'other'
 
 class SensorDesc(HwDesc):
-   def __init__(self, diode, name, position, target, overheat, critical,
+
+   OID_FIELD = 'diode'
+
+   def __init__(self, diode, name=None, position=Position.OTHER,
+                target=0., overheat=0., critical=0.,
                 low=0.0, lcritical=-5.0, **kwargs):
       super(SensorDesc, self).__init__(**kwargs)
       self.diode = diode
@@ -26,3 +28,11 @@ class SensorDesc(HwDesc):
       values = kwargs.copy()
       values.update(self.__dict__)
       self.name = self.fmt % values
+
+   @classmethod
+   def __oid2lid__(cls, oid):
+      return oid - 1
+
+   @classmethod
+   def __lid2oid__(cls, lid):
+      return lid + 1

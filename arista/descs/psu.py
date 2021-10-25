@@ -1,9 +1,10 @@
 
-from __future__ import absolute_import, division, print_function
-
 from ..core.desc import HwDesc
 
 class PsuDesc(HwDesc):
+
+   OID_FIELD = 'psuId'
+
    def __init__(self, psuId=None, led=None, sensors=None, fans=None, **kwargs):
       super(PsuDesc, self).__init__(**kwargs)
       self.psuId = psuId

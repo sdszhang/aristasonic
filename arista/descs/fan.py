@@ -1,6 +1,4 @@
 
-from __future__ import absolute_import, division, print_function
-
 from ..core.desc import HwDesc
 from ..core.cooling import Airflow
 
@@ -10,6 +8,9 @@ class FanPosition(object):
    OUTLET = 'outlet'
 
 class FanDesc(HwDesc):
+
+   OID_FIELD = 'fanId'
+
    def __init__(self, fanId, name='fan%(fanId)s', position=FanPosition.UNKNOWN,
                 airflow=Airflow.UNKNOWN, ledId=None, **kwargs):
       super(FanDesc, self).__init__(**kwargs)
@@ -26,6 +27,9 @@ class FanDesc(HwDesc):
       self.name = self.fmt % values
 
 class FanSlotDesc(HwDesc):
+
+   OID_FIELD = 'slotId'
+
    def __init__(self, slotId, name=None, fans=None, ledId=None, **kwargs):
       super(FanSlotDesc, self).__init__(**kwargs)
       self.slotId = slotId
