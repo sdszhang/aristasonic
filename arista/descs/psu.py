@@ -5,12 +5,14 @@ class PsuDesc(HwDesc):
 
    OID_FIELD = 'psuId'
 
-   def __init__(self, psuId=None, led=None, sensors=None, fans=None, **kwargs):
+   def __init__(self, psuId=None, led=None, sensors=None, fans=None, rails=None,
+                **kwargs):
       super(PsuDesc, self).__init__(**kwargs)
       self.psuId = psuId
       self.led = led
       self.sensors = sensors or []
       self.fans = fans or []
+      self.rails = rails or []
 
    def setPsuId(self, psuId):
       self.psuId = psuId

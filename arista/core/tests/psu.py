@@ -3,6 +3,7 @@ from ...tests.testing import unittest
 
 from ...descs.fan import FanDesc, FanPosition
 from ...descs.psu import PsuDesc
+from ...descs.rail import RailDesc, RailDirection
 from ...descs.sensor import Position, SensorDesc
 
 from ..component import Component, Priority
@@ -23,6 +24,8 @@ class MockPmbus(Component):
       pass
    def addFans(self, fans):
       pass
+   def addRails(self, rails):
+      pass
 
 class MockPsuModel(PsuModel):
    PMBUS_CLS = MockPmbus
@@ -38,6 +41,11 @@ class PsuVendor1(MockPsuModel):
       fans=[
          FanDesc(fanId=1, name='FanP%(psuId)d/%(fanId)d',
                  position=FanPosition.OUTLET),
+      ],
+      rails=[
+         RailDesc(railId=0, direction=RailDirection.INPUT),
+         RailDesc(railId=1, direction=RailDirection.OUTPUT),
+         RailDesc(railId=2, direction=RailDirection.OUTPUT),
       ],
    )
 
