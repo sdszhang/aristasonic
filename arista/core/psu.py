@@ -39,6 +39,15 @@ class PsuImpl(PsuInv):
    def getCapacity(self):
       return self.model.CAPACITY
 
+   def getFans(self):
+      return self.psu.getInventory().getFans()
+
+   def getTemps(self):
+      return self.psu.getInventory().getTemps()
+
+   def getRails(self):
+      return self.psu.getInventory().getRails()
+
 class PsuSlotImpl(PsuSlotInv):
    def __init__(self, slot):
       self.slot = slot
@@ -104,6 +113,7 @@ class PsuSlot(SlotComponent):
          assert len(psus) == 1, "Fixed PSU cannot list more than one"
       self.psuSlot = self.inventory.addPsuSlot(PsuSlotImpl(self))
       self.psuInv = None
+      self.psu = None
       self.load(cacheOnly=True) # no IO in the constructor
 
    def _forcePsuModel(self, model):
@@ -201,6 +211,9 @@ class PsuSlot(SlotComponent):
       )
       psu.addTempSensors(desc.sensors)
       psu.addFans(desc.fans)
+      psu.addRails(desc.rails)
+      self.psu = psu
+      self.components = self.components[:-1]
       return psu
 
    def load(self, useCache=True, cacheOnly=False):
@@ -217,6 +230,7 @@ class PsuSlot(SlotComponent):
 
       desc = copy.deepcopy(self.model.DESCRIPTION)
       desc.setPsuId(self.slotId)
+      desc.setAirflow(airflow=self.model.identifier.airflow)
       psu = self.addPsu(desc)
       self.psuSlot.insertPsu(psu)
 
@@ -253,11 +267,11 @@ class PsuSlot(SlotComponent):
 
    def setup(self):
       self.load(useCache=False)
-      if self.components:
+      if self.psu:
          # initialize the PSU, iterComponent will not run on it since the list
          # has already been computed.
-         self.components[0].setup()
-         self.components[0].finish()
+         self.psu.setup()
+         self.psu.finish()
 
 class PsuModel():
    MANUFACTURER = None

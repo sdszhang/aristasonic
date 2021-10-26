@@ -20,3 +20,7 @@ class PsuDesc(HwDesc):
          sensor.renderName(psuId=psuId)
       for fan in self.fans:
          fan.renderName(psuId=psuId)
+
+   def setAirflow(self, airflow):
+      for fan in self.fans:
+          fan.airflow = airflow

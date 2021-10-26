@@ -552,13 +552,14 @@ class PowerSysfsImpl(GenericSysfsImpl):
 
 class RailSysfsRawImpl(Rail):
    def __init__(self, driver, desc, **kwargs):
-      self.railId = desc.railId + 1
+      self.railId = desc.railId
       self.driver = driver
       self.desc = desc
       self.__dict__.update(**kwargs)
       self.voltage = SysfsEntryFloat(self, 'in%d_input' % self.railId)
       self.current = SysfsEntryFloat(self, 'curr%d_input' % self.railId)
-      self.power = SysfsEntryFloat(self, 'power%d_input' % self.railId)
+      self.power = SysfsEntryFloat(self, 'power%d_input' % self.railId,
+                                   scale=1000000.)
 
    def _tryComputeDiv(self, dividend, divisor):
       if not dividend.exists() or not divisor.exists():
@@ -591,13 +592,34 @@ class RailSysfsRawImpl(Rail):
 
 class RailSysfsImpl(Rail):
    def __init__(self, driver, desc, **kwargs):
-      self.railId = desc.railId + 1
+      self.railId = desc.railId
       self.driver = driver
       self.desc = desc
       self.__dict__.update(**kwargs)
-      self.voltage = VoltageSysfsImpl(driver, desc.voltage) if desc.voltage else None
-      self.current = CurrentSysfsImpl(driver, desc.current) if desc.current else None
-      self.power = PowerSysfsImpl(driver, desc.power) if desc.power else None
+      self.voltage = VoltageSysfsImpl(driver, self._getVoltageDesc(desc))
+      self.current = CurrentSysfsImpl(driver, self._getCurrentDesc(desc))
+      self.power = PowerSysfsImpl(driver, self._getPowerDesc(desc))
+
+   def _getVoltageDesc(self, desc):
+      return desc.voltage or VoltageDesc(
+         voltId=desc.railId,
+         name=desc.name,
+         direction=desc.direction
+      )
+
+   def _getCurrentDesc(self, desc):
+      return desc.current or CurrentDesc(
+         currId=desc.railId,
+         name=desc.name,
+         direction=desc.direction
+      )
+
+   def _getPowerDesc(self, desc):
+      return desc.power or PowerDesc(
+         powerId=desc.railId,
+         name=desc.name,
+         direction=desc.direction
+      )
 
    def _tryComputeDiv(self, dividend, divisor):
       if not dividend or not divisor:
@@ -615,16 +637,22 @@ class RailSysfsImpl(Rail):
 
    def getCurrent(self):
       if self.current:
-         return self.current.getCurrent()
+         value = self.current.getCurrent()
+         if value is not None:
+             return value
       return self._tryComputeDiv(self.power, self.voltage)
 
    def getVoltage(self):
       if self.voltage:
-         return self.voltage.getVoltage()
+         value = self.voltage.getVoltage()
+         if value is not None:
+             return value
       return self._tryComputeDiv(self.power, self.current)
 
    def getPower(self):
       if self.power:
-         return self.power.getPower()
+         value = self.power.getPower()
+         if value is not None:
+             return value
       return self._tryComputeMul(self.current, self.voltage)
 

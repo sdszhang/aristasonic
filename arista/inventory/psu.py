@@ -52,3 +52,15 @@ class Psu(InventoryInterface):
    @diagmethod('capacity')
    def getCapacity(self):
       raise NotImplementedError
+
+   @diagmethod('fans', diag=True)
+   def getFans(self):
+      raise NotImplementedError
+
+   @diagmethod('temps', diag=True)
+   def getTemps(self):
+      raise NotImplementedError
+
+   @diagmethod('rails', diag=True)
+   def getRails(self):
+      raise NotImplementedError
