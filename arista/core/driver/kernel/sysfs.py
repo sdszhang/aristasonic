@@ -1,13 +1,18 @@
 from __future__ import division, print_function, with_statement
 
+from collections import defaultdict
 import os
+import re
 
 from ... import utils
 from ...config import Config
 from ...driver import Driver
 from ...log import getLogger
 
+from ....descs.fan import FanDesc
 from ....descs.led import LedColor
+from ....descs.rail import VoltageDesc, CurrentDesc, PowerDesc
+from ....descs.sensor import SensorDesc
 
 from ....inventory.fan import Fan
 from ....inventory.gpio import Gpio
@@ -140,7 +145,82 @@ class SysfsEntryCustomLed(SysfsEntryIntLed):
    def _writeConversion(self, value):
       return str(self.color2value[value])
 
-class FanSysfsImpl(Fan):
+class GenericSysfs(object):
+
+   DESC_CLS = None
+   DESC_NAME = None
+   SYSFS_PREFIX = None
+
+   @classmethod
+   def descName(cls):
+      return cls.DESC_NAME
+
+   @classmethod
+   def descMatch(cls, oid, desc):
+      return desc.__getoid__() == oid
+
+   @classmethod
+   def descForId(cls, oid):
+      return cls.DESC_CLS(cls.DESC_CLS.__oid2lid__(oid))
+
+   @classmethod
+   def getDescForId(cls, oid, descs=None):
+      for desc in descs or []:
+         if cls.descMatch(oid, desc):
+            return desc
+      return cls.descForId(oid)
+
+class GenericSysfsImpl(GenericSysfs):
+
+   SCALE_FACTOR = 1000.
+
+   def __init__(self, driver, desc, prefix=None, **kwargs):
+      self.prefix = prefix or '%s%s' % (self.SYSFS_PREFIX, desc.__getoid__())
+      self.driver = driver
+      self.desc = desc
+      scale = self.SCALE_FACTOR
+      self.label = SysfsEntry(self, '%s_label' % self.prefix)
+      self.input = SysfsEntryFloat(self, '%s_input' % self.prefix, scale=scale)
+      self.max = SysfsEntryFloat(self, '%s_max' % self.prefix, scale=scale)
+      self.min = SysfsEntryFloat(self, '%s_min' % self.prefix, scale=scale)
+      self.crit = SysfsEntryFloat(self, '%s_crit' % self.prefix, scale=scale)
+      self.lcrit = SysfsEntryFloat(self, '%s_lcrit' % self.prefix, scale=scale)
+      self.__dict__.update(**kwargs)
+
+   def _getOr(self, entry, *defaults):
+      if entry.exists():
+         return entry.read()
+      for default in defaults:
+         if default is not None:
+            return default
+      return None
+
+   def getDesc(self):
+      return self.desc
+
+   def getName(self):
+      return self._getOr(self.label, self.desc.name)
+
+   def getInput(self):
+      return self._getOr(self.input)
+
+   def getHighThreshold(self):
+      return self._getOr(self.max)
+
+   def getLowThreshold(self):
+      return self._getOr(self.min)
+
+   def getCriticalThreshold(self):
+      return self._getOr(self.crit)
+
+   def getLowCriticalThreshold(self):
+      return self._getOr(self.lcrit)
+
+class FanSysfsImpl(Fan, GenericSysfs):
+
+   DESC_CLS = FanDesc
+   DESC_NAME = 'fans'
+   SYSFS_PREFIX = 'fan' # NOTE: also pwm but it goes with
 
    MIN_FAN_SPEED = 30
    MAX_FAN_SPEED = 100
@@ -163,6 +243,9 @@ class FanSysfsImpl(Fan):
 
    def getId(self):
       return self.fanId
+
+   def getDesc(self):
+      return self.desc
 
    def getName(self):
       if self.desc.name is None:
@@ -270,23 +353,32 @@ class LedRgbSysfsImpl(Led):
    def isStatusLed(self):
       return 'sfp' in self.desc.name
 
-class TempSysfsImpl(Temp):
+class TempSysfsImpl(Temp, GenericSysfs):
+
+   DESC_CLS = SensorDesc
+   DESC_NAME = 'sensors'
+   SYSFS_PREFIX = 'temp'
+
    def __init__(self, driver, desc, **kwargs):
       self.tempId = desc.diode + 1
       self.driver = driver
       self.desc = desc
       self.reportHwThresh = Config().report_hw_thresholds
       self.__dict__.update(**kwargs)
+      self.label = SysfsEntry(self, 'temp%d_label' % self.tempId)
       self.input = SysfsEntryFloat(self, 'temp%d_input' % self.tempId)
       self.max = SysfsEntryFloat(self, 'temp%d_max' % self.tempId)
       self.crit = SysfsEntryFloat(self, 'temp%d_crit' % self.tempId)
       self.min = SysfsEntryFloat(self, 'temp%d_min' % self.tempId)
       self.lcrit = SysfsEntryFloat(self, 'temp%d_lcrit' % self.tempId)
       self.fault = SysfsEntryBool(self, 'temp%d_fault' % self.tempId)
-      # XXX: override the label ?
 
    def getName(self):
-      return self.desc.name
+      if self.desc.name:
+         return self.desc.name
+      if self.label.exists():
+         return self.label.read()
+      return "N/A"
 
    def getDesc(self):
       return self.desc
@@ -429,3 +521,32 @@ class GpioSysfsImpl(Gpio):
 
    def setActive(self, value):
       self.setRawValue(not value if self.isActiveLow() else value)
+
+class VoltageSysfsImpl(GenericSysfsImpl):
+
+   DESC_CLS = VoltageDesc
+   DESC_NAME = 'voltages'
+   SYSFS_PREFIX = 'in'
+
+   def getVoltage(self):
+      return self.getInput()
+
+class CurrentSysfsImpl(GenericSysfsImpl):
+
+   DESC_CLS = CurrentDesc
+   DESC_NAME = 'currents'
+   SYSFS_PREFIX = 'curr'
+
+   def getCurrent(self):
+      return self.getInput()
+
+class PowerSysfsImpl(GenericSysfsImpl):
+
+   DESC_CLS = PowerDesc
+   DESC_NAME = 'powers'
+   SYSFS_PREFIX = 'power'
+   SCALE_FACTOR = 1000000. # uW
+
+   def getPower(self):
+      return self.getInput()
+
