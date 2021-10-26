@@ -11,7 +11,7 @@ from ...log import getLogger
 
 from ....descs.fan import FanDesc
 from ....descs.led import LedColor
-from ....descs.rail import VoltageDesc, CurrentDesc, PowerDesc
+from ....descs.rail import CurrentDesc, PowerDesc, RailDesc, VoltageDesc
 from ....descs.sensor import SensorDesc
 
 from ....inventory.fan import Fan
@@ -549,4 +549,82 @@ class PowerSysfsImpl(GenericSysfsImpl):
 
    def getPower(self):
       return self.getInput()
+
+class RailSysfsRawImpl(Rail):
+   def __init__(self, driver, desc, **kwargs):
+      self.railId = desc.railId + 1
+      self.driver = driver
+      self.desc = desc
+      self.__dict__.update(**kwargs)
+      self.voltage = SysfsEntryFloat(self, 'in%d_input' % self.railId)
+      self.current = SysfsEntryFloat(self, 'curr%d_input' % self.railId)
+      self.power = SysfsEntryFloat(self, 'power%d_input' % self.railId)
+
+   def _tryComputeDiv(self, dividend, divisor):
+      if not dividend.exists() or not divisor.exists():
+         return 0
+      divisor = divisor.read()
+      return dividend.read() / divisor if divisor != 0 else 0
+
+   def _tryComputeMul(self, val1, val2):
+      if not val1.exists() or not val2.exists():
+         return 0
+      return val1.read() * val2.read()
+
+   def getName(self):
+      return self.desc.name
+
+   def getCurrent(self):
+      if self.current.exists():
+         return self.current.read()
+      return self._tryComputeDiv(self.power, self.voltage)
+
+   def getVoltage(self):
+      if self.voltage.exists():
+         return self.voltage.read()
+      return self._tryComputeDiv(self.power, self.current)
+
+   def getPower(self):
+      if self.power.exists():
+         return self.power.read()
+      return self._tryComputeMul(self.current, self.voltage)
+
+class RailSysfsImpl(Rail):
+   def __init__(self, driver, desc, **kwargs):
+      self.railId = desc.railId + 1
+      self.driver = driver
+      self.desc = desc
+      self.__dict__.update(**kwargs)
+      self.voltage = VoltageSysfsImpl(driver, desc.voltage) if desc.voltage else None
+      self.current = CurrentSysfsImpl(driver, desc.current) if desc.current else None
+      self.power = PowerSysfsImpl(driver, desc.power) if desc.power else None
+
+   def _tryComputeDiv(self, dividend, divisor):
+      if not dividend or not divisor:
+         return 0
+      divisor = divisor.getInput()
+      return dividend.getInput() / divisor if divisor != 0 else 0
+
+   def _tryComputeMul(self, val1, val2):
+      if not val1 or not val2:
+         return 0
+      return val1.getInput() * val2.getInput()
+
+   def getName(self):
+      return self.desc.name
+
+   def getCurrent(self):
+      if self.current:
+         return self.current.getCurrent()
+      return self._tryComputeDiv(self.power, self.voltage)
+
+   def getVoltage(self):
+      if self.voltage:
+         return self.voltage.getVoltage()
+      return self._tryComputeDiv(self.power, self.current)
+
+   def getPower(self):
+      if self.power:
+         return self.power.getPower()
+      return self._tryComputeMul(self.current, self.voltage)
 

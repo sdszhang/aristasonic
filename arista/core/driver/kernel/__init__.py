@@ -18,6 +18,7 @@ from .sysfs import (
    FanSysfsImpl,
    GpioSysfsImpl,
    LedSysfsImpl,
+   RailSysfsImpl,
    ResetSysfsImpl,
    TempSysfsImpl,
 )
@@ -107,3 +108,6 @@ class KernelDriver(Driver):
 
    def getGpio(self, desc, **kwargs):
       return GpioSysfsImpl(self, desc, **kwargs)
+
+   def getRail(self, desc, **kwargs):
+      return RailSysfsImpl(self, desc, **kwargs)
