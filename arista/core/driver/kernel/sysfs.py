@@ -70,7 +70,8 @@ class SysfsEntry(object):
       return True
 
    def read(self):
-      raw = self._read().rstrip()
+      raw = self._read()
+      raw = raw.rstrip() if raw else raw
       value = self._readConversion(raw)
       logging.io('%s.read(): %s -> %s', self, raw, value)
       return value
@@ -256,7 +257,9 @@ class FanSysfsImpl(Fan, GenericSysfs):
       return 'N/A'
 
    def getSpeed(self):
-      return self.pwm.read()
+      if self.pwm.exists():
+         return self.pwm.read()
+      return 0
 
    def getFault(self):
       if self.faultGpio is not None:
