@@ -51,22 +51,22 @@ class PsuVendor1(MockPsuModel):
 
 class PsuModel1(PsuVendor1):
    IDENTIFIERS = [
-      PsuIdent('MODEL1-0', 'SKU1-F', Airflow.FORWARD),
-      PsuIdent('MODEL1-1', 'SKU1-R', Airflow.REVERSE),
+      PsuIdent('MODEL1-0', 'SKU1-F', Airflow.EXHAUST),
+      PsuIdent('MODEL1-1', 'SKU1-R', Airflow.INTAKE),
    ]
 
 class PsuModel2(PsuVendor1):
    IDENTIFIERS = [
-      PsuIdent('MODEL2-0', 'SKU2-F', Airflow.FORWARD),
-      PsuIdent('MODEL2-1', 'SKU2-R', Airflow.REVERSE),
+      PsuIdent('MODEL2-0', 'SKU2-F', Airflow.EXHAUST),
+      PsuIdent('MODEL2-1', 'SKU2-R', Airflow.INTAKE),
    ]
 
 class PsuModel3(MockPsuModel):
    MANUFACTURER = 'VENDOR2'
    PMBUS_ADDR = 0x17
    IDENTIFIERS = [
-      PsuIdent('MODEL-F', 'SKU3-F', Airflow.FORWARD),
-      PsuIdent('MODEL-R', 'SKU3-R', Airflow.REVERSE),
+      PsuIdent('MODEL-F', 'SKU3-F', Airflow.EXHAUST),
+      PsuIdent('MODEL-R', 'SKU3-R', Airflow.INTAKE),
    ]
 
 class MockPmbusDetect(object):

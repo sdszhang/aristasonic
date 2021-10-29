@@ -89,9 +89,9 @@ class Upperlake(FixedSystem):
          ('psu2AcOk', 'psu2_ac_status'),
       ])
 
-      for psuId in incrange(1, 2):
-         addrFunc=lambda addr, i=psuId: \
-                  scd.i2cAddr(2 + i, addr, t=3, datr=2, datw=3)
+      for psuId, bus in [(1, 4), (2, 3)]:
+         addrFunc=lambda addr, bus=bus: \
+                  scd.i2cAddr(bus, addr, t=3, datr=2, datw=3)
          name = "psu%d" % psuId
          scd.newComponent(
             PsuSlot,

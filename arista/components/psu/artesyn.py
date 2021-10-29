@@ -1,71 +1,62 @@
 from ...core.cooling import Airflow
 from ...core.psu import PsuModel, PsuIdent
 
-from ...descs.psu import PsuDesc
-from ...descs.sensor import Position, SensorDesc
 
 from . import PmbusPsu
 from .ds460 import Ds460
+from .helper import psuDescHelper, Position
 
 class ArtesynPsu(PsuModel):
    MANUFACTURER = 'artesyn'
    MANUFACTURER_ALIASES = ['emerson'] # NOTE: acquired by Emerson
    PMBUS_ADDR = 0x58
+   PMBUS_CLS = PmbusPsu
 
 class DS495SPE(ArtesynPsu):
    CAPACITY = 500
-   IDENTIFIERS = [
-      PsuIdent('DS495SPE-3-401 ', 'PWR-500AC-F', Airflow.FORWARD),
-      PsuIdent('DS495SPE-3-402 ', 'PWR-500AC-R', Airflow.REVERSE),
-   ]
-
-   PMBUS_CLS = PmbusPsu
-   DESCRIPTION = PsuDesc(
+   DESCRIPTION = psuDescHelper(
       sensors=[
-         SensorDesc(diode=0,
-                    name='Power supply %(psuId)d hotspot sensor',
-                    position=Position.OTHER,
-                    target=80, overheat=95, critical=100),
-         SensorDesc(diode=1,
-                    name='Power supply %(psuId)d inlet temp sensor',
-                    position=Position.INLET,
-                    target=55, overheat=70, critical=75),
-         SensorDesc(diode=2,
-                    name='Power supply %(psuId)d exhaust temp sensor',
-                    position=Position.OUTLET,
-                    target=80, overheat=108, critical=113),
-      ]
+         ('hotspot', Position.OTHER, 60, 111, 123),
+         ('inlet', Position.INLET, 60, 80, 85),
+         ('outlet', Position.OUTLET, 60, 80, 85),
+      ],
    )
+   IDENTIFIERS = [
+      PsuIdent('DS495SPE-3-401 ', 'PWR-500AC-F', Airflow.EXHAUST),
+      PsuIdent('DS495SPE-3-402 ', 'PWR-500AC-R', Airflow.INTAKE),
+   ]
 
 class DS460(ArtesynPsu):
    CAPACITY = 460
+   DESCRIPTION = psuDescHelper(
+      sensors=[
+         ('inlet', Position.INLET, 39, 60, 70),
+         ('internal', Position.OTHER, 55, 80, 150),
+      ],
+   )
    IDENTIFIERS = [
       # NOTE: that first entry is a workaround for insufficient information exposed
       # through the pmbus MFR_*. Proper identification would require IPMI eeprom
       # parsing.
-      PsuIdent('DS460', 'PWR-460AC-F', Airflow.FORWARD),
+      PsuIdent('DS460', 'PWR-460AC-F', Airflow.EXHAUST),
 
-      PsuIdent('DS460S-3    ', 'PWR-460AC-F', Airflow.FORWARD),
-      PsuIdent('DS460S-3-001', 'PWR-460AC-R', Airflow.REVERSE),
-      PsuIdent('DS460S-3-002', 'PWR-460AC-F', Airflow.FORWARD),
-      PsuIdent('DS460S-3-003', 'PWR-460AC-R', Airflow.REVERSE),
+      PsuIdent('DS460S-3    ', 'PWR-460AC-F', Airflow.EXHAUST),
+      PsuIdent('DS460S-3-001', 'PWR-460AC-R', Airflow.INTAKE),
+      PsuIdent('DS460S-3-002', 'PWR-460AC-F', Airflow.EXHAUST),
+      PsuIdent('DS460S-3-003', 'PWR-460AC-R', Airflow.INTAKE),
    ]
-
    PMBUS_CLS = Ds460
-   DESCRIPTION = PsuDesc(
-      sensors=[
-         SensorDesc(diode=0, name='Power supply %(psuId)d inlet temp sensor',
-                    position=Position.INLET,
-                    target=39, overheat=60, critical=70),
-         SensorDesc(diode=1, name='Power supply %(psuId)d internal sensor',
-                    position=Position.OTHER,
-                    target=55, overheat=80, critical=150),
-      ]
-   )
 
-class CSU500DP(DS495SPE):
+class CSU500DP(ArtesynPsu):
    CAPACITY = 500
+   DESCRIPTION = psuDescHelper(
+      sensors=[
+         ('inlet', Position.INLET, 60, 65, 69),
+         ('secondary hotspot', Position.OTHER, 60, 105, 109),
+         ('primary hotspot', Position.OTHER, 60, 104, 108),
+      ],
+   )
    IDENTIFIERS = [
-      PsuIdent('CSU500DP-3    ', 'PWR-511-AC-RED', Airflow.FORWARD),
-      PsuIdent('CSU500DP-3-001', 'PWR-511-AC-BLUE', Airflow.REVERSE),
+      PsuIdent('CSU500DP-3    ', 'PWR-511-AC-RED', Airflow.EXHAUST),
+      PsuIdent('CSU500DP-3-001', 'PWR-511-AC-BLUE', Airflow.INTAKE),
    ]

@@ -11,5 +11,5 @@ class Fixed150AC(FixedPsuModel):
    CAPACITY = 150
    IDENTIFIERS = [
       # Note: Used for Newport
-      PsuIdent('PWR-440-AC', 'PWR-440-AC', Airflow.FORWARD),
+      PsuIdent('PWR-440-AC', 'PWR-440-AC', Airflow.EXHAUST),
    ]

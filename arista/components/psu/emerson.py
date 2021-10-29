@@ -1,45 +1,26 @@
 from ...core.cooling import Airflow
 from ...core.psu import PsuModel, PsuIdent
 
-from ...descs.psu import PsuDesc
-from ...descs.sensor import Position, SensorDesc
-
 from . import PmbusPsu
+from .helper import psuDescHelper, Position
 
 class EmersonPsu(PsuModel):
    MANUFACTURER = 'emerson'
    PMBUS_ADDR = 0x58
 
    PMBUS_CLS = PmbusPsu
-   DESCRIPTION = PsuDesc(
-      sensors=[
-         SensorDesc(diode=0,
-                    name='Power supply %(psuId)d hotspot sensor',
-                    position=Position.OTHER,
-                    target=80, overheat=95, critical=100),
-         SensorDesc(diode=1,
-                    name='Power supply %(psuId)d inlet temp sensor',
-                    position=Position.INLET,
-                    target=55, overheat=70, critical=75),
-         SensorDesc(diode=2,
-                    name='Power supply %(psuId)d exhaust temp sensor',
-                    position=Position.OUTLET,
-                    target=80, overheat=108, critical=113),
-      ]
-   )
 
 class DS750PED(EmersonPsu):
    CAPACITY = 750
+   DESCRIPTION = psuDescHelper(
+      sensors=[
+         ('hotspot', Position.OTHER, 85, 100, 105),
+         ('ambiant', Position.OTHER, 55, 70, 75),
+      ],
+   )
    IDENTIFIERS = [
-      PsuIdent('DS750PED-3',     'PWR-745AC-F', Airflow.FORWARD),
-      PsuIdent('DS750PED-3-001', 'PWR-745AC-R', Airflow.REVERSE),
-      PsuIdent('DS750PED-3-402', 'PWR-745AC-R', Airflow.REVERSE),
-      PsuIdent('DS750PED-3-403', 'PWR-745AC-F', Airflow.FORWARD),
-   ]
-
-class CSU500DP3(EmersonPsu):
-   CAPACITY = 500
-   IDENTIFIERS = [
-      PsuIdent('CSU500DP-3', 'PWR-511-AC-RED', Airflow.FORWARD),
-      PsuIdent('CSU500DP-3-001', 'PWR-511-AC-BLUE', Airflow.REVERSE),
+      PsuIdent('DS750PED-3',     'PWR-745AC-F', Airflow.EXHAUST),
+      PsuIdent('DS750PED-3-001', 'PWR-745AC-R', Airflow.INTAKE),
+      PsuIdent('DS750PED-3-402', 'PWR-745AC-R', Airflow.INTAKE),
+      PsuIdent('DS750PED-3-403', 'PWR-745AC-F', Airflow.EXHAUST),
    ]
