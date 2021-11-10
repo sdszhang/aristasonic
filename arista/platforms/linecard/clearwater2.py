@@ -8,6 +8,7 @@ from ...components.denali.linecard import StandbyScdRegisterMap
 from ...components.eeprom import At24C512
 from ...components.lm75 import Tmp75
 from ...components.phy.b52 import B52
+from ...components.plx import PlxPortDesc
 from ...components.scd import I2cScd
 from ...components.tmp464 import Tmp464
 
@@ -51,16 +52,16 @@ class ClearwaterCpuBase(ClearwaterBase):
 class Clearwater2(ClearwaterCpuBase):
    SID = ['Clearwater2']
    SKU = ['7800R3-48CQ2-LC', '7800R-48QC2-LC']
-   PLX_LCPU_MODE = [
-      # VS0 (sup)
-      ((1 << 0) |  # sup1
-       (1 << 2) |  # sup2
-       (1 << 13)), # gmac
-      # VS1 (lcpu)
-      ((1 << 1) |  # lcpu
-       (1 << 3) |  # j2
-       (1 << 5))   # scd
+
+   PLX_PORTS = [
+      PlxPortDesc(port=0, name='sup1', upstream=True),
+      PlxPortDesc(port=1, name='lcpu', vs=PlxPortDesc.VS1, upstream=True),
+      PlxPortDesc(port=2, name='sup2', upstream=True),
+      PlxPortDesc(port=3, name='je0', vs=PlxPortDesc.VS1),
+      PlxPortDesc(port=5, name='scd', vs=PlxPortDesc.VS1),
+      PlxPortDesc(port=13, name='gmac'),
    ]
+
    XCVR_BUS_OFFSET = 24
 
 @registerPlatform()

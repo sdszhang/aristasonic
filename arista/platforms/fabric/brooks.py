@@ -1,5 +1,7 @@
 from ...core.platform import registerPlatform
 
+from ...components.asic.dnx.ramon import Ramon
+from ...components.denali.desc import DenaliAsicDesc
 from ...components.max31790 import Max31790
 from ...components.tmp464 import Tmp464
 
@@ -12,10 +14,10 @@ class Brooks(Eldridge):
    SID = ['Brooks']
    SKU = ['DCS-7804-FM']
 
-   ASIC_PLX_DOWNSTREAM_PORTS = {
-      0 : 1,
-      1 : 3,
-   }
+   ASICS = [
+      DenaliAsicDesc(cls=Ramon, asicId=0),
+      DenaliAsicDesc(cls=Ramon, asicId=1),
+   ]
 
    def createStandbyFans(self):
       chip = self.pca.newComponent(Max31790, self.pca.i2cAddr(0x2d),

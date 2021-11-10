@@ -4,11 +4,13 @@ from ...core.register import RegBitField, RegisterMap
 from ...core.utils import incrange, HwApi
 
 from ...components.asic.dnx.ramon import Ramon
+from ...components.denali.desc import DenaliAsicDesc
 from ...components.denali.fabric import DenaliFabric
 from ...components.dpm.ucd import Ucd90320
 from ...components.max31790 import Max31790
 from ...components.max6658 import Max6658
 from ...components.pca9555 import Pca9555
+from ...components.plx import PlxPortDesc
 from ...components.tmp464 import Tmp464
 from ...components.tmp468 import Tmp468
 
@@ -44,35 +46,39 @@ class Eldridge(DenaliFabric):
    SID = ['Eldridge']
    SKU = ['DCS-7808-FM', '7808R3-FM']
 
-   # PLX downstream ports for asics 0, 1, 2
-   ASIC_PLX_DOWNSTREAM_PORTS = {
-      0 : 1,
-      1 : 3,
-      2 : 4,
-   }
+   ASICS = [
+      DenaliAsicDesc(cls=Ramon, asicId=0),
+      DenaliAsicDesc(cls=Ramon, asicId=1),
+      DenaliAsicDesc(cls=Ramon, asicId=2),
+   ]
+
+   PLX_PORTS = [
+      PlxPortDesc(port=0, name='sup1', upstream=True),
+      PlxPortDesc(port=1, name='ramon0'),
+      PlxPortDesc(port=2, name='sup2', upstream=True),
+      PlxPortDesc(port=3, name='ramon1'),
+      PlxPortDesc(port=4, name='ramon2'),
+   ]
 
    def createGpio2(self):
       self.gpio2 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x21),
                                          registerCls=Gpio2Registers)
 
    def createAsics(self):
-      asicResetGpios = {
-         0 : (self.gpio2.ramon0SysReset, self.gpio2.ramon0PcieReset),
-         1 : (self.gpio2.ramon1SysReset, self.gpio2.ramon1PcieReset),
-         2 : (self.gpio2.ramon2SysReset, self.gpio2.ramon2PcieReset),
-      }
-
       self.asics = []
-      for i in self.ASIC_PLX_DOWNSTREAM_PORTS.keys():
-         # We may not have PCI addr for asic yet until the card is powered on
-         # and PLX is out of reset and scanned by kernel. So, use card PCI
-         # (upstream) address instead, and update the correct address later
-         # for the asic when we power on the card.
-         addr = self.slot.pciAddr()
-         self.asics.append(self.main.newComponent(
-                           Ramon, addr,
-                           resetGpio=asicResetGpios[i][0],
-                           pcieResetGpio=asicResetGpios[i][1]))
+      for desc in self.ASICS:
+         downstream = self.plx.pci.portByName('ramon%d' % desc.asicId)
+         sysRst = getattr(self.gpio2, 'ramon%dSysReset' % desc.asicId)
+         pcieRst = getattr(self.gpio2, 'ramon%dPcieReset' % desc.asicId)
+         # TODO: attach pcie reset signal to a PciEndpoint object
+         upstream = downstream.pciEndpoint()
+         asic = upstream.newComponent(
+            Ramon,
+            addr=upstream.addr,
+            resetGpio=sysRst,
+            pcieResetGpio=pcieRst,
+         )
+         self.asics.append(asic)
 
    def standbyDomain(self):
       self.createGpio2()

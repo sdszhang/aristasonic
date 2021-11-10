@@ -67,9 +67,6 @@ class Card(Sku):
    def hasCpuModule(self):
       return self.CPU_CLS is not None
 
-   def updateAsicAddr(self):
-      pass
-
    def setup(self, filters=Priority.defaultFilter):
       super(Card, self).setup()
       super(Card, self).finish(filters=filters)
@@ -94,15 +91,16 @@ class CardSlot(SlotComponent):
       self.slotId = slotId
       self.parent = parent
       self.card = None
+      self.pci = None
 
    def getEeprom(self):
       raise NotImplementedError
 
    def disablePciPort(self):
-      self.parent.pciSwitch.disable(self.slotId)
+      self.pci.disable()
 
    def enablePciPort(self):
-      self.parent.pciSwitch.enable(self.slotId)
+      self.pci.enable()
 
    def loadCard(self, card=None, **kwargs):
       if card is None:

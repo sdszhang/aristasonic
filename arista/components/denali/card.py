@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function
 
 import copy
+import time
 
 from ...core.card import Card, CardSlot
 from ...core.fabric import Fabric
@@ -15,18 +16,15 @@ from ...libs.wait import waitFor
 from ..dpm.ucd import Ucd90320
 from ..eeprom import At24C512
 from ..pca9541 import Pca9541
+from ..plx import PlxPex8700
 from ..power import PowerDomain
 
 logging = getLogger(__name__)
 
 class DenaliCard(Card):
-   # Connect supes 1 and 2 via Plx upstream ports 0 and 2
-   PCIE_SWITCH_UPSTREAM_PORTS = {
-      1: 0,
-      2: 2,
-   }
 
-   ASIC_PLX_DOWNSTREAM_PORTS = {}
+   ASICS = []
+   PLX_PORTS = []
 
    def __init__(self, *args, **kwargs):
       self.scd = None
@@ -47,13 +45,24 @@ class DenaliCard(Card):
          return {}
 
    def getUpstreamPort(self):
-      return self.PCIE_SWITCH_UPSTREAM_PORTS[self.slot.parent.getSlotId()]
+      slotId = self.slot.parent.getSlotId()
+      name = 'sup%d' % slotId if slotId != 0 else 'lcpu'
+      return self.plx.pci.portByName(name)
 
    def createGpio1(self):
       self.gpio1 = None
 
-   def createPlx(self):
-      self.plx = None
+   def createPlx(self, parent=None):
+      self.plx = self.pca.newComponent(
+         PlxPex8700,
+         addr=self.pca.i2cAddr(0x38),
+      )
+      self.plx.addPciSwitch(
+         parent,
+         ports=self.PLX_PORTS,
+      )
+      if self.PLX_PORTS:
+          self.slot.pci.attach(self.getUpstreamPort())
 
    def createAsics(self):
       self.asics = []
@@ -66,6 +75,8 @@ class DenaliCard(Card):
          and Fans...
       '''
       self.standby = self.newComponent(PowerDomain)
+      self.main = self.newComponent(PowerDomain)
+
       self.pca = self.standby.newComponent(Pca9541, addr=self.slot.bus.i2cAddr(0x77),
                                            driverMode='user')
       self.eeprom = self.pca.newComponent(At24C512, addr=self.pca.i2cAddr(0x50),
@@ -74,7 +85,7 @@ class DenaliCard(Card):
       self.createGpio1()
       if self.gpio1 is not None:
          self.gpio1.addRedGreenGpioLed('status', 'statusRed', 'statusGreen')
-      self.createPlx()
+      self.createPlx(parent=self.main)
 
    def standbyDomain(self):
       pass
@@ -87,7 +98,6 @@ class DenaliCard(Card):
       self.standbyDomain()
 
    def loadMainDomain(self):
-      self.main = self.newComponent(PowerDomain)
       self.createScd()
       self.createAsics()
       self.mainDomain()
@@ -122,12 +132,6 @@ class DenaliCard(Card):
          self.gpio1.pcieReset(True)
          self.getInventory().getLed('status').setColor(LedColor.OFF)
 
-   def getAsicPciAddr(self, asicId, asic):
-      plxDownstreamAddr = PciAddr(bus=self.plxDownstreamBus,
-                                  device=self.ASIC_PLX_DOWNSTREAM_PORTS[asicId])
-      asicUpstreamBus = readSecondaryBus(plxDownstreamAddr)
-      return PciAddr(bus=asicUpstreamBus)
-
    def powerMainPowerDomainIs(self, on):
       if on:
          for asicId, asic in enumerate(self.asics):
@@ -145,11 +149,9 @@ class DenaliCard(Card):
 
       if on:
          self.slot.enablePciPort()
-         # PLX is up. We now can get PLX downtream bus to asics, and
-         # achieve asics' PCI addr.
-         self.updateAsicAddr()
          # Verify asic presence
          for asicId, asic in enumerate(self.asics):
+            # TODO: fixme pci addr does not exists
             self.asics[asicId].waitForIt()
 
    def powerOnIs(self, on, lcpuCtx=None):
@@ -166,6 +168,10 @@ class DenaliCard(Card):
          self.slot.enablePciPort()
       else:
          self.slot.disablePciPort()
+         # NOTE: Wait for linux to be done processing pci hotplug events
+         #       not waiting would lead to uncorrectable pci errors with a high
+         #       risk of softlockups
+         waitFor(lambda: not self.getUpstreamPort().reachable())
          if lcpuCtx:
             self.powerLcpuIs(False, lcpuCtx)
          else:
@@ -186,12 +192,13 @@ class DenaliCard(Card):
          return False
 
    def enablePlxPcieUpstreamLink(self, bind):
-      self.plx.disableUpstreamPort(self.getUpstreamPort(), True)
+      upstream = self.getUpstreamPort()
+      upstream.disable()
       if bind:
-         self.slot.parent.pciSwitch.bind(self.slot.slotId)
-         self.plx.disableUpstreamPort(self.getUpstreamPort(), False)
+         self.slot.pci.bind()
+         upstream.enable()
       else:
-         self.slot.parent.pciSwitch.unbind(self.slot.slotId)
+         self.slot.pci.unbind()
 
    def setupPlx(self):
       self.plx.enableHotPlug()
@@ -202,11 +209,6 @@ class DenaliCard(Card):
       self.pca.takeOwnership()
       self.pca.setup()
       self.eeprom.setup()
-
-   def updateAsicAddr(self):
-      self.plxDownstreamBus = readSecondaryBus(self.slot.pci)
-      for asicId, asic in enumerate(self.asics):
-         self.asics[asicId].addr = self.getAsicPciAddr(asicId, asic)
 
 class DenaliCardSlot(CardSlot):
 
@@ -232,16 +234,6 @@ class DenaliCardSlot(CardSlot):
          return None
       self.card.setupIdentification()
       return self.card.eeprom.prefdl()
-
-   def pciAddr(self, domain=0, bus=0, device=0, func=0):
-      addr = copy.deepcopy(self.pci)
-
-      addr.domain += domain
-      addr.bus += bus
-      addr.device += device
-      addr.func += func
-
-      return addr
 
 class DenaliLinecardBase(DenaliCard, Linecard):
    pass

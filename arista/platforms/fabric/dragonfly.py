@@ -1,5 +1,7 @@
 from ...core.platform import registerPlatform
 
+from ...components.asic.dnx.ramon import Ramon
+from ...components.denali.desc import DenaliAsicDesc
 from ...components.tmp464 import Tmp464
 from ...descs.sensor import SensorDesc, Position
 
@@ -10,10 +12,10 @@ class Dragonfly(Eldridge):
    SID = ['Dragonfly']
    SKU = ['7808R3A-FM']
 
-   ASIC_PLX_DOWNSTREAM_PORTS = {
-      0 : 1,
-      1 : 3,
-   }
+   ASICS = [
+      DenaliAsicDesc(cls=Ramon, asicId=0),
+      DenaliAsicDesc(cls=Ramon, asicId=1),
+   ]
 
    def createStandbySensors(self):
       self.pca.newComponent(Tmp464, self.pca.i2cAddr(0x48), sensors=[

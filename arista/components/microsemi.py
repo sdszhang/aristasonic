@@ -1,6 +1,6 @@
 
 from ..core.component import Priority
-from ..core.component.pci import PciComponent
+from ..core.pci import PciSwitch, DownstreamPciPort
 
 from ..drivers.microsemi import MicrosemiDriver
 from ..drivers.pci import PciSwitchPortDriver
@@ -11,13 +11,13 @@ class MicrosemiPortDesc(object):
       self.dsp = dsp
       self.partition = partition
 
-class MicrosemiPort(PciComponent):
+class MicrosemiPort(DownstreamPciPort):
 
    DRIVER = PciSwitchPortDriver
    PRIORITY = Priority.DEFAULT
 
-   def __init__(self, desc=None, addr=None, **kwargs):
-      super(MicrosemiPort, self).__init__(addr=addr, **kwargs)
+   def __init__(self, port=0, desc=None, **kwargs):
+      super(MicrosemiPort, self).__init__(port=port, **kwargs)
       self.desc = desc
 
    def enable(self):
@@ -26,43 +26,26 @@ class MicrosemiPort(PciComponent):
    def disable(self):
       self.driver.disable()
 
-class Microsemi(PciComponent):
+   def bind(self):
+      return self.parent.bind(self)
+
+   def unbind(self):
+      return self.parent.unbind(self)
+
+class Microsemi(PciSwitch):
 
    DRIVER = MicrosemiDriver
    PRIORITY = Priority.DEFAULT
 
-   def __init__(self, ports=None, **kwargs):
-      super(Microsemi, self).__init__(**kwargs)
-      self.ports = ports or {}
+   DOWNSTREAM_PORT_CLS = MicrosemiPort
 
-   def addPciPort(self, portId=None, desc=None, addr=None, upstreamAddr=None):
-      port = self.newComponent(
-         MicrosemiPort,
-         desc=desc,
-         addr=addr,
-         upstreamAddr=upstreamAddr,
-      )
-      self.ports[portId] = port
-      return port
+   def addPciPort(self, desc=None, **kwargs):
+      return self.downstreamPort(port=desc.port, device=desc.dsp - 1, desc=desc, **kwargs)
 
-   def bind(self, slotId):
-      assert slotId in self.ports, \
-             "SlotId %d is not defined in downstream ports" % slotId
-      portDesc = self.ports[slotId].desc
-      return self.driver.bind(portDesc.port, portDesc.dsp, portDesc.partition)
+   def bind(self, port):
+      desc = port.desc
+      return self.driver.bind(desc.port, desc.dsp, desc.partition)
 
-   def unbind(self, slotId, flags=0x2):
-      assert slotId in self.ports, \
-             "SlotId %d is not defined in downstream ports" % slotId
-      portDesc = self.ports[slotId].desc
-      return self.driver.unbind(portDesc.dsp, portDesc.partition, flags=flags)
-
-   def enable(self, slotId):
-      assert slotId in self.ports, \
-             "SlotId %d is not defined in downstream ports" % slotId
-      self.ports[slotId].enable()
-
-   def disable(self, slotId):
-      assert slotId in self.ports, \
-             "SlotId %d is not defined in downstream ports" % slotId
-      self.ports[slotId].disable()
+   def unbind(self, port, flags=0x2):
+      desc = port.desc
+      return self.driver.unbind(desc.dsp, desc.partition, flags=flags)

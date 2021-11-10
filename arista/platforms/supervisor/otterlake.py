@@ -54,14 +54,7 @@ class OtterLake(DenaliSupervisor):
       DenaliPsuSlotDesc(psuId=12, bank=2, slot=6, bus=19, addr=0x72),
    ]
 
-   def __init__(self, chassis=None, slot=None, **kwargs):
-      super(OtterLake, self).__init__(chassis=chassis, slot=slot,
-                                      scdAddr=PciAddr(bus=0x9f), **kwargs)
-
-      self.cpu = None
-      self.createCpuCard()
-
-   def createCpuCard(self):
+   def addCpuComplex(self):
       self.cpu = self.newComponent(SprucefishCpu)
 
       self.cpu.cpld.newComponent(Ucd90160, self.cpu.cpuDpmAddr())

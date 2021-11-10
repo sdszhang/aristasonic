@@ -31,7 +31,7 @@ class DenaliChassisTest(unittest.TestCase):
             if cls is None:
                slot.getPresence = lambda: False
             else:
-               slot.getEeprom = lambda c=cls: { 'SKU': c.SKU[0] }
+               slot.getEeprom = lambda c=cls: { 'SKU': c.SKU[0], 'SID': c.SID[0] }
 
       hookCardSlots(chassis.active.fabricSlots, fabrics)
       hookCardSlots(chassis.active.linecardSlots, linecards)

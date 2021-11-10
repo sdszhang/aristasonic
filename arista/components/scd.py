@@ -216,7 +216,7 @@ class ScdInterruptRegister():
    def setup(self):
       if not Config().init_irq:
          return
-      writeConfig(self.scd.pciSysfs, OrderedDict([
+      writeConfig(self.scd.addr.getSysfsPath(), OrderedDict([
          ('interrupt_mask_read_offset%s' % self.num, str(self.readAddr)),
          ('interrupt_mask_set_offset%s' % self.num, str(self.setAddr)),
          ('interrupt_mask_clear_offset%s' % self.num, str(self.clearAddr)),
@@ -251,7 +251,6 @@ class ScdSmbus():
 class Scd(PciComponent):
    BusTweak = namedtuple('BusTweak', 'addr, t, datr, datw, ed')
    def __init__(self, addr, registerCls=None, **kwargs):
-      self.pciSysfs = addr.getSysfsPath()
       drivers = [
          KernelDriver(module='scd'),
          ScdKernelDriver(scd=self, addr=addr, registerCls=registerCls),
@@ -304,7 +303,7 @@ class Scd(PciComponent):
       return interrupt
 
    def getMmap(self):
-      path = os.path.join(self.pciSysfs, "resource0")
+      path = os.path.join(self.addr.getSysfsPath(), "resource0")
       if not self.mmapReady:
          # check that the scd driver is loaded the first time
          drv = self.drivers['scd']

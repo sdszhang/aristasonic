@@ -127,7 +127,6 @@ class FabricModule(Module):
 
    def get_all_asics(self):
       self._asic_list = []
-      self._sku.updateAsicAddr()
       starting_index = self._sku.getRelativeSlotId() * len(self._sku.asics)
       for asic_index, asic in enumerate(self._sku.asics):
          global_asic_index = starting_index + asic_index
@@ -148,7 +147,6 @@ class LinecardModule(Module):
 
    def get_all_asics(self):
       self._asic_list = []
-      self._sku.updateAsicAddr()
       for asic_index, asic in enumerate(self._sku.asics):
          self._asic_list.append((asic_index, str(asic.addr)))
       return self._asic_list

@@ -14,6 +14,8 @@ from ..component import Priority
 from ..platform import getPlatformSkus
 from ..types import PciAddr
 
+from .mockchassis import MockSupervisor
+
 from ... import platforms as _
 
 class LinecardTest(unittest.TestCase):
@@ -23,11 +25,12 @@ class LinecardTest(unittest.TestCase):
 
    def createLinecard(self, cls):
       if issubclass(cls, DenaliLinecard):
-         pci = PciAddr(bus=0x01)
-         scd = Scd(PciAddr(bus=0x02))
+         sup = MockSupervisor()
+         pci = sup.cpu.pciRoot.rootPort(bus=0x01)
+         scd = Scd(addr=sup.cpu.pciRoot.rootPort(bus=0x02).addr)
          bus = scd.getSmbus(0x03)
          slotId = DenaliLinecard.ABSOLUTE_CARD_OFFSET
-         slot = DenaliLinecardSlot(None, slotId, pci, bus)
+         slot = DenaliLinecardSlot(sup, slotId, pci, bus)
       else:
          slot = CardSlot(None, 0)
       return cls(slot=slot)

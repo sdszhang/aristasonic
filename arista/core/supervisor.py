@@ -19,6 +19,9 @@ class Supervisor(FixedSystem):
       self.psuSlots = []
       self.fanSlots = []
 
+      self.cpu = None
+      self.addCpuComplex()
+
    def readChassisEeprom(self):
       if inSimulation():
          return { 'SKU': 'DCS-7808-CH' }
@@ -51,7 +54,7 @@ class Supervisor(FixedSystem):
 
    def readSlotId(self):
       if inSimulation():
-         return 0
+         return 1
       raise NotImplementedError
 
    def getSlotId(self):
@@ -59,4 +62,5 @@ class Supervisor(FixedSystem):
          self.slotId = self.readSlotId()
       return self.slotId
 
-
+   def addCpuComplex(self):
+      pass

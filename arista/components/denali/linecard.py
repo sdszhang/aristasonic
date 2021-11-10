@@ -7,8 +7,6 @@ from ...core.log import getLogger
 from ...core.platform import getSysEeprom
 from ...core.provision import ProvisionConfig, ProvisionMode
 from ...core.register import Register, RegisterMap, RegBitField, SetClearRegister
-from ...core.types import PciAddr
-from ...core.utils import getCmdlineDict
 
 from ...drivers.pca9555 import GpioRegister
 from ...drivers.scd.register import (
@@ -20,7 +18,6 @@ from ...drivers.scd.sram import SramContent
 
 from ...libs.wait import waitFor
 
-from ..plx import PlxPex8700
 from ..scd import Scd
 
 from .card import DenaliLinecardBase, DenaliLinecardSlot
@@ -32,34 +29,41 @@ class DenaliLinecard(DenaliLinecardBase):
 
    SCD_PCI_OFFSET = 0
    ASICS = []
-
-   PLX_LCPU_MODE = None
-
-   def createPlx(self):
-      self.plx = self.pca.newComponent(PlxPex8700, addr=self.pca.i2cAddr(0x38))
+   PLX_PORTS = []
 
    def createScd(self):
-      scdAddr = self.slot.pciAddr(bus=self.SCD_PCI_OFFSET)
-      self.scd = self.main.newComponent(Scd, scdAddr, registerCls=ScdRegisterMap)
+      downstream = self.plx.pci.portByName('scd')
+      upstream = downstream.pciEndpoint()
+      self.scd = upstream.newComponent(
+         Scd,
+         addr=upstream.addr,
+         registerCls=ScdRegisterMap,
+      )
 
    def createAsics(self):
       self.asics = []
       for desc in self.ASICS:
-         addr = self.slot.pciAddr(bus=desc.bus)
+         downstream = self.plx.pci.portByName('je%d' % desc.asicId)
          # TODO: use sysfs entries for the asic resets
          rst = getattr(self.scd.regs, 'je%dReset' % desc.rstIdx)
          prst = getattr(self.scd.regs, 'je%dPcieReset' % desc.rstIdx)
          # TODO: avoid the rescan on the lcpu side, look into plx vs hotswap
-         asic = self.main.newComponent(desc.cls, addr, rescan=True,
-                                       resetGpio=rst, pcieResetGpio=prst)
+         upstream = downstream.pciEndpoint()
+         asic = upstream.newComponent(
+            desc.cls,
+            addr=upstream.addr,
+            rescan=True,
+            resetGpio=rst,
+            pcieResetGpio=prst,
+         )
          self.asics.append(asic)
 
    def createCpu(self):
       assert self.CPU_CLS
-      slotId = int(getCmdlineDict().get('slot_id', 0))
-      self.slot = DenaliLinecardSlot(self, slotId, PciAddr(bus=0x04), None,
-                                     card=self)
-      self.cpu = self.newComponent(self.CPU_CLS, self.slot)
+      self.cpu = self.newComponent(self.CPU_CLS)
+      self.slot = self.cpu.createCardSlot(DenaliLinecardSlot, self)
+      self.pca = self.slot.bus
+      self.createPlx(parent=self)
       self.eeprom = getSysEeprom()
 
    def waitForStandbyPowerOn(self):
@@ -177,9 +181,7 @@ class DenaliLinecard(DenaliLinecardBase):
                  "LCPU power to be turned off", interval=50)
 
    def setupPlxLcpuMode(self):
-      if self.PLX_LCPU_MODE:
-         self.plx.vsPortVec(0, self.PLX_LCPU_MODE[0])
-         self.plx.vsPortVec(1, self.PLX_LCPU_MODE[1])
+      self.plx.setupVs()
 
    def setupPlx(self):
       super(DenaliLinecard, self).setupPlx()

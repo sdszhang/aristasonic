@@ -4,7 +4,6 @@ from ...drivers.pca9555 import GpioRegister
 from ...libs.wait import waitFor
 
 from ..pca9555 import Pca9555
-from ..plx import PlxPex8700
 
 from .card import DenaliFabricBase
 
@@ -26,13 +25,11 @@ class Gpio1Registers(RegisterMap):
 
 class DenaliFabric(DenaliFabricBase):
    PLATFORM = None
+   PLX_PORTS = []
 
    def createGpio1(self):
       self.gpio1 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x20),
                                          registerCls=Gpio1Registers)
-
-   def createPlx(self):
-      self.plx = self.pca.newComponent(PlxPex8700, addr=self.pca.i2cAddr(0x38))
 
    def powerStandbyDomainIs(self, on):
       '''Turn on card Ecbs and fan Ecbs. On Denali fabric, we expect

@@ -12,7 +12,8 @@ from ...core.fabric import Fabric
 from ..card import CardSlot
 from ..component import Priority
 from ..platform import getPlatformSkus
-from ..types import PciAddr
+
+from .mockchassis import MockSupervisor
 
 from ... import platforms as _
 
@@ -23,11 +24,12 @@ class FabricTest(unittest.TestCase):
 
    def createFabric(self, cls):
       if issubclass(cls, DenaliFabric):
-         pci = PciAddr(bus=0x01)
-         scd = Scd(PciAddr(bus=0x02))
+         sup = MockSupervisor()
+         pci = sup.cpu.pciRoot.rootPort(bus=0x01)
+         scd = Scd(addr=sup.cpu.pciRoot.rootPort(bus=0x02).addr)
          bus = scd.getSmbus(0x03)
          slotId = DenaliFabric.ABSOLUTE_CARD_OFFSET
-         slot = DenaliFabricSlot(None, slotId, pci, bus)
+         slot = DenaliFabricSlot(sup, slotId, pci, bus)
       else:
          slot = CardSlot(None, 0)
       return cls(slot=slot)

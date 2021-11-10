@@ -14,6 +14,7 @@ from ...components.lm75 import Tmp75
 from ...components.max6581 import Max6581
 from ...components.pca9555 import Pca9555
 from ...components.phy.babbage import Babbage
+from ...components.plx import PlxPortDesc
 from ...components.tmp464 import Tmp464
 
 from ...descs.sensor import Position, SensorDesc
@@ -23,12 +24,19 @@ class ClearwaterBase(DenaliLinecard):
    SCD_PCI_OFFSET = 3
    XCVR_BUS_OFFSET = 0
    ASICS = [
-      DenaliAsicDesc(cls=Jericho2, bus=2, rstIdx=1),
+      DenaliAsicDesc(cls=Jericho2, asicId=0, rstIdx=1),
    ]
 
    STANDBY_TEMP_SENSORS_CLS = Lm73
    GPIO1_CLS = Pca9555
    PHY_CLS = Babbage
+
+   PLX_PORTS = [
+      PlxPortDesc(port=0, name='sup1', upstream=True),
+      PlxPortDesc(port=2, name='sup2', upstream=True),
+      PlxPortDesc(port=3, name='je0'),
+      PlxPortDesc(port=5, name='scd'),
+   ]
 
    PORTS = PortLayout(
       qsfps=incrange(1, 48),

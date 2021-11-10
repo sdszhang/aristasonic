@@ -2,50 +2,114 @@
 from collections import namedtuple
 
 from ..core.component.i2c import I2cComponent
+from ..core.pci import PciSwitch, DownstreamPciPort, UpstreamPciPort
 from ..core.register import RegisterMap, Register, RegBitField, RegBitRange
 
 from ..drivers.plx import PlxPex8700I2cDevDriver
 
-PlxPortDesc = namedtuple('PlxPortDesc', [
-   'port',
-   'lane',
-   'name',
-])
-
-class PlxPort(object):
-   def __init__(self, plx, pciePort, pcieLane, name):
-      self.plx = plx
-      self.pciePort = pciePort
-      self.pcieLane = pcieLane
+class PlxPortDesc(object):
+   VS0 = 0
+   VS1 = 1
+   def __init__(self, port=None, name=None, vs=VS0, upstream=False):
+      self.port = port
       self.name = name
+      self.station = port // 12
+      self.lane = (port % 12) * 2
+      self.vs = vs
+      self.upstream = upstream
+
+class DownstreamPlxPort(DownstreamPciPort):
+   def __init__(self, desc=None, **kwargs):
+      super(DownstreamPlxPort, self).__init__(port=desc.port, **kwargs)
+      self.desc = desc
+
+   @property
+   def name(self):
+      return self.desc.name
 
    def enable(self):
-      return self.plx.enablePort(self)
+      return self.parent.enablePort(self)
 
    def disable(self):
-      return self.plx.disablePort(self)
+      return self.parent.disablePort(self)
+
+class UpstreamPlxPort(UpstreamPciPort):
+   def __init__(self, desc=None, **kwargs):
+      super(UpstreamPlxPort, self).__init__(port=desc.port, **kwargs)
+      self.desc = desc
+
+   @property
+   def name(self):
+      return self.desc.name
+
+   def enable(self):
+      return self.parent.enablePort(self)
+
+   def disable(self):
+      return self.parent.disablePort(self)
+
+class PlxPciSwitch(PciSwitch):
+
+   UPSTREAM_PORT_CLS = UpstreamPlxPort
+   DOWNSTREAM_PORT_CLS = DownstreamPlxPort
+
+   def __init__(self, plx=None, ports=None, **kwargs):
+      super(PlxPciSwitch, self).__init__(**kwargs)
+      self.plx = plx
+      self.ports = {}
+      self.addPciPorts(ports)
+
+   @property
+   def upstream(self):
+      for port in self.upstreamPorts.values():
+         if port.upstream:
+            return port
+      raise RuntimeError('No upstream port defined')
+
+   def addPciPorts(self, descs):
+      self.descs = descs
+      for desc in descs:
+         if desc.upstream:
+            p = self.upstreamPort(port=desc.port, desc=desc)
+         else:
+            p = self.downstreamPort(port=desc.port, device=desc.port, desc=desc)
+         self.ports[p.name] = p
+
+   def portByName(self, name):
+      return self.ports[name]
+
+   def busForPort(self, port):
+      return super(PlxPciSwitch, self).busForPort(0)
+
+   def enablePort(self, port):
+      return self.plx.enablePort(port)
+
+   def disablePort(self, port):
+      return self.plx.disablePort(port)
 
 class Plx(I2cComponent):
+
+   PLX_PORT_CONFIG = []
+
    def __init__(self, addr, reverse=False, **kwargs):
       super(Plx, self).__init__(addr=addr, **kwargs)
-      self.ports = []
       self.reverse = reverse
-
-   def addPorts(self, ports):
-      for port in ports:
-         self.ports.append(PlxPort(self, port.port, port.lane, port.name))
-
-   def get(self, name):
-      port = [p for p in self.ports if p.name == name]
-      if len(port) != 1:
-         return None
-      return port[0]
+      self.pci = None
 
    def enablePort(self, port):
       raise NotImplementedError
 
    def disablePort(self, port):
       raise NotImplementedError
+
+   def addPciSwitch(self, parent, upstream=None, **kwargs):
+      assert not self.pci
+      self.pci = parent.newComponent(
+         PlxPciSwitch,
+         plx=self,
+         **kwargs
+      )
+      return self.pci
 
 class Plx8700RegisterMap(RegisterMap):
    SltCap = Register(0x7c,
@@ -72,20 +136,33 @@ class PlxPex8700(Plx):
    def enableHotPlug(self):
       self.driver.enableHotPlug()
 
-   def disableUpstreamPort(self, port, off=True):
-      self.driver.disableUpstreamPort(port, off)
+   def disablePort(self, port):
+      self.driver.disablePort(port.port)
 
-   def setUpstreamPort(self, port=0):
-      self.driver.setUpstreamPort(port)
+   def enablePort(self, port):
+      self.driver.enablePort(port.port)
 
-   def setNtPort(self, port=2):
-      self.driver.setNtPort(port)
+   def setUpstreamPort(self, port):
+      self.driver.setUpstreamPort(port.port)
+
+   def setNtPort(self, port):
+      self.driver.setNtPort(port.port)
 
    def enableNt(self, on=False):
       self.driver.enableNt(on)
 
    def smbusPing(self):
       return self.driver.smbusPing()
+
+   def setupVs(self):
+      if not self.pci.ports:
+         return
+
+      vs = [0, 0]
+      for port in self.pci.ports.values():
+         vs[port.desc.vs] |= 1 << port.port
+      for i, v in enumerate(vs):
+         self.vsPortVec(i, v)
 
    def vsPortVec(self, vsId, value=None):
       return self.driver.vsPortVec(vsId, value)

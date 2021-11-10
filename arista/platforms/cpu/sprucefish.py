@@ -1,5 +1,5 @@
 from ...core.cpu import Cpu
-from ...core.types import PciAddr
+from ...core.pci import PciRoot
 
 from ...components.scd import Scd
 from ...components.eeprom import At24C512
@@ -11,7 +11,11 @@ class SprucefishCpu(Cpu):
 
    def __init__(self, **kwargs):
       super(SprucefishCpu, self).__init__(**kwargs)
-      cpld = self.newComponent(Scd, addr=PciAddr(bus=0xff, device=0x0b, func=3))
+
+      self.pciRoot = self.newComponent(PciRoot)
+
+      port = self.pciRoot.rootPort(bus=0xff, device=0x0b, func=3)
+      cpld = port.newComponent(Scd, addr=port.addr)
       self.cpld = cpld
 
       cpld.createPowerCycle()

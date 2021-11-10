@@ -12,6 +12,7 @@ from ...components.denali.linecard import (
 )
 from ...components.eeprom import At24C512
 from ...components.pca9555 import Pca9555
+from ...components.plx import PlxPortDesc
 from ...components.scd import I2cScd
 from ...components.tmp464 import Tmp464
 
@@ -24,22 +25,19 @@ class WolverineStandbyRegMap(StandbyScdRegisterMap):
 
 class Wolverine(DenaliLinecard):
    CPU_CLS = HedgehogCpu
-   SCD_PCI_OFFSET = 4
    ASICS = [
-      DenaliAsicDesc(cls=Jericho2cPlus, bus=2, rstIdx=0),
-      DenaliAsicDesc(cls=Jericho2cPlus, bus=3, rstIdx=1),
+      DenaliAsicDesc(cls=Jericho2cPlus, asicId=0),
+      DenaliAsicDesc(cls=Jericho2cPlus, asicId=1),
    ]
    XCVR_BUS_OFFSET = 24
-   PLX_LCPU_MODE = [
-      # VS0 (sup)
-      ((1 << 0) |  # sup1
-       (1 << 2) |  # sup2
-       (1 << 13)), # gmac
-      # VS1 (lcpu)
-      ((1 << 1) |  # lcpu
-       (1 << 3) |  # je0
-       (1 << 4) |  # je1
-       (1 << 5))   # scd
+   PLX_PORTS = [
+      PlxPortDesc(port=0, name='sup1', upstream=True),
+      PlxPortDesc(port=1, name='lcpu', vs=PlxPortDesc.VS1, upstream=True),
+      PlxPortDesc(port=2, name='sup2', upstream=True),
+      PlxPortDesc(port=3, name='je0', vs=PlxPortDesc.VS1),
+      PlxPortDesc(port=4, name='je1', vs=PlxPortDesc.VS1),
+      PlxPortDesc(port=5, name='scd', vs=PlxPortDesc.VS1),
+      PlxPortDesc(port=13, name='gmac'),
    ]
 
    PORTS = PortLayout(

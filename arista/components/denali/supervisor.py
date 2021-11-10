@@ -1,7 +1,6 @@
 
 from ...core.psu import PsuSlot
 from ...core.supervisor import Supervisor
-from ...core.types import PciAddr
 
 from ...descs.gpio import GpioDesc
 
@@ -21,12 +20,11 @@ from .card import (
 )
 
 class DenaliSupervisor(Supervisor):
-   CPU_PCI_ROOT = '0000:00:03.0'
    LINECARD_PORTS = []
    FABRIC_PORTS = []
    PSUS = []
 
-   def __init__(self, scdAddr=None, pciSwitchCls=Microsemi, **kwargs):
+   def __init__(self, pciSwitchCls=Microsemi, **kwargs):
       super(DenaliSupervisor, self).__init__(**kwargs)
 
       self.chassisEeproms = []
@@ -42,7 +40,6 @@ class DenaliSupervisor(Supervisor):
                                self.linecardCount + self.fabricCount)
 
       self.scd = None
-      self.scdAddr = scdAddr
 
       self.createScd()
       self.createPciSwitch()
@@ -51,7 +48,9 @@ class DenaliSupervisor(Supervisor):
       self.createPsus()
 
    def createScd(self):
-      self.scd = self.newComponent(Scd, self.scdAddr)
+      port = self.cpu.pciRoot.rootPort(device=0x1c).pciEndpoint(port=0)
+      self.scd = port.newComponent(Scd, addr=port.addr)
+      port.parent = self.scd # FIXME
       self.scd.addSmbusMasterRange(0x8000, 3, 0x80)
       self.scd.addUartPortRange(0x7e00, self.linecardCount)
 
@@ -74,34 +73,12 @@ class DenaliSupervisor(Supervisor):
       ]
 
    def createPciSwitch(self):
-      pciSwitchUpstreamBus = readSecondaryBus(self.CPU_PCI_ROOT)
-      pciSwitchUpstreamAddr = PciAddr(bus=pciSwitchUpstreamBus, device=0x00, func=0)
-
-      # Management endpoint for configuring the switch
-      pciSwitchManagementAddr = PciAddr(bus=pciSwitchUpstreamBus, device=0x00, func=1)
-      self.pciSwitch = self.newComponent(self.pciSwitchCls,
-                                         addr=pciSwitchManagementAddr)
-
-      pciSwitchDownstreamBus = readSecondaryBus(pciSwitchUpstreamAddr)
-      for idx, portDesc in enumerate(self.LINECARD_PORTS):
-         pciSwitchDownstreamAddr = PciAddr(bus=pciSwitchDownstreamBus, device=portDesc.dsp - 1)
-         cardUpstreamBus = readSecondaryBus(pciSwitchDownstreamAddr)
-         self.pciSwitch.addPciPort(
-            portId=DenaliLinecardBase.ABSOLUTE_CARD_OFFSET + idx,
-            desc=portDesc,
-            addr=pciSwitchDownstreamAddr,
-            upstreamAddr=PciAddr(bus=cardUpstreamBus),
-         )
-
-      for idx, portDesc in enumerate(self.FABRIC_PORTS):
-         pciSwitchDownstreamAddr = PciAddr(bus=pciSwitchDownstreamBus, device=portDesc.dsp - 1)
-         cardUpstreamBus = readSecondaryBus(pciSwitchDownstreamAddr)
-         self.pciSwitch.addPciPort(
-            portId=DenaliFabricBase.ABSOLUTE_CARD_OFFSET + idx,
-            desc=portDesc,
-            addr=PciAddr(bus=pciSwitchDownstreamBus, device=portDesc.dsp - 1),
-            upstreamAddr=PciAddr(bus=cardUpstreamBus),
-         )
+      port = self.cpu.pciRoot.rootPort(device=0x03)
+      self.pciSwitch = self.cpu.pciRoot.newComponent(
+         self.pciSwitchCls,
+         addr=port.pciEndpoint(func=1).addr,
+      )
+      port.attach(self.pciSwitch.upstreamPort())
 
    def createLinecards(self):
       for lcId in range(self.linecardCount):
@@ -111,7 +88,7 @@ class DenaliSupervisor(Supervisor):
             GpioDesc("%s_present" % name, 0x4100, lcId, ro=True),
             GpioDesc("%s_present_changed" % name, 0x4100, 16 + lcId),
          ])
-         pci = self.pciSwitch.ports[slotId].upstreamAddr
+         pci = self.pciSwitch.addPciPort(self.LINECARD_PORTS[lcId])
          bus = self.scd.getSmbus(self.linecardSmbus[lcId])
          presenceGpio = self.scd.inventory.getGpio("%s_present" % name)
          self.linecardSlots.append(DenaliLinecardSlot(self, slotId, pci, bus,
@@ -128,7 +105,7 @@ class DenaliSupervisor(Supervisor):
             GpioDesc("%s_present" % name, 0x4110, fcId, ro=True),
             GpioDesc("%s_present_changed" % name, 0x4110, 16 + fcId),
          ])
-         pci = self.pciSwitch.ports[slotId].upstreamAddr
+         pci = self.pciSwitch.addPciPort(self.FABRIC_PORTS[fcId])
          bus = self.scd.getSmbus(self.fabricSmbus[fcId])
          presenceGpio = self.scd.inventory.getGpio("%s_present" % name)
          self.fabricSlots.append(DenaliFabricSlot(self, slotId, pci, bus,
