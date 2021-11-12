@@ -1,3 +1,5 @@
+
+import os
 import time
 
 from .python import monotonicRaw
@@ -63,3 +65,6 @@ def waitFor(func, description=None, timeout=60, delay=None, delayMax=1000,
          time.sleep(stime / 1000)
 
    raise RuntimeError("Not reachable")
+
+def waitForPath(path, *args, **kwargs):
+    return waitFor(lambda: os.path.exists(path), *args, **kwargs)

@@ -2,12 +2,27 @@ import enum
 import os
 
 from ..core.driver import Driver
-from ..core.register import RegBitField, RegisterMap
+from ..core.register import RegBitField, RegisterMap, Register
 from ..core.utils import FileResource, FileWaiter
 
-from ..components.pci import PciRegister8, PciRegister16
-
 from ..libs.wait import waitFor
+
+class PciRegister(Register):
+   pass
+
+class PciRegister8(PciRegister):
+   def read(self):
+      return self.parent.read8(self.addr)
+
+   def write(self, value):
+      return self.parent.write8(self.addr, value)
+
+class PciRegister16(PciRegister):
+   def read(self):
+      return self.parent.read16(self.addr)
+
+   def write(self, value):
+      return self.parent.write16(self.addr, value)
 
 class PciCapability(enum.IntEnum):
    PCI_EXPRESS = 0x10
