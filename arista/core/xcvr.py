@@ -231,6 +231,7 @@ class XcvrSlot(SlotComponent):
       self.interrupt = interrupt
       self.presentGpio = presentGpio
       self.leds = leds
+      self.xcvrInv = None
       self.xcvr = None
 
    def getId(self):
@@ -246,7 +247,7 @@ class XcvrSlot(SlotComponent):
       return self.interrupt
 
    def getXcvr(self):
-      return self.xcvr
+      return self.xcvrInv
 
    def getLeds(self):
       return self.leds
@@ -262,10 +263,10 @@ class SfpSlot(XcvrSlot):
       self.addSfp()
 
    def addSfp(self):
-      self.xcvr = self.inventory.addSfp(SfpImpl(self.addrFunc, self.sfpSlotInv))
-      self.newComponent(
+      self.xcvrInv = self.inventory.addSfp(SfpImpl(self.addrFunc, self.sfpSlotInv))
+      self.xcvr = self.newComponent(
          cls=Sfp,
-         addr=self.xcvr.getI2cAddr(),
+         addr=self.xcvrInv.getI2cAddr(),
          portName=self.name
       )
 
@@ -292,10 +293,10 @@ class QsfpSlot(XcvrSlot):
       self.addQsfp()
 
    def addQsfp(self):
-      self.xcvr = self.inventory.addQsfp(QsfpImpl(self.addrFunc, self.qsfpSlotInv))
-      self.newComponent(
+      self.xcvrInv = self.inventory.addQsfp(QsfpImpl(self.addrFunc, self.qsfpSlotInv))
+      self.xcvr = self.newComponent(
          cls=Qsfp,
-         addr=self.xcvr.getI2cAddr(),
+         addr=self.xcvrInv.getI2cAddr(),
          portName=self.name
       )
 
@@ -333,10 +334,10 @@ class OsfpSlot(XcvrSlot):
       self.addOsfp()
 
    def addOsfp(self):
-      self.xcvr = self.inventory.addOsfp(OsfpImpl(self.addrFunc, self.osfpSlotInv))
-      self.newComponent(
+      self.xcvrInv = self.inventory.addOsfp(OsfpImpl(self.addrFunc, self.osfpSlotInv))
+      self.xcvr = self.newComponent(
          cls=Osfp,
-         addr=self.xcvr.getI2cAddr(),
+         addr=self.xcvrInv.getI2cAddr(),
          portName=self.name
       )
 

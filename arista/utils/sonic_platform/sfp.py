@@ -287,3 +287,9 @@ class Sfp(SfpBase):
       except (OSError, IOError):
          return False
       return True
+
+   def set_write_max(self, size):
+      self._slot.slot.xcvr.driver.setWriteMax(size)
+
+   def get_write_max(self):
+      return self._slot.slot.xcvr.driver.getWriteMax()

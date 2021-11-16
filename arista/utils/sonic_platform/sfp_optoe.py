@@ -130,3 +130,9 @@ class SfpOptoe(SfpOptoeBase):
          return self.SFP_STATUS_UNPLUGGED
 
       return self.SFP_STATUS_OK
+
+   def set_write_max(self, size):
+      self._slot.slot.xcvr.driver.setWriteMax(size)
+
+   def get_write_max(self):
+      return self._slot.slot.xcvr.driver.getWriteMax()

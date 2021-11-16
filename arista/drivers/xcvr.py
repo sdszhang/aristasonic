@@ -6,7 +6,6 @@ from ..core.utils import inSimulation
 
 class XcvrKernelDriver(I2cKernelDriver):
    MODULE = 'optoe'
-   WRITE_MAX = 32
 
    def __init__(self, portName=None, **kwargs):
       super(XcvrKernelDriver, self).__init__(**kwargs)
@@ -18,14 +17,25 @@ class XcvrKernelDriver(I2cKernelDriver):
       if inSimulation():
          return
 
+      self.setPortName(self.portName)
+
+   def setPortName(self, name):
       portNamePath = os.path.join(self.getSysfsPath(), 'port_name')
       with open(portNamePath, 'w') as f:
-         f.write(self.portName)
+         f.write(name)
 
+   def setWriteMax(self, size):
       writeMaxPath = os.path.join(self.getSysfsPath(), 'write_max')
       if os.path.exists(writeMaxPath):
          with open(writeMaxPath, 'w') as f:
-            f.write(str(self.WRITE_MAX))
+            f.write(str(size))
+
+   def getWriteMax(self):
+      writeMaxPath = os.path.join(self.getSysfsPath(), 'write_max')
+      if not os.path.exists(writeMaxPath):
+         return 1 # NOTE: previous version of the driver hardcoded 1
+      with open(writeMaxPath) as f:
+         return int(f.read())
 
 class SfpKernelDriver(XcvrKernelDriver):
    NAME = 'optoe2'
