@@ -27,8 +27,10 @@ override_dh_auto_install:
 	$(MAKE) install-py3 \
 	   DESTDIR=$(CURDIR)/debian/python3-$(DEB_SOURCE) \
 	   PY_INSTALL_ARGS=--install-layout=deb
-	$(MAKE) install-drivers install-libs \
+	$(MAKE) install-drivers \
 	   DESTDIR=$(CURDIR)/debian/drivers-$(DEB_SOURCE)
+	$(MAKE) install-libs \
+	   DESTDIR=$(CURDIR)/debian/$(DEB_SOURCE)-libs
 	$(MAKE) install-fs \
 	   DESTDIR=$(CURDIR)/debian/$(DEB_SOURCE)
 

@@ -38,6 +38,12 @@ Depends:
    i2c-tools
 Description: Miscellaneous Arista scripts and tools
 
+Package: sonic-platform-arista-libs
+Architecture: amd64
+Depends:
+   ${misc:Depends}
+Description: Arista compiled user libraries
+
 Package: drivers-sonic-platform-arista-dev
 Architecture: amd64
 Depends:
