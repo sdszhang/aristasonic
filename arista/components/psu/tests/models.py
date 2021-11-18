@@ -39,10 +39,14 @@ class PsuModelTest(unittest.TestCase):
          identifiers.add(ident.partName)
       self.assertEqual(len(identifiers), len(model.IDENTIFIERS))
       self.assertValidI2cAddr(model.IPMI_ADDR)
-      self.assertValidI2cAddr(model.PMBUS_ADDR)
+      if model.PMBUS_ADDR:
+         # Fixed non-SMBus-accessible PSUs don't have this
+         self.assertValidI2cAddr(model.PMBUS_ADDR)
+      if model.PMBUS_CLS:
+         # Fixed non-SMBus-accessible PSUs don't have this
+         self.assertIsInstance(model.PMBUS_CLS, object)
       self.assertGreater(model.CAPACITY, 0)
       self.assertIsInstance(model.DUAL_INPUT, bool)
-      self.assertIsNotNone(model.PMBUS_CLS)
       if model.DRIVER is not None:
          self.assertIsInstance(model.DRIVER, str)
       self.assertIsInstance(model.DESCRIPTION, PsuDesc)

@@ -320,7 +320,9 @@ class XcvrSlot(SlotComponent):
       return self.name
 
    def getPresence(self):
-      return self.presentGpio.isActive()
+      if self.presentGpio:
+         return self.presentGpio.isActive()
+      return False
 
    def getInterruptLine(self):
       return self.interrupt

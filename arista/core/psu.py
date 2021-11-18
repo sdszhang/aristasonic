@@ -98,7 +98,10 @@ class PsuSlot(SlotComponent):
       self.psus = psus
       self.forcePsuLoad = forcePsuLoad
 
-      self.addrFunc(0x00) # workaround to configure a bus wide parameter
+      if self.addrFunc:
+         self.addrFunc(0x00) # workaround to configure a bus wide parameter
+      else:
+         assert len(psus) == 1, "Fixed PSU cannot list more than one"
       self.psuSlot = self.inventory.addPsuSlot(PsuSlotImpl(self))
       self.psuInv = None
       self.load(cacheOnly=True) # no IO in the constructor
@@ -111,9 +114,12 @@ class PsuSlot(SlotComponent):
    def autodetectPsuModel(self):
       psus = []
       for psuCls in self.psus:
-         psu = psuCls.tryLoadPsu(self)
-         if psu is not None:
-            psus.append(psu)
+         try:
+            psu = psuCls.tryLoadPsu(self)
+            if psu is not None:
+               psus.append(psu)
+         except Exception: # pylint: disable=broad-except
+            pass
 
       if not psus:
          if self.forcePsuLoad:
@@ -185,10 +191,13 @@ class PsuSlot(SlotComponent):
       return self.model
 
    def addPsu(self, desc):
+      if not self.addrFunc:
+         return None
+      addr = self.addrFunc(self.model.PMBUS_ADDR)
       psu = self.newComponent(
          self.model.PMBUS_CLS,
          name=self.model.DRIVER,
-         addr=self.addrFunc(self.model.PMBUS_ADDR),
+         addr=addr,
       )
       psu.addTempSensors(desc.sensors)
       psu.addFans(desc.fans)
@@ -217,6 +226,9 @@ class PsuSlot(SlotComponent):
          self.outputOkGpio = psu.driver.getOutputOkGpio()
 
    def getPresence(self):
+      # If the GPIO is just set to True, it's fixed and it's always present.
+      if self.presentGpio is True:
+         return True
       return self.presentGpio.isActive()
 
    def _getGpioActiveOr(self, gpio):

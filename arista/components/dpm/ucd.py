@@ -252,3 +252,6 @@ class Ucd90320(Ucd):
       days = (fid >> 11) & 0xffff
       value = (reg[9] << 8) | reg[8]
       return paged, ftype, page, value, days, msecs
+
+class Ucd9090A(Ucd):
+   pass
