@@ -24,7 +24,7 @@ def readSecondaryBus(pciAddr):
 
    devPath = '/sys/bus/pci/devices/%s/secondary_bus_number' % pciAddr
    waitFor(lambda: os.path.exists(devPath), "Unable to get %s secondary bus" % pciAddr,
-           timeout=60, sleep=True)
+           timeout=60, interval=100)
 
    def readBus():
       with open(devPath) as f:
