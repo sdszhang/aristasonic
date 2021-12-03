@@ -1,6 +1,6 @@
 
-from .kernel import I2cKernelDriver
-from .sysfs import LedRgbSysfsImpl
+from ..core.driver.kernel.i2c import I2cKernelDriver
+from ..core.driver.kernel.sysfs import LedRgbSysfsImpl
 
 class RookStatusLedKernelDriver(I2cKernelDriver):
    MODULE = 'rook-led-driver'

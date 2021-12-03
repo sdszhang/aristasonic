@@ -1,7 +1,6 @@
 from collections import OrderedDict
 
 from ..config import Config
-from ..driver import KernelDriver
 from ..inventory import Inventory
 
 DEFAULT_WAIT_TIMEOUT = 15
@@ -82,18 +81,9 @@ class Component(object):
    def addDrivers(self, drivers):
       if drivers:
          for drv in drivers:
-            key = getattr(drv, 'driverName', drv.__class__.__name__)
+            key = getattr(drv, 'module', drv.__class__.__name__)
             if key not in self.drivers:
                self.drivers[key] = drv
-
-   # Compatibility function for platform code
-   def addDriver(self, driver, *args, **kwargs):
-      if driver:
-         if driver == KernelDriver:
-            kwargs['module'] = args[0]
-         drv = driver(**kwargs)
-         self.drivers[getattr(drv, 'driverName', None) or
-                      driver.__class__.__name__] = drv
 
    def getInventory(self):
       return self.inventory

@@ -4,7 +4,7 @@ import os
 from ..core.utils import inSimulation
 from ..libs.wait import waitFor
 
-from .kernel import I2cKernelDriver
+from ..core.driver.kernel.i2c import I2cKernelDriver
 
 class EepromKernelDriver(I2cKernelDriver):
    MODULE = 'eeprom'

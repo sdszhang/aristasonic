@@ -6,7 +6,7 @@ from contextlib import closing
 
 from ..core.utils import inSimulation
 
-from .kernel import I2cKernelDriver
+from ..core.driver.kernel.i2c import I2cKernelDriver
 from .i2c import I2cDevDriver
 
 CTRL_REG = 0x01

@@ -3,7 +3,8 @@ from __future__ import print_function
 import os
 
 from .config import etcPath, flashPath
-from .driver import modprobe, KernelDriver
+from .driver import modprobe
+from .driver.kernel import KernelDriver
 from .exception import UnknownPlatformError
 from .log import getLogger
 from .prefdl import Prefdl

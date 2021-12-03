@@ -1,5 +1,5 @@
 
-from .kernel import I2cKernelDriver
+from ..core.driver.kernel.i2c import I2cKernelDriver
 
 class CrowFanCpldKernelDriver(I2cKernelDriver):
    MODULE = 'crow-fan-driver'

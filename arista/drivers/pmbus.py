@@ -1,6 +1,6 @@
 
 from .i2c import I2cDevDriver
-from .kernel import I2cKernelDriver
+from ..core.driver.kernel.i2c import I2cKernelDriver
 from .user import GpioFuncImpl
 
 class PsuPmbusDetect(I2cDevDriver):

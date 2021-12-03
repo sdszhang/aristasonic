@@ -1,9 +1,9 @@
 import enum
 import os
 
-from ..core.driver import Driver, KernelDriver
+from ..core.driver import Driver
 from ..core.register import RegBitField, RegisterMap
-from ..core.utils import FileResource, FileWaiter, MmapResource
+from ..core.utils import FileResource, FileWaiter
 
 from ..components.pci import PciRegister8, PciRegister16
 
@@ -127,31 +127,3 @@ class PciSwitchPortDriver(Driver):
       # done processing the link down event, proceeding with things like turning off
       # power, may generate PCI error.
       waitFor(lambda: not self.upstreamPortExists())
-
-class PciKernelDriver(KernelDriver):
-   def __init__(self, addr=None, registerCls=None, **kwargs):
-      self.addr = addr
-      self.regs = registerCls(self) if registerCls is not None else None
-      self.mmap_ = None
-      self.hwmonPath = None
-      super(PciKernelDriver, self).__init__(**kwargs)
-
-   @property
-   def mmap(self):
-      if self.mmap_ is None:
-         path = os.path.join(self.addr.getSysfsPath(), "resource0")
-         if not FileWaiter(path, 5).waitFileReady():
-            raise IOError('Mmap failed because file %s doesn\'t exist' % path)
-         self.mmap_ = MmapResource(path)
-         if not self.mmap_.map():
-            raise IOError('Failed to mmap file %s' % path)
-      return self.mmap_
-
-   def write(self, addr, value):
-      self.mmap.write32(addr, value)
-
-   def read(self, addr):
-      return self.mmap.read32(addr)
-
-   def getSysfsPath(self):
-      return self.addr.getSysfsPath()

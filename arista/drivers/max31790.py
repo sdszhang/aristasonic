@@ -1,5 +1,5 @@
 
-from .kernel import I2cKernelDriver
+from ..core.driver.kernel.i2c import I2cKernelDriver
 
 class Max31790KernelDriver(I2cKernelDriver):
    MODULE = 'amax31790'

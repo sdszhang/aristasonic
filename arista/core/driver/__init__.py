@@ -4,9 +4,9 @@ import subprocess
 
 from collections import OrderedDict
 
-from . import utils
-from .utils import FileWaiter, inDebug, inSimulation
-from .log import getLogger
+from .. import utils
+from ..utils import FileWaiter, inDebug, inSimulation
+from ..log import getLogger
 
 logging = getLogger(__name__)
 
@@ -129,52 +129,6 @@ class Driver(object):
    def __str__(self):
       kwargs = ['%s=%s' % (k, v) for k, v in self.__dict__.items()]
       return '%s(%s)' % (self.__class__.__name__, ', '.join(kwargs))
-
-class KernelDriver(Driver):
-   def __init__(self, waitFile=None, waitTimeout=None, args=None, **kwargs):
-      self.args = args if args is not None else []
-      self.fileWaiter = FileWaiter(waitFile, waitTimeout)
-      self.module = self.driverName = kwargs.get('module')
-      self.hwmonPath = None
-      super(KernelDriver, self).__init__(**kwargs)
-
-   def __str__(self):
-      return '%s(name=%s)' % (self.__class__.__name__, self.driverName)
-
-   def setup(self):
-      if not self.loaded():
-         modprobe(self.module, self.args)
-      self.fileWaiter.waitFileReady()
-
-   def clean(self):
-      if not self.loaded():
-         logging.debug('Module %s is not loaded', self.module)
-         return
-
-      devices = deviceListForModule(self.module)
-      if devices:
-         logging.debug('Module %s is still in use by other devices: %s',
-                       self.module, devices)
-         return
-
-      try:
-         rmmod(self.module)
-      except Exception as e: # pylint: disable=broad-except
-         logging.error('Failed to unload %s: %s', self.module, e)
-
-   def loaded(self):
-      return isModuleLoaded(self.module)
-
-   def getSysfsPath(self):
-      raise NotImplementedError
-
-   def getHwmonPath(self):
-      if self.hwmonPath is None:
-         self.hwmonPath = utils.locateHwmonFolder(self.getSysfsPath())
-      return self.hwmonPath
-
-   def getHwmonEntry(self, entry):
-      return os.path.join(self.getHwmonPath(), entry)
 
 class UserDriver(Driver):
    pass

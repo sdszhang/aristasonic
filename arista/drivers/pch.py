@@ -1,5 +1,5 @@
 
-from .kernel import PciKernelDriver
+from ..core.driver.kernel.pci import PciKernelDriver
 
 class PchTempKernelDriver(PciKernelDriver):
    MODULE = 'intel_pch_thermal'

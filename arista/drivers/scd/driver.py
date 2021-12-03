@@ -7,9 +7,15 @@ from ...core.config import Config
 from ...core.i2c_utils import I2cMsg
 from ...core.log import getLogger
 
+from ...core.driver.kernel.pci import PciKernelDriver
+from ...core.driver.kernel.sysfs import (
+   FanSysfsImpl,
+   GpioSysfsImpl,
+   LedSysfsImpl,
+   ResetSysfsImpl,
+)
+
 from ..i2c import I2cDevDriver
-from ..pci import PciKernelDriver
-from ..sysfs import FanSysfsImpl, GpioSysfsImpl, LedSysfsImpl, ResetSysfsImpl
 
 logging = getLogger(__name__)
 

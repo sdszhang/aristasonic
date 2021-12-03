@@ -1,5 +1,5 @@
 
-from .kernel import KernelDriver
+from ..core.driver.kernel import KernelDriver
 
 class RavenFanKernelDriver(KernelDriver):
    MODULE = 'raven-fan-driver'

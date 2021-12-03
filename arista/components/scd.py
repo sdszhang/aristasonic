@@ -8,7 +8,7 @@ from collections import OrderedDict, namedtuple
 from ..core.component import Priority, PciComponent
 from ..core.component.i2c import I2cComponent
 from ..core.config import Config
-from ..core.driver import KernelDriver
+from ..core.driver.kernel import KernelDriver
 from ..core.types import I2cAddr, MdioClause, MdioSpeed
 from ..core.utils import (
    FileWaiter,

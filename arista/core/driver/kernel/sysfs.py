@@ -2,18 +2,18 @@ from __future__ import division, print_function, with_statement
 
 import os
 
-from ..core import utils
-from ..core.config import Config
-from ..core.driver import Driver
-from ..core.log import getLogger
+from ... import utils
+from ...config import Config
+from ...driver import Driver
+from ...log import getLogger
 
-from ..descs.led import LedColor
+from ....descs.led import LedColor
 
-from ..inventory.fan import Fan
-from ..inventory.gpio import Gpio
-from ..inventory.led import Led
-from ..inventory.reset import Reset
-from ..inventory.temp import Temp
+from ....inventory.fan import Fan
+from ....inventory.gpio import Gpio
+from ....inventory.led import Led
+from ....inventory.reset import Reset
+from ....inventory.temp import Temp
 
 logging = getLogger(__name__)
 

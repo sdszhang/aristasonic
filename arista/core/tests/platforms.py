@@ -9,7 +9,6 @@ from ...descs.led import LedColor
 from ...descs.sensor import SensorDesc
 
 from ...drivers.scd.driver import ScdKernelDriver
-from ...drivers.sysfs import SysfsEntry, GpioSysfsImpl
 
 from ...inventory.fan import Fan, FanSlot
 from ...inventory.led import Led
@@ -26,6 +25,7 @@ from ...inventory.xcvr import (
 from .. import utils
 from ..config import Config
 from ..driver import Driver
+from ..driver.kernel.sysfs import SysfsEntry, GpioSysfsImpl
 from ..fixed import FixedSystem
 from ..platform import getPlatformSkus
 from ..types import I2cAddr
