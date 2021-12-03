@@ -158,8 +158,7 @@ class CliLogSink(LogSink):
    def write(self, line, record):
       print(line)
       if record.exc:
-         traceback.print_exception(sys.last_type, sys.last_value,
-                                   sys.last_traceback)
+         traceback.print_exception(*sys.exc_info())
 
 class FileLogSink(LogSink):
    NAME = 'file'
@@ -171,8 +170,7 @@ class FileLogSink(LogSink):
    def write(self, line, record):
       self.file.write(line + '\n')
       if record.exc:
-         traceback.format_exception(sys.last_type, sys.last_value,
-                                    sys.last_traceback)
+         traceback.format_exception(*sys.exc_info())
 
 class SyslogLogSink(LogSink):
    NAME = 'syslog'
