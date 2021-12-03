@@ -1,5 +1,5 @@
 
-from .component import Component
+from .component.component import Component
 from .port import PortLayout
 from .utils import HwApi
 

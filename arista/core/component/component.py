@@ -20,6 +20,7 @@ class Component(LegacyComponent):
          kwargs['addr'] = args[0]
          args = args[1:]
       kwargs.setdefault('registerCls', self.REGISTER_CLS)
+      kwargs.setdefault('priority', self.PRIORITY)
       # FIXME: workaround until DriverSelector
       driverCls = kwargs.get('driverCls', self.DRIVER)
       drivers = [
@@ -29,7 +30,6 @@ class Component(LegacyComponent):
       super(Component, self).__init__(
          *args,
          drivers=drivers,
-         priority=self.PRIORITY,
          **kwargs
       )
       assert len(self.drivers) <= 1, "New style components can only have one driver"

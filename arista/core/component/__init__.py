@@ -180,15 +180,3 @@ class PciComponent(Component):
    # XXX: Legacy, use component.pci.PciComponent instead
    def __init__(self, **kwargs):
       super(PciComponent, self).__init__(**kwargs)
-
-class I2cComponent(Component):
-   # XXX: Legacy, use component.i2c.I2cComponent instead
-   def __init__(self, **kwargs):
-      super(I2cComponent, self).__init__(**kwargs)
-
-   def __str__(self):
-      return '%s(addr=%s)' % (self.__class__.__name__, self.addr)
-
-class SlotComponent(Component):
-   def getPresence(self):
-      raise NotImplementedError

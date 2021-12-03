@@ -83,7 +83,7 @@ class MockPsuSlot(PsuSlot):
 
 class MockFixedSystem(FixedSystem):
    def __init__(self, psus, numPsus=2, psuFunc=lambda x: x):
-      super(MockFixedSystem, self).__init__(drivers=[])
+      super(MockFixedSystem, self).__init__()
       self.slots = []
       self.numPsus = numPsus
       for i in incrange(1, numPsus):

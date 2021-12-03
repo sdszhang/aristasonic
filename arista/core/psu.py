@@ -1,7 +1,8 @@
 
 import copy
 
-from .component import SlotComponent, Priority
+from .component import Priority
+from .component.slot import SlotComponent
 from .log import getLogger
 from .utils import JsonStoredData, inSimulation
 
@@ -78,10 +79,13 @@ class PsuIdent(object):
       self.metadata = metadata
 
 class PsuSlot(SlotComponent):
+
+   PRIORITY = Priority.POWER
+
    def __init__(self, slotId=None, desc=None, addrFunc=None, psus=None,
                 presentGpio=None, inputOkGpio=None, outputOkGpio=None, led=None,
                 forcePsuLoad=False, **kwargs):
-      super(PsuSlot, self).__init__(priority=Priority.POWER, **kwargs)
+      super(PsuSlot, self).__init__(**kwargs)
       self.slotId = slotId
       self.model = None
 

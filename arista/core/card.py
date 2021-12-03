@@ -1,5 +1,6 @@
 
-from .component import Priority, SlotComponent
+from .component import Priority
+from .component.slot import SlotComponent
 from .config import Config
 from .exception import UnknownPlatformError
 from .inventory import Inventory

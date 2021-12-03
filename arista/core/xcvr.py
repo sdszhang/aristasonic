@@ -8,7 +8,8 @@ from ..inventory.xcvr import (
    Sfp as SfpInv,
    SfpSlot as SfpSlotInv,
 )
-from .component import SlotComponent
+
+from .component.slot import SlotComponent
 
 class SfpImpl(SfpInv):
    def __init__(self, addrFunc, slot):

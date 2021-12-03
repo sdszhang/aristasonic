@@ -1,7 +1,8 @@
 
 from ..inventory.fan import FanSlot as FanSlotInv
 
-from .component import SlotComponent, Priority
+from .component import Priority
+from .component.slot import SlotComponent
 
 class FanSlotImpl(FanSlotInv):
    # TODO: cleanup a bit more
@@ -36,11 +37,14 @@ class FanSlotImpl(FanSlotInv):
       return self.slot.getFault()
 
 class FanSlot(SlotComponent):
+
+   PRIORITY = Priority.COOLING
+
    def __init__(self, slotId=None, name=None, description=None, fans=None,
                 faultGpio=None, presentGpio=None, maxPowerDraw=0., model='N/A',
                 led=None,
                 **kwargs):
-      super(FanSlot, self).__init__(priority=Priority.COOLING, **kwargs)
+      super(FanSlot, self).__init__(**kwargs)
       self.slotId = slotId
       self.name = name or 'slot%d' % self.slotId
       self.fans = fans or []

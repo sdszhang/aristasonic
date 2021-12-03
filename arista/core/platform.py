@@ -3,7 +3,7 @@ from __future__ import print_function
 import os
 
 from .config import etcPath, flashPath
-from .driver import modprobe
+from .driver import modprobe, KernelDriver
 from .exception import UnknownPlatformError
 from .log import getLogger
 from .prefdl import Prefdl
@@ -22,6 +22,11 @@ syseepromData = None
 host_prefdl_path = flashPath('.system-prefdl')
 host_prefdl_path_bin = flashPath('.system-prefdl-bin')
 fmted_prefdl_path = etcPath('.syseeprom')
+
+PREREQUISITES = [
+   KernelDriver(module='eeprom'),
+   KernelDriver(module='i2c-dev'),
+]
 
 def readPrefdlEeprom(*addrs):
    modprobe('eeprom')

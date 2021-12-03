@@ -9,6 +9,7 @@ from ...core import utils
 from ...core.config import Config
 from ...core.component import Priority
 from ...core.log import getLogger
+from ...core.platform import PREREQUISITES
 
 logging = getLogger(__name__)
 
@@ -40,6 +41,10 @@ def setupXcvrs(platform):
       except NotImplementedError:
          pass
 
+def loadPrerequisites():
+   for driver in PREREQUISITES:
+      driver.setup()
+
 @registerAction(setupParser)
 def doSetup(ctx, args):
    platform = ctx.platform
@@ -52,6 +57,7 @@ def doSetup(ctx, args):
    with utils.FileLock(Config().lock_file):
       if args.early or not args.late:
          logging.debug('setting up critical drivers')
+         loadPrerequisites()
          platform.setup(Priority.defaultFilter)
 
       # NOTE: This assumes that none of the resetable devices are
