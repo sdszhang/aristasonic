@@ -7,6 +7,8 @@ from ..inventory import Inventory
 from ..metainventory import MetaInventory, LazyInventory
 
 from .mockinv import (
+   MockEthernet,
+   MockEthernetSlot,
    MockFan,
    MockFanSlot,
    MockInterrupt,
@@ -29,14 +31,21 @@ from .mockinv import (
 
 class InventoryTest(unittest.TestCase):
    def _populateTestInventory(self, inv):
-      sfps = [MockSfp(0, 'SFP-1G-SX'), MockSfp(1, 'CAB-SFP-SFP-1M')]
+      eths = [MockEthernet(0, '1000BASE-T')]
+      for eth in eths:
+         name = eth.getName()
+         sfpId = eth.getId()
+         led = inv.addLed(MockLed('%s%d' % (name, sfpId)))
+         inv.addEthernetSlot(MockEthernetSlot(sfpId, name, leds=[led], xcvr=eth))
+
+      sfps = [MockSfp(1, 'SFP-1G-SX'), MockSfp(2, 'CAB-SFP-SFP-1M')]
       for sfp in sfps:
          name = sfp.getName()
          sfpId = sfp.getId()
          led = inv.addLed(MockLed('%s%d' % (name, sfpId)))
          inv.addSfpSlot(MockSfpSlot(sfpId, name, leds=[led], xcvr=sfp))
 
-      qsfps = [MockQsfp(2, 'CAB-Q-Q-100G-1M'), MockQsfp(3, 'QSFP-100G-CWDM4')]
+      qsfps = [MockQsfp(3, 'CAB-Q-Q-100G-1M'), MockQsfp(4, 'QSFP-100G-CWDM4')]
       for qsfp in qsfps:
          name = qsfp.getName()
          qsfpId = qsfp.getId()
@@ -45,7 +54,7 @@ class InventoryTest(unittest.TestCase):
          inv.addQsfpSlot(
             MockQsfpSlot(qsfpId, name, leds=[led], reset=reset, xcvr=qsfp))
 
-      osfps = [MockOsfp(4, 'AB-O-O-400G-1M'), MockOsfp(5, 'AOC-O-O-400G-3M')]
+      osfps = [MockOsfp(5, 'AB-O-O-400G-1M'), MockOsfp(6, 'AOC-O-O-400G-3M')]
       for osfp in osfps:
          name = osfp.getName()
          osfpId = osfp.getId()

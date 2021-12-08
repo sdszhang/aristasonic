@@ -10,10 +10,12 @@ class Inventory():
       self.leds = {}
       self.ledGroups = {}
 
+      self.ethernets = {}
       self.sfps = {}
       self.qsfps = {}
       self.osfps = {}
 
+      self.ethernetSlots = {}
       self.sfpSlots = {}
       self.qsfpSlots = {}
       self.osfpSlots = {}
@@ -50,10 +52,21 @@ class Inventory():
 
    def getXcvrs(self):
       xcvrs = {}
+      xcvrs.update(self.getEthernets())
       xcvrs.update(self.getSfps())
       xcvrs.update(self.getQsfps())
       xcvrs.update(self.getOsfps())
       return xcvrs
+
+   def addEthernet(self, eth):
+      self.ethernets[eth.getId()] = eth
+      return eth
+
+   def getEthernets(self):
+      return self.ethernets
+
+   def getEthernet(self, xcvrId):
+      return self.ethernets[xcvrId]
 
    def addSfp(self, sfp):
       self.sfps[sfp.getId()] = sfp
@@ -86,16 +99,22 @@ class Inventory():
       return self.osfps[xcvrId]
 
    def getXcvrSlot(self, slotId):
-      return self.sfpSlots.get(slotId) or \
+      return self.ethernetSlots.get(slotId) or \
+             self.sfpSlots.get(slotId) or \
              self.qsfpSlots.get(slotId) or \
              self.osfpSlots.get(slotId)
 
    def getXcvrSlots(self):
       xcvrSlots = {}
+      xcvrSlots.update(self.getEthernetSlots())
       xcvrSlots.update(self.getSfpSlots())
       xcvrSlots.update(self.getQsfpSlots())
       xcvrSlots.update(self.getOsfpSlots())
       return xcvrSlots
+
+   def addEthernetSlot(self, slot):
+      self.ethernetSlots[slot.getId()] = slot
+      return slot
 
    def addSfpSlot(self, slot):
       self.sfpSlots[slot.getId()] = slot
@@ -108,6 +127,9 @@ class Inventory():
    def addOsfpSlot(self, slot):
       self.osfpSlots[slot.getId()] = slot
       return slot
+
+   def getEthernetSlots(self):
+      return self.ethernetSlots
 
    def getSfpSlots(self):
       return self.sfpSlots

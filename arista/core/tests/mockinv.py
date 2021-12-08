@@ -23,6 +23,8 @@ from ...inventory.xcvr import (
    QsfpSlot,
    Sfp,
    SfpSlot,
+   Ethernet,
+   EthernetSlot,
 )
 
 from ..cooling import Airflow
@@ -294,6 +296,17 @@ class MockSlot(Slot):
    def __eq__(self, value):
       return isinstance(value, MockSlot) and self.name == value.name
 
+class MockEthernet(Ethernet):
+   def __init__(self, xcvrId, name):
+      self.xcvrId = xcvrId
+      self.name = name
+
+   def getId(self):
+      return self.xcvrId
+
+   def getName(self):
+      return self.name
+
 class MockSfp(Sfp):
    def __init__(self, xcvrId, name, addr=None):
       self.xcvrId = xcvrId
@@ -338,6 +351,59 @@ class MockOsfp(Osfp):
 
    def getI2cAddr(self):
       return self.addr
+
+class MockEthernetSlot(EthernetSlot):
+   def __init__(self, slotId, name, presence=True, leds=None, xcvr=None):
+      self.slotId = slotId
+      self.name = name
+      self.presence = presence
+      self.leds = leds or []
+      self.xcvr = xcvr
+
+   def getId(self):
+      return self.slotId
+
+   def getName(self):
+      return self.name
+
+   def getPresence(self):
+      return self.presence
+
+   def getLeds(self):
+      return self.leds
+
+   def getLowPowerMode(self):
+      return False
+
+   def setLowPowerMode(self, value):
+      return False
+
+   def getModuleSelect(self):
+      return True
+
+   def setModuleSelect(self, value):
+      return True
+
+   def getInterruptLine(self):
+      return None
+
+   def getReset(self):
+      return None
+
+   def getRxLos(self):
+      return False
+
+   def getTxDisable(self):
+      return False
+
+   def setTxDisable(self, value):
+      return False
+
+   def getTxFault(self):
+      return False
+
+   def getXcvr(self):
+      return self.xcvr
 
 class MockSfpSlot(SfpSlot):
    def __init__(self, slotId, name, presence=True, leds=None, intr=None,

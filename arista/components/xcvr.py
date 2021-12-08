@@ -11,6 +11,9 @@ from ..drivers.xcvr import (
 class Xcvr(I2cComponent):
    PRIORITY = Priority.DEFAULT
 
+class Ethernet(Xcvr):
+   pass
+
 class Sfp(Xcvr):
    DRIVER = SfpKernelDriver
 

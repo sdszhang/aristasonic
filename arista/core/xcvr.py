@@ -1,5 +1,5 @@
 
-from ..components.xcvr import Osfp, Qsfp, Sfp
+from ..components.xcvr import Osfp, Qsfp, Sfp, Ethernet
 from ..inventory.xcvr import (
    Osfp as OsfpInv,
    OsfpSlot as OsfpSlotInv,
@@ -7,9 +7,27 @@ from ..inventory.xcvr import (
    QsfpSlot as QsfpSlotInv,
    Sfp as SfpInv,
    SfpSlot as SfpSlotInv,
+   Ethernet as EthernetInv,
+   EthernetSlot as EthernetSlotInv,
 )
 
 from .component.slot import SlotComponent
+
+class EthernetImpl(EthernetInv):
+   def __init__(self, slot):
+      self.slot = slot
+
+   def getType(self):
+      return "ethernet"
+
+   def getId(self):
+      return self.slot.getId()
+
+   def getName(self):
+      return self.slot.getName()
+
+   def getI2cAddr(self):
+      return None
 
 class SfpImpl(SfpInv):
    def __init__(self, addrFunc, slot):
@@ -61,6 +79,66 @@ class OsfpImpl(OsfpInv):
 
    def getI2cAddr(self):
       return self.addr
+
+class EthernetSlotImpl(EthernetSlotInv):
+   def __init__(self, slot):
+      self.slot = slot
+
+   def getId(self):
+      return self.slot.getId()
+
+   def getName(self):
+      return self.slot.getName()
+
+   def getPresence(self):
+      # Currently not supported
+      return False
+
+   def getLeds(self):
+      return self.slot.leds
+
+   def getInterruptLine(self):
+      # Not supported for Ethernet
+      return None
+
+   def getReset(self):
+      # Not supported for Ethernet
+      return None
+
+   def getLowPowerMode(self):
+      # Not supported for Ethernet
+      return False
+
+   def setLowPowerMode(self, value):
+      # Not supported for Ethernet
+      return False
+
+   def getModuleSelect(self):
+      # Not supported for Ethernet
+      return True
+
+   def setModuleSelect(self, value):
+      # Not supported for Ethernet
+      return True
+
+   def getRxLos(self):
+      # Not supported for Ethernet
+      return False
+
+   def getTxDisable(self):
+      # Not supported for Ethernet
+      return False
+
+   def setTxDisable(self, value):
+      # Not supported for Ethernet
+      return False
+
+   def getTxFault(self):
+      # Not supported for Ethernet
+      return False
+
+   def getXcvr(self):
+      return self.slot.getXcvr()
 
 class SfpSlotImpl(SfpSlotInv):
    def __init__(self, slot):
@@ -252,6 +330,19 @@ class XcvrSlot(SlotComponent):
 
    def getLeds(self):
       return self.leds
+
+class EthernetSlot(XcvrSlot):
+   def __init__(self, **kwargs):
+      super().__init__(**kwargs)
+      self.ethernetSlotInv = self.inventory.addEthernetSlot(EthernetSlotImpl(self))
+      self.addEthernet()
+
+   def addEthernet(self):
+      self.xcvrInv = self.inventory.addEthernet(EthernetImpl(self.ethernetSlotInv))
+      self.xcvr = self.newComponent(
+         cls=Ethernet,
+         portName=self.name
+      )
 
 class SfpSlot(XcvrSlot):
    def __init__(self, rxLosGpio=None, txDisableGpio=None, txFaultGpio=None,

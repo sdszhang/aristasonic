@@ -6,8 +6,10 @@ class Port():
       self.lanes = lanes
 
 class PortLayout():
-   def __init__(self, sfps=None, qsfps=None, osfps=None):
+   def __init__(self, ethernets=None, sfps=None, qsfps=None, osfps=None):
+      self.ethernetRange = ethernets or []
       self.sfpRange = sfps or []
       self.qsfpRange = qsfps or []
       self.osfpRange = osfps or []
-      self.allRange = sorted(self.sfpRange + self.qsfpRange + self.osfpRange)
+      self.allRange = sorted(self.ethernetRange + self.sfpRange + self.qsfpRange +
+                             self.osfpRange)

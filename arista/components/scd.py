@@ -21,7 +21,8 @@ from ..core.log import getLogger
 from ..core.xcvr import (
    OsfpSlot,
    QsfpSlot,
-   SfpSlot
+   SfpSlot,
+   EthernetSlot,
 )
 
 from ..descs.led import LedDesc
@@ -383,19 +384,25 @@ class Scd(PciComponent):
       # Note: separate adder to avoid conflicting with kernel driver
       return self.inventory.addReset(self.driver.getReset(desc, **kwargs))
 
-   def _addXcvrSlot(self, cls, name, xcvrId, addr, bus, ledAddr, ledAddrOffsetFn,
-                    ledLanes, intrRegs=None, intrRegIdxFn=None,
-                    intrBitFn=None, **kwargs):
+   def _addXcvrSlot(self, cls, name, xcvrId, addr=None, bus=None, ledAddr=None,
+                    ledAddrOffsetFn=None, ledLanes=None, intrRegs=None,
+                    intrRegIdxFn=None, intrBitFn=None, **kwargs):
       intr = None
       if intrRegs:
          intrReg = intrRegs[intrRegIdxFn(xcvrId)]
          intr = intrReg.getInterruptBit(name, intrBitFn(xcvrId))
 
-      addrFunc = lambda addr, b=bus: self.i2cAddr(b, addr, t=1, datr=0, datw=3, ed=0)
-      presentDesc = GpioDesc("%s_present" % name, addr=addr, bit=2, ro=True,
-                             activeLow=True)
+      presentGpio = None
+      addrFunc = None
+      if addr is not None and bus is not None:
+         addrFunc = lambda addr, b=bus: self.i2cAddr(b, addr,
+                                                     t=1, datr=0, datw=3, ed=0)
+         presentDesc = GpioDesc("%s_present" % name, addr=addr, bit=2, ro=True,
+                                activeLow=True)
+         presentGpio = self.addXcvrGpio(presentDesc)
 
       leds = []
+      ledLanes = ledLanes or 0
       for laneId in incrange(1, ledLanes):
          laneName = name
          if ledLanes > 1:
@@ -410,8 +417,22 @@ class Scd(PciComponent):
          slotId=xcvrId,
          addrFunc=addrFunc,
          interrupt=intr,
-         presentGpio=self.addXcvrGpio(presentDesc),
+         presentGpio=presentGpio,
          leds=ledGroup,
+         **kwargs
+      )
+
+   def addEthernetSlotBlock(self, ethernetRange, **kwargs):
+      for i in ethernetRange:
+         self.addEthernetSlot(xcvrId=i, **kwargs)
+
+   def addEthernetSlot(self, xcvrId, **kwargs):
+      name = 'ethernet%d' % xcvrId
+
+      return self._addXcvrSlot(
+         cls=EthernetSlot,
+         name=name,
+         xcvrId=xcvrId,
          **kwargs
       )
 

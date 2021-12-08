@@ -1,10 +1,7 @@
 import time
 
-try:
-   from arista.utils.sonic_platform.thermal import SfpThermal
-   from sonic_platform_base.sonic_xcvr.sfp_optoe_base import SfpOptoeBase
-except ImportError as e:
-   raise ImportError("%s - required module not found" % e)
+from arista.utils.sonic_platform.thermal import SfpThermal
+from sonic_platform_base.sonic_xcvr.sfp_optoe_base import SfpOptoeBase
 
 EEPROM_PATH = '/sys/class/i2c-adapter/i2c-{0}/{0}-{1:04x}/eeprom'
 
@@ -22,8 +19,10 @@ class SfpOptoe(SfpOptoeBase):
       self.index = index
       self._slot = slot
       sfp = slot.getXcvr()
-      self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
-                                            sfp.getI2cAddr().address)
+      self._eepromPath = None
+      if sfp.getI2cAddr():
+         self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
+                                               sfp.getI2cAddr().address)
       self._sfp_type = None
       self._thermal_list.append(SfpThermal(self))
 
@@ -40,7 +39,7 @@ class SfpOptoe(SfpOptoeBase):
       if info:
          sfp_type = info.get("type_abbrv_name")
       # XXX: Need this hack until xcvrd is refactored
-      if sfp_type == "OSFP-8X" or sfp_type == "QSFP-DD":
+      if sfp_type in ["OSFP-8X", "QSFP-DD"]:
          sfp_type = "QSFP_DD"
       return sfp_type
 

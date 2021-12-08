@@ -76,7 +76,9 @@ class SfpEepromGenerator():
 
       for xcvr in platform.getInventory().getXcvrs().values():
          addr = xcvr.getI2cAddr()
-         xcvrMap.add(Xcvr(xcvr.getType(), xcvr.getId(), addr.busName, addr.address))
+         if addr:
+            xcvrMap.add(Xcvr(xcvr.getType(), xcvr.getId(),
+                             addr.busName, addr.address))
 
       xcvrMap = self.addUniqueXcvrMap(xcvrMap)
 
