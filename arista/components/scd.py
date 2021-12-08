@@ -42,7 +42,7 @@ SYS_UIO_PATH = '/sys/class/uio'
 
 class ScdI2cAddr(I2cAddr):
    def __init__(self, scd, bus, addr, **kwargs):
-      super(ScdI2cAddr, self).__init__(bus, addr, **kwargs)
+      super().__init__(bus, addr, **kwargs)
       self.scd_ = scd
 
    @property
@@ -170,7 +170,7 @@ class ScdInterrupt(Interrupt):
    def getFile(self):
       return self.reg.scd.getUio(self.reg.num, self.bit)
 
-class ScdInterruptRegister(object):
+class ScdInterruptRegister():
    def __init__(self, scd, addr, num, mask):
       self.scd = scd
       self.num = num
@@ -226,7 +226,7 @@ class ScdInterruptRegister(object):
          return None
       return self.scd.inventory.addInterrupt(ScdInterrupt(self, name, bit))
 
-class ScdMdio(object):
+class ScdMdio():
    def __init__(self, scd, master, bus, devIdx, port, device, clause, name):
       self.scd = scd
       self.master = master
@@ -237,7 +237,7 @@ class ScdMdio(object):
       self.clause = clause
       self.name = name
 
-class ScdSmbus(object):
+class ScdSmbus():
    def __init__(self, scd, bus):
       self.scd = scd
       self.bus = bus
@@ -272,7 +272,7 @@ class Scd(PciComponent):
       self.mdios = []
       self.msiRearmOffset = None
       self.uartPorts = {}
-      super(Scd, self).__init__(addr=addr, drivers=drivers, **kwargs)
+      super().__init__(addr=addr, drivers=drivers, **kwargs)
       self.regs = self.drivers['scd-hwmon'].regs
 
    def __str__(self):
@@ -524,7 +524,8 @@ class Scd(PciComponent):
          'devCount': [0] * busCount,
       }
 
-   def addMdioMasterRange(self, base, count, spacing=0x40, busCount=1, speed=MdioSpeed.S2_5):
+   def addMdioMasterRange(self, base, count, spacing=0x40, busCount=1,
+                          speed=MdioSpeed.S2_5):
       addrs = range(base, base + count * spacing, spacing)
       for i, addr in enumerate(addrs, 0):
          self.addMdioMaster(addr, i, busCount, speed=speed)

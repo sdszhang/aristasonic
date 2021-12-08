@@ -9,4 +9,4 @@ class ActionError(Exception):
 
 class ActionComplete(ActionError):
    def __init__(self, msg='action completed early', code=0):
-      super(ActionComplete, self).__init__(msg=msg, code=code)
+      super().__init__(msg=msg, code=code)

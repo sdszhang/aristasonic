@@ -26,7 +26,7 @@ class MockSfpSlot(SfpSlot):
 
 class MockFixedSystem(FixedSystem):
    def __init__(self, sfpRange, qsfpRange, osfpRange):
-      super(MockFixedSystem, self).__init__()
+      super().__init__()
       self.sfpRange = sfpRange
       self.qsfpRange = qsfpRange
       self.osfpRange = osfpRange

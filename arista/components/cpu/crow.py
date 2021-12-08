@@ -44,7 +44,7 @@ class CrowSysCpld(SysCpld):
 
    def powerCycleOnSeu(self, value=None):
       if not isinstance(self.driver.regs, KoiCpldRegisters):
-         return super(CrowSysCpld, self).powerCycleOnSeu(value)
+         return super().powerCycleOnSeu(value)
 
       res1 = self.driver.regs.powerCycleOnCrc(value)
       res2 = self.driver.regs.powerCycleOnCpldSeu(value)
@@ -52,7 +52,7 @@ class CrowSysCpld(SysCpld):
 
    def hasSeuError(self):
       if not isinstance(self.driver.regs, KoiCpldRegisters):
-         return super(CrowSysCpld, self).hasSeuError()
+         return super().hasSeuError()
 
       return self.driver.regs.scdCrcError() or \
              self.driver.regs.cpldSeuDetected()

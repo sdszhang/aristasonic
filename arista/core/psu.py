@@ -71,7 +71,7 @@ class PsuSlotImpl(PsuSlotInv):
                        self.psu)
       self.psu = PsuImpl(self, self.slot.model, psu)
 
-class PsuIdent(object):
+class PsuIdent():
    def __init__(self, partName=None, aristaName=None, airflow=None, metadata=None):
       self.partName = partName
       self.aristaName = aristaName
@@ -85,7 +85,7 @@ class PsuSlot(SlotComponent):
    def __init__(self, slotId=None, desc=None, addrFunc=None, psus=None,
                 presentGpio=None, inputOkGpio=None, outputOkGpio=None, led=None,
                 forcePsuLoad=False, **kwargs):
-      super(PsuSlot, self).__init__(**kwargs)
+      super().__init__(**kwargs)
       self.slotId = slotId
       self.model = None
 
@@ -247,7 +247,7 @@ class PsuSlot(SlotComponent):
          self.components[0].setup()
          self.components[0].finish()
 
-class PsuModel(object):
+class PsuModel():
    MANUFACTURER = None
    MANUFACTURER_ALIASES = []
    IDENTIFIERS = []

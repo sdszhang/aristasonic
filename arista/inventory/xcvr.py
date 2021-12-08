@@ -22,13 +22,13 @@ class Xcvr(InventoryInterface):
    def getI2cAddr(self):
       raise NotImplementedError
 
-class Sfp(Xcvr):
+class Sfp(Xcvr): # pylint: disable=abstract-method
    pass
 
-class Qsfp(Xcvr):
+class Qsfp(Xcvr): # pylint: disable=abstract-method
    pass
 
-class Osfp(Xcvr):
+class Osfp(Xcvr): # pylint: disable=abstract-method
    pass
 
 @diagcls
@@ -90,11 +90,11 @@ class XcvrSlot(InventoryInterface):
    def getXcvr(self):
       raise NotImplementedError
 
-class SfpSlot(XcvrSlot):
+class SfpSlot(XcvrSlot): # pylint: disable=abstract-method
    NUM_CHANNELS = 1
 
-class QsfpSlot(XcvrSlot):
+class QsfpSlot(XcvrSlot): # pylint: disable=abstract-method
    NUM_CHANNELS = 4
 
-class OsfpSlot(XcvrSlot):
+class OsfpSlot(XcvrSlot): # pylint: disable=abstract-method
    NUM_CHANNELS = 8

@@ -225,7 +225,7 @@ class OsfpSlotImpl(OsfpSlotInv):
 class XcvrSlot(SlotComponent):
    def __init__(self, slotId=None, name=None, addrFunc=None, interrupt=None,
                 presentGpio=None, leds=None, **kwargs):
-      super(XcvrSlot, self).__init__(**kwargs)
+      super().__init__(**kwargs)
       self.addrFunc = addrFunc
       self.slotId = slotId
       self.name = name
@@ -256,7 +256,7 @@ class XcvrSlot(SlotComponent):
 class SfpSlot(XcvrSlot):
    def __init__(self, rxLosGpio=None, txDisableGpio=None, txFaultGpio=None,
                 **kwargs):
-      super(SfpSlot, self).__init__(**kwargs)
+      super().__init__(**kwargs)
       self.rxLosGpio = rxLosGpio
       self.txDisableGpio = txDisableGpio
       self.txFaultGpio = txFaultGpio
@@ -285,7 +285,7 @@ class SfpSlot(XcvrSlot):
 
 class QsfpSlot(XcvrSlot):
    def __init__(self, lpMode=None, modSel=None, reset=None, **kwargs):
-      super(QsfpSlot, self).__init__(**kwargs)
+      super().__init__(**kwargs)
       self.lpMode = lpMode
       self.modSel = modSel
       self.reset = reset
@@ -294,7 +294,8 @@ class QsfpSlot(XcvrSlot):
       self.addQsfp()
 
    def addQsfp(self):
-      self.xcvrInv = self.inventory.addQsfp(QsfpImpl(self.addrFunc, self.qsfpSlotInv))
+      self.xcvrInv = self.inventory.addQsfp(QsfpImpl(self.addrFunc,
+                                                     self.qsfpSlotInv))
       self.xcvr = self.newComponent(
          cls=Qsfp,
          addr=self.xcvrInv.getI2cAddr(),
@@ -327,7 +328,7 @@ class QsfpSlot(XcvrSlot):
 
 class OsfpSlot(XcvrSlot):
    def __init__(self, lpMode=None, modSel=None, reset=None, **kwargs):
-      super(OsfpSlot, self).__init__(**kwargs)
+      super().__init__(**kwargs)
       self.lpMode = lpMode
       self.modSel = modSel
       self.reset = reset
@@ -335,7 +336,8 @@ class OsfpSlot(XcvrSlot):
       self.addOsfp()
 
    def addOsfp(self):
-      self.xcvrInv = self.inventory.addOsfp(OsfpImpl(self.addrFunc, self.osfpSlotInv))
+      self.xcvrInv = self.inventory.addOsfp(OsfpImpl(self.addrFunc,
+                                                     self.osfpSlotInv))
       self.xcvr = self.newComponent(
          cls=Osfp,
          addr=self.xcvrInv.getI2cAddr(),

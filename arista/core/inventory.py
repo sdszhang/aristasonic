@@ -5,7 +5,7 @@ from collections import defaultdict
 from ..inventory.reloadcause import ReloadCause, ReloadCauseProvider
 from ..inventory.slot import Slot
 
-class Inventory(object):
+class Inventory():
    def __init__(self):
       self.leds = {}
       self.ledGroups = {}

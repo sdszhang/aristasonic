@@ -8,7 +8,7 @@ logging = getLogger(__name__)
 
 CONFIG_PATH = "/etc/sonic/arista.config"
 
-class Config(object):
+class Config():
    instance_ = None
 
    def __new__(cls):

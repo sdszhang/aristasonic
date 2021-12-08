@@ -1,7 +1,7 @@
 
 from __future__ import print_function
 
-class Renderer(object):
+class Renderer():
 
    NAME = None
 
@@ -15,7 +15,7 @@ class Renderer(object):
       '''Output for JSON, recommended to use for text as well'''
       raise NotImplementedError
 
-class Show(object):
+class Show():
 
    TXT = 'text'
    JSON = 'json'

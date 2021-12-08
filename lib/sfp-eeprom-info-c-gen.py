@@ -5,7 +5,7 @@ from __future__ import print_function
 import argparse
 import sys
 
-class Xcvr(object):
+class Xcvr():
    def __init__(self, xcvrType, xcvrId, bus, addr):
       self.type = xcvrType.upper()
       self.id = xcvrId
@@ -20,7 +20,7 @@ class Xcvr(object):
              self.bus == other.bus and \
              self.addr == other.addr
 
-class XcvrMap(object):
+class XcvrMap():
    def __init__(self, name):
       self.name = '%s_xcvrs' % name
       self.xcvrs = []
@@ -47,15 +47,16 @@ class XcvrMap(object):
             return False
       return True
 
-class Platform(object):
+class Platform():
    def __init__(self, sid, base, xcvrMap):
       self.sid = sid
+      self.base = base
       self.xcvrMap = xcvrMap
 
    def toC(self):
       return '   PLATFORM("%s", %s),\n' % (self.sid, self.xcvrMap.name)
 
-class SfpEepromGenerator(object):
+class SfpEepromGenerator():
    def __init__(self):
       self.xcvrMaps = {}
       self.platforms = []

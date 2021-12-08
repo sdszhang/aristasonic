@@ -17,13 +17,13 @@ from .pmbus import PmbusComponent
 
 logging = getLogger(__name__)
 
-class AdmPriority(object):
+class AdmPriority():
    NONE = 0
    LOW = 10
    NORMAL = 20
    HIGH = 30
 
-class AdmPin(object):
+class AdmPin():
 
    GPIO = 'gpio'
 
@@ -37,7 +37,7 @@ class AdmReloadCauseEntry(ReloadCauseEntry):
 
 class AdmReloadCauseProvider(ReloadCauseProviderHelper):
    def __init__(self, adm):
-      super(AdmReloadCauseProvider, self).__init__(name=str(adm))
+      super().__init__(name=str(adm))
       self.adm = adm
 
    def process(self):
@@ -66,7 +66,7 @@ class Adm1266(PmbusComponent):
       POWERUP_COUNTER = 0xe4
 
    def __init__(self, addr=None, causes=None, **kwargs):
-      super(Adm1266, self).__init__(addr=addr, **kwargs)
+      super().__init__(addr=addr, **kwargs)
       self.causes = causes
       self.inventory.addReloadCauseProvider(AdmReloadCauseProvider(self))
 

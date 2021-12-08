@@ -12,7 +12,7 @@ logging = getLogger(__name__)
 class InvalidPrefdlData( Exception ):
    pass
 
-class TlvField(object):
+class TlvField():
    def __init__(self, code, name, length=None, aliases=None, value=None):
       self.name = name
       self.code = code
@@ -50,14 +50,14 @@ class TlvIntField(TlvField):
 
 class TlvMacField(TlvStrField):
    def parse(self, value):
-      v = super(TlvMacField, self).parse(value)
+      v = super().parse(value)
       if ':' in v:
          return v
       return ":".join([v[0:2], v[2:4], v[4:6], v[6:8], v[8:10], v[10:12]])
 
 class TlvIntTupleField(TlvStrField):
    def parse(self, value):
-      value = super(TlvIntTupleField, self).parse(value)
+      value = super().parse(value)
       return tuple(int(v) for v in value.split('.'))
 
    def toStr(self):
@@ -70,7 +70,7 @@ class TlvSerialField(TlvStrField):
          return True
       return False
 
-class PrefdlBase(object):
+class PrefdlBase():
    FIELDS = [
       TlvField(0x00, 'END', length=0),
       TlvStrField(0x01, 'Deviation'),
@@ -204,7 +204,7 @@ class PrefdlV3(PrefdlBase):
 class UnknownPrefdlVersion(Exception):
    pass
 
-class Prefdl(object):
+class Prefdl():
    MAP = {
       b"0002": PrefdlV2,
       b"0003": PrefdlV3,

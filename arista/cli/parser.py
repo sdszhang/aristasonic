@@ -9,10 +9,10 @@ from ..core.log import getLogger
 
 logging = getLogger(__name__)
 
-class CliContext(object):
+class CliContext():
    pass
 
-class Parser(object):
+class Parser():
    def __init__(self, name, parser, parent, kwargs, childs=None):
       self.name = name
       self.parser = parser

@@ -19,18 +19,18 @@ from .pmbus import PmbusComponent
 
 logging = getLogger(__name__)
 
-class UcdPriority(object):
+class UcdPriority():
    NONE = 0
    LOW = 10
    NORMAL = 20
    HIGH = 30
 
-class UcdGpi(object):
+class UcdGpi():
    def __init__(self, bit, priority=UcdPriority.NORMAL):
       self.bit = bit
       self.priority = priority
 
-class UcdMon(object):
+class UcdMon():
    def __init__(self, val, priority=UcdPriority.NORMAL):
       self.val = val
       self.priority = priority
@@ -40,7 +40,7 @@ class UcdReloadCauseEntry(ReloadCauseEntry):
 
 class UcdReloadCauseProvider(ReloadCauseProviderHelper):
    def __init__(self, ucd):
-      super(UcdReloadCauseProvider, self).__init__(name=str(ucd))
+      super().__init__(name=str(ucd))
       self.ucd = ucd
 
    def process(self):
@@ -73,7 +73,7 @@ class Ucd(PmbusComponent):
    daysOffset = 0
 
    def __init__(self, addr=None, causes=None, **kwargs):
-      super(Ucd, self).__init__(addr=addr, **kwargs)
+      super().__init__(addr=addr, **kwargs)
       self.causes = causes or {}
       self.oldestTime = datetime.datetime(1970, 1, 1)
       self.inventory.addReloadCauseProvider(UcdReloadCauseProvider(self))

@@ -16,7 +16,7 @@ from ..libs.python import isinteger
 
 logging = getLogger(__name__)
 
-class HwApi(object):
+class HwApi():
    def __init__(self, *values):
       self.values = [int(v) for v in values]
 
@@ -44,7 +44,7 @@ class HwApi(object):
          return HwApi(value)
       return HwApi((int(v) for v in value.split('.')))
 
-class ResourceAccessor(object):
+class ResourceAccessor():
    ''' Base abstraction for accessing resource like files '''
    def __init__(self, path):
       self.path_ = path
@@ -99,7 +99,7 @@ class ResourceAccessor(object):
 class MmapResource(ResourceAccessor):
    """Resource implementation for a directly-mapped memory region."""
    def __init__(self, *args, **kwargs):
-      super(MmapResource, self).__init__(*args, **kwargs)
+      super().__init__(*args, **kwargs)
       self.mmap_ = None
 
    def map(self):
@@ -152,7 +152,7 @@ class MmapResource(ResourceAccessor):
 class FileResource(ResourceAccessor):
    ''' Resource implementation for a file base memory region. '''
    def __init__(self, *args, **kwargs):
-      super(FileResource, self).__init__(*args, **kwargs)
+      super().__init__(*args, **kwargs)
       self.file_ = None
 
    def openResource(self):
@@ -243,7 +243,7 @@ WAITFILE_HWMON = 'hwmon'
 
 # Depreciate this object if we want to wait on access instead of waiting at start
 # and potentially failing
-class FileWaiter(object):
+class FileWaiter():
    def __init__(self, waitFile=None, waitTimeout=None):
       self.waitFile = waitFile
       self.waitTimeout = float(waitTimeout) if waitTimeout else 1.0
@@ -267,29 +267,28 @@ class FileWaiter(object):
    def fileExists(self):
       if isinstance(self.waitFile, str):
          return os.path.exists(self.waitFile)
-      else:
-         def _findFile(directory, patterns):
-            if not os.path.exists(directory):
-               return False
-
-            nextPattern = patterns[0]
-            for filename in os.listdir(directory):
-               if not re.match(nextPattern, filename):
-                  continue
-
-               if len(patterns) == 1:
-                  return True
-
-               subdir = os.path.join(directory, filename)
-               if not os.path.isdir(subdir):
-                  continue
-
-               if _findFile(subdir, patterns[1:]):
-                  return True
-
+      def _findFile(directory, patterns):
+         if not os.path.exists(directory):
             return False
 
-         return _findFile(self.waitFile[0], self.waitFile[1:])
+         nextPattern = patterns[0]
+         for filename in os.listdir(directory):
+            if not re.match(nextPattern, filename):
+               continue
+
+            if len(patterns) == 1:
+               return True
+
+            subdir = os.path.join(directory, filename)
+            if not os.path.isdir(subdir):
+               continue
+
+            if _findFile(subdir, patterns[1:]):
+               return True
+
+         return False
+
+      return _findFile(self.waitFile[0], self.waitFile[1:])
 
 class FileLock:
    def __init__(self, lock_file, auto_release=False):
@@ -312,7 +311,7 @@ class FileLock:
       else:
          self.f.close()
 
-class NoopObj(object):
+class NoopObj():
    def __init__(self, *args, **kwargs):
       self.name = self.__class__.__name__
       self.classStr = '%s(%s)' % (self.name, self._fmtArgs(*args, **kwargs))
@@ -331,7 +330,7 @@ class NoopObj(object):
    def __getattr__(self, attr):
       return self.noop(attr)
 
-class StoredData(object):
+class StoredData():
    def __init__(self, name, lifespan='temporary', path=None):
       self.name = name
       self.lifespan = lifespan
@@ -390,11 +389,10 @@ class JsonStoredData(StoredData):
       return obj
 
    def write(self, data, mode='a+'):
-      super(JsonStoredData, self).write(json.dumps(data, indent=3,
-                                                   separators=(',', ': ')), mode)
+      super().write(json.dumps(data, indent=3, separators=(',', ': ')), mode)
 
    def read(self):
-      res = super(JsonStoredData, self).read()
+      res = super().read()
       if res:
          return json.loads(res)
       return self.DEFAULT_VALUE
@@ -442,7 +440,7 @@ def simulateWith(simulatedFunc):
 
 def writeConfigSim(path, data):
    for filename, value in data.items():
-      logging.info('writting data under %s : %r',
+      logging.info('writing data under %s : %r',
                    os.path.join(path, filename), value)
 
 @simulateWith(writeConfigSim)
@@ -453,7 +451,8 @@ def writeConfig(path, data):
          with open(filePath, 'w') as f:
             f.write(value)
       except IOError as e:
-         logging.error('%s %s', path, e.strerror)
+         logging.error('writeConfig path=%s data=%s error=%s',
+                       path, data, e.strerror)
 
 def locateHwmonFolder(devicePath, index=0):
    if inSimulation():
@@ -495,4 +494,3 @@ def libraryInit():
          pass
 
 libraryInit()
-
