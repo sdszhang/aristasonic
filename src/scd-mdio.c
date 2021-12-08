@@ -154,9 +154,10 @@ static s32 scd_mii_bus_do(struct mii_bus *mii_bus, int addr, int op, int regnum,
 {
    struct scd_mdio_bus *mdio_bus = mii_bus->priv;
    struct scd_context *ctx = mdio_bus->master->ctx;
-   int prtad = addr >> 5;
-   int devad = addr & 0x1f;
-   int clause = (addr & MDIO_PHY_ID_C45) ? 1 : 0;
+   int full_addr = mdio_bus->dev_id_to_addr[addr];
+   int prtad = (full_addr >> 5) & 0x1f;
+   int devad = full_addr & 0x1f;
+   int clause = (full_addr & MDIO_PHY_ID_C45) ? 1 : 0;
    int err;
 
    dev_dbg(get_scd_dev(ctx), "mii_bus_do, op: %d, master: %d, bus: %d, clause %d, "
@@ -189,19 +190,19 @@ static s32 scd_mii_bus_write(struct mii_bus *mii_bus, int addr, int regnum,
 
 static int scd_mdio_mii_id(int prtad, int devad, int mode)
 {
-   int dev_id = (prtad << 5) | devad;
+   int mii_id = (prtad << 5) | devad;
 
    if (mode & MDIO_SUPPORTS_C45)
-      dev_id |= MDIO_PHY_ID_C45;
+      mii_id |= MDIO_PHY_ID_C45;
 
-   return dev_id;
+   return mii_id;
 }
 
 static int scd_mdio_read(struct net_device *netdev, int prtad, int devad, u16 addr)
 {
    struct scd_mdio_device *mdio_dev = netdev_priv(netdev);
    struct scd_context *ctx = mdio_dev->mdio_bus->master->ctx;
-   int dev_id = scd_mdio_mii_id(prtad, devad, mdio_dev->mode_support);
+   int dev_id = mdio_dev->id;
 
    dev_dbg(get_scd_dev(ctx),
            "scd_mdio_read, dev_id: %04x, prtad: %d, devad: %d, addr: %04x", dev_id,
@@ -214,7 +215,7 @@ static int scd_mdio_write(struct net_device *netdev, int prtad, int devad, u16 a
 {
    struct scd_mdio_device *mdio_dev = netdev_priv(netdev);
    struct scd_context *ctx = mdio_dev->mdio_bus->master->ctx;
-   int dev_id = scd_mdio_mii_id(prtad, devad, mdio_dev->mode_support);
+   int dev_id = mdio_dev->id;
 
    dev_dbg(get_scd_dev(ctx),
            "scd_mdio_write, dev_id: %04x, prtad: %d, devad: %d, addr: %04x, "
@@ -266,6 +267,10 @@ static int __scd_mdio_device_add(struct scd_mdio_bus *bus, u16 dev_id, u16 prtad
    struct scd_mdio_device *scd_mdio_dev;
    int err;
 
+   if (dev_id >= PHY_MAX_ADDR) {
+      return -EINVAL;
+   }
+
    scnprintf(name, sizeof(name), "mdio%d_%d_%d", bus->master->id, bus->id, dev_id);
    net_dev = alloc_netdev(sizeof(*scd_mdio_dev), name,
                           NET_NAME_UNKNOWN, gearbox_setup);
@@ -283,6 +288,7 @@ static int __scd_mdio_device_add(struct scd_mdio_bus *bus, u16 dev_id, u16 prtad
    scd_mdio_dev->mdio_if.mdio_read = scd_mdio_read;
    scd_mdio_dev->mdio_if.mdio_write = scd_mdio_write;
    scd_mdio_dev->id = dev_id;
+   bus->dev_id_to_addr[dev_id] = scd_mdio_dev->mdio_if.prtad;
 
    err = register_netdev(net_dev);
    if (err) {

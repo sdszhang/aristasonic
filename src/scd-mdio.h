@@ -111,6 +111,7 @@ struct scd_mdio_bus {
    struct list_head list;
 
    u16 id;
+   u32 dev_id_to_addr[PHY_MAX_ADDR];
    struct mii_bus *mii_bus;
    struct list_head device_list;
 };
