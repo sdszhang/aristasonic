@@ -98,12 +98,12 @@ class CatalinaP(FixedSystem):
       ])
 
       scd.addGpios([
-         GpioDesc("psu2_present", 0x5000, 0, ro=True),
-         GpioDesc("psu1_present", 0x5000, 1, ro=True),
-         GpioDesc("psu2_status", 0x5000, 8, ro=True),
-         GpioDesc("psu1_status", 0x5000, 9, ro=True),
-         GpioDesc("psu2_ac_status", 0x5000, 10, ro=True),
-         GpioDesc("psu1_ac_status", 0x5000, 11, ro=True),
+         GpioDesc("psu1_present", 0x5000, 0, ro=True),
+         GpioDesc("psu2_present", 0x5000, 1, ro=True),
+         GpioDesc("psu1_status", 0x5000, 8, ro=True),
+         GpioDesc("psu2_status", 0x5000, 9, ro=True),
+         GpioDesc("psu1_ac_status", 0x5000, 10, ro=True),
+         GpioDesc("psu2_ac_status", 0x5000, 11, ro=True),
       ])
 
       intrRegs = [
