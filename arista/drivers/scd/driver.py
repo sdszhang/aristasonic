@@ -15,7 +15,7 @@ from ...core.driver.kernel.sysfs import (
    ResetSysfsImpl,
 )
 
-from ..i2c import I2cDevDriver
+from ...core.driver.user.i2c import I2cDevDriver
 
 logging = getLogger(__name__)
 

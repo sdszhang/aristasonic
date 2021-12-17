@@ -4,7 +4,7 @@ from ..core.utils import inSimulation
 from ..descs.led import LedColor
 from ..inventory.led import Led
 
-from .i2c import I2cDevDriver
+from ..core.driver.user.i2c import I2cDevDriver
 
 class LedGpioImpl(Led):
    def __init__(self, driver, name, gpio, colorActive=LedColor.RED,

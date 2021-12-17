@@ -3,7 +3,7 @@ from contextlib import closing
 from ..core.i2c_utils import I2cMsg
 from ..core.log import getLogger
 
-from .i2c import I2cDevDriver
+from ..core.driver.user.i2c import I2cDevDriver
 
 logging = getLogger(__name__)
 

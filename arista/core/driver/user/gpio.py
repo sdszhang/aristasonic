@@ -1,6 +1,6 @@
-from ..core.utils import inSimulation
+from ...utils import inSimulation
 
-from ..inventory.gpio import Gpio
+from ....inventory.gpio import Gpio
 
 class GpioFuncImpl(Gpio):
    # TODO Remove name arg and make desc positional

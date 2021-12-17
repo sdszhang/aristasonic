@@ -1,7 +1,7 @@
 
 from ...core.log import getLogger
 
-from ..i2c import I2cDevDriver
+from ...core.driver.user.i2c import I2cDevDriver
 
 logging = getLogger(__name__)
 

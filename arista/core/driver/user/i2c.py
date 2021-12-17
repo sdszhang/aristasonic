@@ -1,13 +1,14 @@
 
 from contextlib import closing
 
-from .user import GpioFuncImpl
+from .gpio import GpioFuncImpl
 
-from ..core import utils
-from ..core.driver import UserDriver
-from ..core.log import getLogger
-from ..core.i2c_utils import I2cMsg
-from ..core.utils import SMBus
+from ... import utils
+from ...log import getLogger
+from ...i2c_utils import I2cMsg
+from ...utils import SMBus
+
+from . import UserDriver
 
 logging = getLogger(__name__)
 
