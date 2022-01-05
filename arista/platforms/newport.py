@@ -51,6 +51,7 @@ class Newport(FixedSystem):
       ])
 
       scd.createWatchdog()
+      scd.createPowerCycle()
 
       scd.addSmbusMasterRange(0x8000, 0, 0x80, bus=9)
 
