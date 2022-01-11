@@ -63,6 +63,8 @@ class FanSlot(SlotComponent):
       return self.name
 
    def getModel(self):
+      if self.fans:
+         return self.fans[0].getModel()
       return self.model
 
    def getFans(self):

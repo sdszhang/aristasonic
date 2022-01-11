@@ -35,7 +35,10 @@ class Fan(FanBase):
       return "N/A"
 
    def get_model(self):
-      return "N/A"
+      try:
+         return self._fan.getModel()
+      except Exception: # pylint: disable=broad-except
+         return "N/A"
 
    def get_revision(self):
       return "N/A"

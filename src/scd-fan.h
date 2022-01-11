@@ -74,6 +74,9 @@ struct scd_fan_group {
 };
 
 /* Fan info is for each fan slot */
+#define FAN_INFO_ID_MASK GENMASK(4, 0)
+#define FAN_INFO_SIZE_POS 5
+#define FAN_INFO_SIZE_MASK GENMASK(FAN_INFO_SIZE_POS, FAN_INFO_SIZE_POS)
 enum fan_info_type {
    FAN_7011H_F = 0b000111,
    FAN_7011S_F = 0b001101,
@@ -82,13 +85,16 @@ enum fan_info_type {
    FAN_7011H_R = 0b010111,
    FAN_7011S_R = 0b011101,
    FAN_7011M_R = 0b011110,
-   NOT_PRESENT_80 = 0b111111,
-};
 
-enum fan_count_type {
-   ZERO,
-   SINGLE,
-   DUAL,
+   FAN_7012HP_RED = 0b100011,
+   FAN_7012H_RED = 0b100111,
+   FAN_7012MP_RED = 0b101010,
+   FAN_7012S_RED = 0b101101,
+   FAN_7012M_RED = 0b101110,
+   FAN_7012H_BLUE = 0b110111,
+   FAN_7012S_BLUE = 0b111101,
+   FAN_7012M_BLUE = 0b111110,
+   NOT_PRESENT_80 = 0b111111,
 };
 
 struct fan_info {
@@ -98,6 +104,7 @@ struct fan_info {
    u8 pulses;
    bool forward;
    bool present;
+   char *model;
 };
 
 /* For each fan platform, there are multiple fan slots */

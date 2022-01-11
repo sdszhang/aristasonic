@@ -239,6 +239,7 @@ class FanSysfsImpl(Fan, GenericSysfs):
       self.airflow = SysfsEntry(self, 'fan%d_airflow' % self.fanId)
       self.fault = SysfsEntryBool(self, 'fan%d_fault' % self.fanId)
       self.present = SysfsEntryBool(self, 'fan%d_present' % self.fanId)
+      self.model = SysfsEntry(self, 'fan%d_model' % self.fanId)
       self.faultGpio = faultGpio
       self.__dict__.update(kwargs)
 
@@ -254,7 +255,7 @@ class FanSysfsImpl(Fan, GenericSysfs):
       return self.desc.name
 
    def getModel(self):
-      return 'N/A'
+      return self.model.read()
 
    def getSpeed(self):
       if self.pwm.exists():

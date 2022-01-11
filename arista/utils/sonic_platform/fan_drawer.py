@@ -17,7 +17,10 @@ class FanDrawer(FanDrawerBase):
       return self._slot.getName()
 
    def get_model(self):
-      return self._slot.getModel()
+      try:
+         return self._slot.getModel()
+      except Exception: # pylint: disable=broad-except
+         return 'N/A'
 
    def get_presence(self):
       return self._slot.getPresence()

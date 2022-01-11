@@ -44,6 +44,7 @@ static const struct fan_info p3_fan_infos[] = {
       .pulses = 2,
       .forward = true,
       .present = true,
+      .model = "FAN-7011H-F",
    },
    {
       .id = FAN_7011S_F,
@@ -52,6 +53,7 @@ static const struct fan_info p3_fan_infos[] = {
       .pulses = 2,
       .forward = true,
       .present = true,
+      .model = "FAN-7011S-F",
    },
    {
       .id = FAN_7011M_F,
@@ -60,6 +62,7 @@ static const struct fan_info p3_fan_infos[] = {
       .pulses = 2,
       .forward = true,
       .present = true,
+      .model = "FAN-7011M-F",
    },
    {
       .id = FAN_7011H_R,
@@ -68,6 +71,7 @@ static const struct fan_info p3_fan_infos[] = {
       .pulses = 2,
       .forward = false,
       .present = true,
+      .model = "FAN-7011H-R",
    },
    {
       .id = FAN_7011S_R,
@@ -76,6 +80,7 @@ static const struct fan_info p3_fan_infos[] = {
       .pulses = 2,
       .forward = false,
       .present = true,
+      .model = "FAN-7011S-R",
    },
    {
       .id = FAN_7011M_R,
@@ -84,6 +89,7 @@ static const struct fan_info p3_fan_infos[] = {
       .pulses = 2,
       .forward = false,
       .present = true,
+      .model = "FAN-7011M-R",
    },
    {
       .id = NOT_PRESENT_40,
@@ -92,6 +98,79 @@ static const struct fan_info p3_fan_infos[] = {
       .pulses = 2,
       .forward = true,
       .present = false,
+      .model = "Not Present",
+   },
+   {
+      .id = FAN_7012HP_RED,
+      .hz = 100000,
+      .rotors = 2,
+      .pulses = 2,
+      .forward = true,
+      .present = true,
+      .model = "FAN-7012HP-RED",
+   },
+   {
+      .id = FAN_7012H_RED,
+      .hz = 100000,
+      .rotors = 2,
+      .pulses = 2,
+      .forward = true,
+      .present = true,
+      .model = "FAN-7012H-RED",
+   },
+   {
+      .id = FAN_7012MP_RED,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = true,
+      .present = true,
+      .model = "FAN-7012MP-RED",
+   },
+   {
+      .id = FAN_7012S_RED,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = true,
+      .present = true,
+      .model = "FAN-7012S-RED",
+   },
+   {
+      .id = FAN_7012M_RED,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = true,
+      .present = true,
+      .model = "FAN-7012M-RED",
+   },
+   {
+      .id = FAN_7012H_BLUE,
+      .hz = 100000,
+      .rotors = 2,
+      .pulses = 2,
+      .forward = false,
+      .present = true,
+      .model = "FAN-7012H-BLUE",
+   },
+   {
+      .id = FAN_7012S_BLUE,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = false,
+      .present = true,
+      .model = "FAN-7012S-BLUE",
+   },
+   {
+      .id = FAN_7012M_BLUE,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = false,
+      .present = true,
+      .model = "FAN-7012M-BLUE"
    },
    {
       .id = NOT_PRESENT_80,
@@ -100,6 +179,7 @@ static const struct fan_info p3_fan_infos[] = {
       .pulses = 2,
       .forward = true,
       .present = false,
+      .model = "Not Present"
    },
 };
 
@@ -155,11 +235,13 @@ static const struct fan_platform *fan_platform_find(u32 id) {
 }
 
 static const struct fan_info *fan_info_find(const struct fan_info * infos,
-                                            size_t num, u32 fan_id) {
+                                            size_t num, u32 fan_id,
+                                            u32 size) {
    size_t i;
 
    for (i = 0; i < num; ++i) {
-      if (infos[i].id == fan_id) {
+      if ((infos[i].id & FAN_INFO_ID_MASK) == fan_id &&
+          (infos[i].id & FAN_INFO_SIZE_MASK) >> FAN_INFO_SIZE_POS == size) {
          return &infos[i];
       }
    }
@@ -228,6 +310,15 @@ static ssize_t scd_fan_id_show(struct device *dev, struct device_attribute *da,
    u32 reg = scd_fan_id_read(group, fan->index);
 
    return sprintf(buf, "%u\n", reg);
+}
+
+static u32 scd_fan_size_read(struct scd_fan_group *fan_group)
+{
+   u32 address = FAN_ADDR(fan_group, size);
+   u32 reg = scd_read_register(fan_group->ctx->pdev, address);
+
+   reg &= fan_group->platform->mask_size;
+   return reg;
 }
 
 static ssize_t scd_fan_fault_show(struct device *dev, struct device_attribute *da,
@@ -363,6 +454,16 @@ static ssize_t scd_fan_slot_show(struct device *dev,
    return sprintf(buf, "%u\n", fan->index + 1);
 }
 
+static ssize_t scd_fan_model_show(struct device *dev,
+                                  struct device_attribute *da,
+                                  char *buf)
+{
+   struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
+   struct scd_fan *fan = to_scd_fan_attr(attr)->fan;
+
+   return sprintf(buf, "%s\n", fan->info->model);
+}
+
 /*
  * Register / Unregister functions
  */
@@ -451,7 +552,7 @@ static int scd_fan_group_register(struct scd_context *ctx,
    return 0;
 }
 
-#define SCD_FAN_ATTR_COUNT 8
+#define SCD_FAN_ATTR_COUNT 9
 static void scd_fan_add_attrs(struct scd_fan *fan, size_t index) {
    struct scd_fan_attribute *attrs = fan->attrs;
 
@@ -479,6 +580,9 @@ static void scd_fan_add_attrs(struct scd_fan *fan, size_t index) {
    SCD_FAN_ATTR(attrs[fan->attr_count], fan, "fan", index, "_slot",
                 S_IRUGO, scd_fan_slot_show, NULL);
    fan->attr_count++;
+   SCD_FAN_ATTR(attrs[fan->attr_count], fan, "fan", index, "_model",
+                S_IRUGO, scd_fan_model_show, NULL);
+   fan->attr_count++;
 }
 
 static int scd_fan_add(struct scd_fan_group *fan_group, u32 index) {
@@ -487,9 +591,10 @@ static int scd_fan_add(struct scd_fan_group *fan_group, u32 index) {
    const struct fan_info *fan_info;
    size_t i;
    u32 fan_id = scd_fan_id_read(fan_group, index);
+   u32 size = scd_fan_size_read(fan_group);
 
    fan_info = fan_info_find(fan_group->platform->fan_infos,
-                            fan_group->platform->fan_info_count, fan_id);
+                            fan_group->platform->fan_info_count, fan_id, size);
    if (!fan_info) {
       dev_err(get_scd_dev(ctx), "no infomation for fan%u with id=%u", index + 1,
               fan_id);
