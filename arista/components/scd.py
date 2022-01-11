@@ -9,6 +9,7 @@ from ..core.component import Priority, PciComponent
 from ..core.component.i2c import I2cComponent
 from ..core.config import Config
 from ..core.driver.kernel import KernelDriver
+from ..core.fan import FanSlot
 from ..core.types import I2cAddr, MdioClause, MdioSpeed
 from ..core.utils import (
    FileWaiter,
@@ -25,7 +26,8 @@ from ..core.xcvr import (
    EthernetSlot,
 )
 
-from ..descs.led import LedDesc
+from ..descs.fan import FanDesc, FanPosition
+from ..descs.led import LedColor, LedDesc
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 
@@ -341,8 +343,8 @@ class Scd(PciComponent):
       for i, addr in enumerate(addrs, 0):
          self.addSmbusMaster(addr, i, bus)
 
-   def addFanGroup(self, addr, platform, num):
-      self.fanGroups += [(addr, platform, num)]
+   def addFanGroup(self, addr, platform, slots, count):
+      self.fanGroups += [(addr, platform, slots, count)]
 
    def _addLed(self, addr, name, **kwargs):
       desc = LedDesc(name=name)
@@ -536,6 +538,23 @@ class Scd(PciComponent):
 
    def addFanLed(self, desc):
       return self.inventory.addLed(self.driver.getFanLed(desc))
+
+   def addFanSlotBlock(self, slotCount, fanCount):
+      for i, slotId in enumerate(incrange(1, slotCount)):
+         self.addFanSlot(i, slotId, fanCount)
+
+   def addFanSlot(self, idx, slotId, fanCount):
+      led = LedDesc(name='fan%d' % slotId,
+                    colors=[LedColor.GREEN, LedColor.RED, LedColor.OFF])
+      fanDescs = [FanDesc(fanId=idx * fanCount + j, position=list(FanPosition)[j])
+                  for j in incrange(1, fanCount)]
+
+      return self.newComponent(
+         FanSlot,
+         slotId=slotId,
+         led=self.addFanLed(led),
+         fans=[self.addFan(desc) for desc in fanDescs]
+      )
 
    def addMdioMaster(self, addr, masterId, busCount=1, speed=MdioSpeed.S2_5):
       self.mdioMasters[addr] = {

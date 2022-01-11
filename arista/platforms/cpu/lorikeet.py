@@ -43,6 +43,12 @@ class LorikeetCpu(Cpu):
                     position=Position.OUTLET, target=55, overheat=75, critical=85),
       ])
 
+      self.addFanGroup(self.parent.CHASSIS.FAN_SLOTS, self.parent.CHASSIS.FAN_COUNT)
+
+      cpld.addFanSlotBlock(
+         slotCount=self.parent.CHASSIS.FAN_SLOTS,
+         fanCount=self.parent.CHASSIS.FAN_COUNT,
+      )
 
       # TODO: Add ISL69247 temp sensors
 
@@ -60,5 +66,5 @@ class LorikeetCpu(Cpu):
    def switchDpmAddr(self, addr=0x4f, t=3, **kwargs):
       return self.cpld.i2cAddr(5, addr, t=t, **kwargs)
 
-   def addFanGroup(self, count=3):
-      self.cpld.addFanGroup(0x9000, 3, count)
+   def addFanGroup(self, slots=3, count=2):
+      self.cpld.addFanGroup(0x9000, 3, slots, count)

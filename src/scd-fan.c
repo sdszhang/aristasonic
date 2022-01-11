@@ -40,7 +40,6 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = FAN_7011H_F,
       .hz = 100000,
-      .fans = 2,
       .rotors = 2,
       .pulses = 2,
       .forward = true,
@@ -49,7 +48,6 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = FAN_7011S_F,
       .hz = 100000,
-      .fans = 2,
       .rotors = 1,
       .pulses = 2,
       .forward = true,
@@ -58,7 +56,6 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = FAN_7011M_F,
       .hz = 100000,
-      .fans = 2,
       .rotors = 1,
       .pulses = 2,
       .forward = true,
@@ -67,7 +64,6 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = FAN_7011H_R,
       .hz = 100000,
-      .fans = 2,
       .rotors = 2,
       .pulses = 2,
       .forward = false,
@@ -76,7 +72,6 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = FAN_7011S_R,
       .hz = 100000,
-      .fans = 2,
       .rotors = 1,
       .pulses = 2,
       .forward = false,
@@ -85,7 +80,6 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = FAN_7011M_R,
       .hz = 100000,
-      .fans = 2,
       .rotors = 1,
       .pulses = 2,
       .forward = false,
@@ -94,7 +88,6 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = NOT_PRESENT_40,
       .hz = 100000,
-      .fans = 2,
       .rotors = 1,
       .pulses = 2,
       .forward = true,
@@ -103,7 +96,6 @@ static const struct fan_info p3_fan_infos[] = {
    {
       .id = NOT_PRESENT_80,
       .hz = 100000,
-      .fans = 2,
       .rotors = 1,
       .pulses = 2,
       .forward = true,
@@ -115,10 +107,12 @@ static const struct fan_info p3_fan_infos[] = {
 static const struct fan_platform fan_platforms[] = {
    {
       .id = 3,
-      .max_fan_count = 4,
+      .max_slot_count = 4,
       .max_attr_count = 7,
       .fan_infos = p3_fan_infos,
       .fan_info_count = ARRAY_SIZE(p3_fan_infos),
+
+      .size_offset = 0x170,
 
       .id_offset = 0x180,
       .id_step = 0x10,
@@ -130,12 +124,17 @@ static const struct fan_platform fan_platforms[] = {
       .red_led_offset = 0x1f0,
 
       .speed_offset = 0x10,
-      .speed_step = 0x30,
+      .speed_steps = {
+        0x0,
+        0x60,
+        0x30,
+      },
       .speed_pwm_offset = 0x0,
       .speed_tach_outer_offset = 0x10,
       .speed_tach_inner_offset = 0x20,
 
       .mask_platform = GENMASK(1, 0),
+      .mask_size = GENMASK(0, 0),
       .mask_id = GENMASK(4, 0),
       .mask_pwm = GENMASK(7, 0),
       .mask_tach = GENMASK(15, 0),
@@ -176,7 +175,7 @@ static ssize_t scd_fan_pwm_show(struct device *dev, struct device_attribute *da,
 {
    struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
    struct scd_fan_group *group = dev_get_drvdata(dev);
-   u32 address = FAN_ADDR_3(group, speed, attr->index, pwm);
+   u32 address = FAN_SPEED_TYPE_ADDR(group, attr->index, pwm);
    u32 reg = scd_read_register(group->ctx->pdev, address);
 
    reg &= group->platform->mask_pwm;
@@ -188,7 +187,7 @@ static ssize_t scd_fan_pwm_store(struct device *dev, struct device_attribute *da
 {
    struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
    struct scd_fan_group *group = dev_get_drvdata(dev);
-   u32 address = FAN_ADDR_3(group, speed, attr->index, pwm);
+   u32 address = FAN_SPEED_TYPE_ADDR(group, attr->index, pwm);
    u8 val;
 
    if (kstrtou8(buf, 0, &val))
@@ -249,13 +248,18 @@ static ssize_t scd_fan_input_show(struct device *dev, struct device_attribute *d
    struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
    struct scd_fan_group *group = dev_get_drvdata(dev);
    struct scd_fan *fan = to_scd_fan_attr(attr)->fan;
-   u32 address = FAN_ADDR_3(group, speed, attr->index, tach_outer);
-   u32 reg = scd_read_register(group->ctx->pdev, address);
-   u32 val = 0;
+   u32 outer_address = FAN_SPEED_TYPE_ADDR(group, attr->index, tach_outer);
+   u32 inner_address = FAN_SPEED_TYPE_ADDR(group, attr->index, tach_inner);
+   u32 mask = group->platform->mask_tach;
+   u32 avg = 0, val = 0;
 
-   reg &= group->platform->mask_tach;
-   if (reg && fan->info->pulses)
-      val = fan->info->hz * 60 / reg / fan->info->pulses;
+   avg += scd_read_register(group->ctx->pdev, outer_address) & mask;
+   if (fan->info->rotors > 1) {
+      avg += scd_read_register(group->ctx->pdev, inner_address) & mask;
+   }
+   avg /= fan->info->rotors;
+   if (avg && fan->info->pulses)
+      val = fan->info->hz * 60 / avg / fan->info->pulses;
    else
       return -EDOM;
 
@@ -504,14 +508,14 @@ static int scd_fan_add(struct scd_fan_group *fan_group, u32 index) {
    fan->info = fan_info;
    scnprintf(fan->led_name, LED_NAME_MAX_SZ, "fan%d", fan->index + 1);
 
-   fan->attrs = kcalloc(SCD_FAN_ATTR_COUNT * fan_info->fans,
+   fan->attrs = kcalloc(SCD_FAN_ATTR_COUNT * fan_group->fan_count,
                         sizeof(*fan->attrs), GFP_KERNEL);
    if (!fan->attrs) {
       kfree(fan);
       return -ENOMEM;
    }
 
-   for (i = 0; i < fan->info->fans; ++i) {
+   for (i = 0; i < fan_group->fan_count; ++i) {
       scd_fan_add_attrs(fan, fan_group->attr_index_count++);
       if (fan_group->attr_index_count >= fan_group->platform->max_attr_count) {
          break;
@@ -525,7 +529,7 @@ static int scd_fan_add(struct scd_fan_group *fan_group, u32 index) {
 }
 
 int scd_fan_group_add(struct scd_context *ctx, u32 addr, u32 platform_id,
-                      u32 fan_count)
+                      u32 slot_count, u32 fan_count)
 {
    struct scd_fan_group *fan_group;
    const struct fan_platform *platform;
@@ -540,9 +544,9 @@ int scd_fan_group_add(struct scd_context *ctx, u32 addr, u32 platform_id,
       return -EINVAL;
    }
 
-   if (fan_count > platform->max_fan_count) {
-      dev_warn(get_scd_dev(ctx), "the fan num argument is larger than %zu",
-               platform->max_fan_count);
+   if (slot_count > platform->max_slot_count) {
+      dev_warn(get_scd_dev(ctx), "the fan slot_count argument is larger than %zu",
+               platform->max_slot_count);
       return -EINVAL;
    }
 
@@ -562,11 +566,12 @@ int scd_fan_group_add(struct scd_context *ctx, u32 addr, u32 platform_id,
              "scd_fan_p%u", platform_id);
    fan_group->ctx = ctx;
    fan_group->addr_base = addr;
+   fan_group->slot_count = slot_count;
    fan_group->fan_count = fan_count;
    fan_group->platform = platform;
    INIT_LIST_HEAD(&fan_group->slot_list);
 
-   for (i = 0; i < fan_count; ++i) {
+   for (i = 0; i < slot_count; ++i) {
       err = scd_fan_add(fan_group, i);
       if (err)
          goto fail;

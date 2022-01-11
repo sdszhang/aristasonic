@@ -17,6 +17,8 @@ from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
+from .chassis.tuba import Tuba
+
 from .cpu.lorikeet import LorikeetCpu
 
 @registerPlatform()
@@ -24,6 +26,8 @@ class CatalinaP(FixedSystem):
 
    SID = ['CatalinaP']
    SKU = ['DCS-7060PX5-64S']
+
+   CHASSIS = Tuba
 
    PHY = BabbageLP
 
@@ -36,7 +40,6 @@ class CatalinaP(FixedSystem):
       super(CatalinaP, self).__init__()
 
       self.cpu = self.newComponent(LorikeetCpu)
-      self.cpu.addFanGroup(4)
       self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(0x11),
                                  causes={

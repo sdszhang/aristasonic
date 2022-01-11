@@ -341,6 +341,7 @@ static ssize_t parse_new_object_fan_group(struct scd_context *ctx,
    const char *tmp;
    u32 addr;
    u32 platform_id;
+   u32 slot_count;
    u32 fan_count;
    int res;
 
@@ -349,10 +350,11 @@ static ssize_t parse_new_object_fan_group(struct scd_context *ctx,
 
    PARSE_ADDR_OR_RETURN(&buf, tmp, u32, &addr, ctx->res_size);
    PARSE_INT_OR_RETURN(&buf, tmp, u32, &platform_id);
+   PARSE_INT_OR_RETURN(&buf, tmp, u32, &slot_count);
    PARSE_INT_OR_RETURN(&buf, tmp, u32, &fan_count);
    PARSE_END_OR_RETURN(&buf, tmp);
 
-   res = scd_fan_group_add(ctx, addr, platform_id, fan_count);
+   res = scd_fan_group_add(ctx, addr, platform_id, slot_count, fan_count);
    if (res)
       return res;
 

@@ -27,7 +27,7 @@ class WoodpeckerCpu(Cpu):
       cpld = self.newComponent(Scd, PciAddr(bus=0x00, device=0x09, func=0))
       self.cpld = cpld
 
-      cpld.addFanGroup(0x9000, 3, 3)
+      cpld.addFanGroup(0x9000, 3, 3, 2)
 
       for i, slotId in enumerate(incrange(1, 3)):
          fanIn = FanDesc(fanId=i * 2 + 1, position=FanPosition.INLET)

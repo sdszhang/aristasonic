@@ -1,8 +1,9 @@
+from enum import Enum
 
 from ..core.desc import HwDesc
 from ..core.cooling import Airflow
 
-class FanPosition(object):
+class FanPosition(str, Enum):
    UNKNOWN = 'unknown'
    INLET = 'inlet'
    OUTLET = 'outlet'

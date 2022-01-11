@@ -15,6 +15,7 @@ from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
+from .chassis.yuba import Yuba
 from .cpu.lorikeet import LorikeetCpu
 
 @registerPlatform()
@@ -22,6 +23,8 @@ class BlackhawkTD4(FixedSystem):
 
    SID = ['BlackhawkT4O']
    SKU = ['DCS-7050PX4-32S']
+
+   CHASSIS = Yuba
 
    PORTS = PortLayout(
       osfps=incrange(1, 32),
@@ -32,7 +35,6 @@ class BlackhawkTD4(FixedSystem):
       super(BlackhawkTD4, self).__init__()
 
       self.cpu = self.newComponent(LorikeetCpu)
-      self.cpu.addFanGroup(3)
       self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Adm1266, addr=self.cpu.switchDpmAddr(), causes={
          'overtemp': AdmPin(1, AdmPin.GPIO),

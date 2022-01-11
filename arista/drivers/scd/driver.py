@@ -115,8 +115,8 @@ class ScdKernelDriver(PciKernelDriver):
       for addr, info in scd.uartPorts.items():
          data += ["uart %#x %d" % (addr, info['id'])]
 
-      for addr, platform, num in scd.fanGroups:
-         data += ["fan_group %#x %u %u" % (addr, platform, num)]
+      for addr, platform, slots, count in scd.fanGroups:
+         data += ["fan_group %#x %u %u %u" % (addr, platform, slots, count)]
 
       for addr, name in scd.leds:
          data += ["led %#x %s" % (addr, name)]

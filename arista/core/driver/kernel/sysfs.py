@@ -295,7 +295,7 @@ class FanSysfsImpl(Fan, GenericSysfs):
       return self.desc.airflow
 
    def getPosition(self):
-      return self.desc.position if self.desc else 'N/A'
+      return self.desc.position.value if self.desc else 'N/A'
 
    def getLed(self):
       return self.led

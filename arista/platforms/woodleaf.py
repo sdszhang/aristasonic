@@ -16,6 +16,8 @@ from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
+from .chassis.yuba import Yuba
+
 from .cpu.lorikeet import LorikeetCpu
 
 @registerPlatform()
@@ -23,6 +25,8 @@ class Woodleaf(FixedSystem):
 
    SID = ['Woodleaf']
    SKU = ['DCS-7170B-64C']
+
+   CHASSIS = Yuba
 
    PHY = BabbageLP
 
@@ -35,7 +39,6 @@ class Woodleaf(FixedSystem):
       super(Woodleaf, self).__init__()
 
       self.cpu = self.newComponent(LorikeetCpu)
-      self.cpu.addFanGroup(4)
       self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(0x11),
                                  causes={

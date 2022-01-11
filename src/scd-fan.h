@@ -69,6 +69,7 @@ struct scd_fan_group {
    size_t attr_index_count;
 
    u32 addr_base;
+   size_t slot_count;
    size_t fan_count;
 };
 
@@ -84,10 +85,15 @@ enum fan_info_type {
    NOT_PRESENT_80 = 0b111111,
 };
 
+enum fan_count_type {
+   ZERO,
+   SINGLE,
+   DUAL,
+};
+
 struct fan_info {
    enum fan_info_type id;
    u32 hz;
-   u8 fans;
    u8 rotors;
    u8 pulses;
    bool forward;
@@ -97,10 +103,12 @@ struct fan_info {
 /* For each fan platform, there are multiple fan slots */
 struct fan_platform {
    u32 id;
-   size_t max_fan_count;
+   size_t max_slot_count;
    size_t max_attr_count;
    const struct fan_info *fan_infos;
    size_t fan_info_count;
+
+   u32 size_offset;
 
    u32 id_offset;
    u32 id_step;
@@ -112,12 +120,13 @@ struct fan_platform {
    u32 red_led_offset;
 
    u32 speed_offset;
-   u32 speed_step;
+   u32 speed_steps[3];
    u32 speed_pwm_offset;
    u32 speed_tach_outer_offset;
    u32 speed_tach_inner_offset;
 
    u32 mask_platform;
+   u32 mask_size;
    u32 mask_id;
    u32 mask_pwm;
    u32 mask_tach;
@@ -136,12 +145,15 @@ struct fan_platform {
     ((_group)->addr_base + (_group)->platform->_type##_offset)
 #define FAN_ADDR_2(_group, _type, _index) \
     (FAN_ADDR(_group, _type) + (_group)->platform->_type##_step * (_index))
-#define FAN_ADDR_3(_group, _type, _index, _type2) \
-    (FAN_ADDR_2(_group, _type, _index) + \
-     (_group)->platform->_type##_##_type2##_offset)
+#define FAN_SPEED_ADDR(_group, _index) \
+    (FAN_ADDR(_group, speed) + \
+     (_group)->platform->speed##_steps[(_group)->fan_count] * (_index))
+#define FAN_SPEED_TYPE_ADDR(_group, _index, _type) \
+    (FAN_SPEED_ADDR(_group, _index) + \
+     (_group)->platform->speed##_##_type##_offset)
 
 extern int scd_fan_group_add(struct scd_context *ctx, u32 addr, u32 platform_id,
-                             u32 fan_count);
+                             u32 slot_count, u32 fan_count);
 extern void scd_fan_group_remove_all(struct scd_context *ctx);
 
 #endif /* !_LINUX_DRIVER_SCD_FAN_H_ */

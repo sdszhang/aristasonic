@@ -7,6 +7,8 @@ from .sku import Sku
 
 class FixedSystem(Sku):
 
+   CHASSIS = None
+
    def __init__(self, inventory=None, **kwargs):
       inventory = inventory or Inventory()
       super(FixedSystem, self).__init__(inventory=inventory, **kwargs)
@@ -25,3 +27,8 @@ class FixedSystem(Sku):
 
    def __str__(self):
       return '%s()' % self.__class__.__name__
+
+class FixedChassis(object):
+   FAN_SLOTS = None
+   FAN_COUNT = None
+   HEIGHT_RU = None
