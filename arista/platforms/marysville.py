@@ -16,6 +16,7 @@ from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
+from .chassis.yuba import Yuba
 from .cpu.woodpecker import WoodpeckerCpu
 
 @registerPlatform()
@@ -23,6 +24,8 @@ class Marysville(FixedSystem):
 
    SID = ['Marysville']
    SKU = ['DCS-7050SX3-48YC8']
+
+   CHASSIS = Yuba
 
    PORTS = PortLayout(
       sfps=incrange(1, 48),

@@ -1,15 +1,11 @@
 from ...core.cpu import Cpu
-from ...core.fan import FanSlot
 from ...core.types import PciAddr
-from ...core.utils import incrange
 
 from ...components.cpu.amd.k10temp import K10Temp
 from ...components.dpm.ucd import Ucd90160, UcdGpi, UcdPriority
 from ...components.max6658 import Max6658
 from ...components.scd import Scd
 
-from ...descs.fan import FanDesc, FanPosition
-from ...descs.led import LedDesc, LedColor
 from ...descs.sensor import Position, SensorDesc
 
 class WoodpeckerCpu(Cpu):
@@ -27,22 +23,13 @@ class WoodpeckerCpu(Cpu):
       cpld = self.newComponent(Scd, PciAddr(bus=0x00, device=0x09, func=0))
       self.cpld = cpld
 
-      cpld.addFanGroup(0x9000, 3, 3, 2)
+      cpld.addFanGroup(0x9000, 3, self.parent.CHASSIS.FAN_SLOTS,
+                       self.parent.CHASSIS.FAN_COUNT)
 
-      for i, slotId in enumerate(incrange(1, 3)):
-         fanIn = FanDesc(fanId=i * 2 + 1, position=FanPosition.INLET)
-         fanOut = FanDesc(fanId=i * 2 + 2, position=FanPosition.OUTLET)
-         led = LedDesc(name='fan%d' % slotId,
-                       colors=[LedColor.GREEN, LedColor.RED, LedColor.OFF])
-         self.newComponent(
-            FanSlot,
-            slotId=slotId,
-            led=cpld.addFanLed(led),
-            fans=[
-               cpld.addFan(fanIn),
-               cpld.addFan(fanOut),
-            ]
-         )
+      cpld.addFanSlotBlock(
+         slotCount=self.parent.CHASSIS.FAN_SLOTS,
+         fanCount=self.parent.CHASSIS.FAN_COUNT,
+      )
 
       cpld.addSmbusMasterRange(0x8000, 2, 0x80, 4)
       cpld.newComponent(Max6658, cpld.i2cAddr(0, 0x4c), sensors=[

@@ -14,6 +14,7 @@ from ..components.psu.liteon import PS2102
 from ..components.scd import Scd
 from ..components.tmp468 import Tmp468
 
+from .chassis.yuba import Yuba
 from .cpu.woodpecker import WoodpeckerCpu
 
 from ..descs.gpio import GpioDesc
@@ -25,6 +26,8 @@ class Smartsville(FixedSystem):
 
    SID = ['Smartsville', 'SmartsvilleSsd']
    SKU = ['DCS-7280CR3-32P4', 'DCS-7280CR3-32P4-M']
+
+   CHASSIS = Yuba
 
    PHY = Babbage
 
