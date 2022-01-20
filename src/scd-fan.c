@@ -35,6 +35,46 @@
       _attr.fan = _fan;                                                          \
    } while(0)
 
+/* List of fan infos for platform 0 */
+static const struct fan_info p0_fan_infos[] = {
+   {
+      .id = FAN_7010_F,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = true,
+      .present = true,
+      .model = "FAN-7010"
+   },
+   {
+      .id = FAN_7010_F_Z,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = true,
+      .present = true,
+      .model = "FAN-7010"
+   },
+   {
+      .id = FAN_7010_R,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = false,
+      .present = true,
+      .model = "FAN-7010"
+   },
+   {
+      .id = FAN_7010_R_Z,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = false,
+      .present = true,
+      .model = "FAN-7010"
+   },
+};
+
 /* List of fan infos for platform 3 */
 static const struct fan_info p3_fan_infos[] = {
    {
@@ -183,8 +223,44 @@ static const struct fan_info p3_fan_infos[] = {
    },
 };
 
+
 /* List of fan platforms */
 static const struct fan_platform fan_platforms[] = {
+   {
+      .id = 0,
+      .max_slot_count = 1,
+      .max_attr_count = 2,
+      .fan_infos = p0_fan_infos,
+      .fan_info_count = ARRAY_SIZE(p0_fan_infos),
+
+      .size_offset = 0x170,
+
+      .id_offset = 0x180,
+      .id_step = 0x0, // unused
+
+      .platform_offset = 0x0, // unused
+      .present_offset = 0x1c0,
+      .ok_offset = 0x0, // unused
+      .green_led_offset = 0xffffe550,
+      .red_led_offset = 0xffffe550,
+
+      .speed_offset = 0x10,
+      .speed_steps = {
+         0x0, // unused
+         0x0, // unused
+         0x60,
+      },
+      .speed_pwm_offset = 0x0,
+      .speed_tach_outer_offset = 0x10,
+      .speed_tach_inner_offset = 0x0, // unused
+
+      .mask_platform = GENMASK(0, 0), // unused
+      .mask_id = GENMASK(2, 0),
+      .mask_pwm = GENMASK(7, 0),
+      .mask_tach = GENMASK(15, 0),
+      .mask_green_led = 1,
+      .mask_red_led = 2,
+   },
    {
       .id = 3,
       .max_slot_count = 4,

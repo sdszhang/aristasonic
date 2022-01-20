@@ -78,6 +78,11 @@ struct scd_fan_group {
 #define FAN_INFO_SIZE_POS 5
 #define FAN_INFO_SIZE_MASK GENMASK(FAN_INFO_SIZE_POS, FAN_INFO_SIZE_POS)
 enum fan_info_type {
+   FAN_7010_F = 0b000011,
+   FAN_7010_F_Z = 0b000010,
+   FAN_7010_R = 0b000111,
+   FAN_7010_R_Z = 0b000110,
+
    FAN_7011H_F = 0b000111,
    FAN_7011S_F = 0b001101,
    FAN_7011M_F = 0b001110,

@@ -1,4 +1,4 @@
-from ..core.fixed import FixedSystem
+from ..core.fixed import FixedChassis, FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
@@ -18,11 +18,18 @@ from ..descs.sensor import Position, SensorDesc
 
 from .cpu.newport import NewportCpu
 
+class NewportChassis(FixedChassis):
+    FAN_SLOTS = 1
+    FAN_COUNT = 2
+    HEIGHT_RU = 1
+
 @registerPlatform()
 class Newport(FixedSystem):
 
    SID = ['Newport']
    SKU = ['DCS-7010TX-48']
+
+   CHASSIS = NewportChassis
 
    PHY = Broncos
 
@@ -52,6 +59,12 @@ class Newport(FixedSystem):
 
       scd.createWatchdog()
       scd.createPowerCycle()
+      scd.addFanGroup(0x2000, 0, self.CHASSIS.FAN_SLOTS, self.CHASSIS.FAN_COUNT)
+      scd.addFanSlotBlock(
+         slotCount=self.CHASSIS.FAN_SLOTS,
+         fanCount=self.CHASSIS.FAN_COUNT,
+         statusLed=(0x0550, 'fan_status')
+      )
 
       scd.addSmbusMasterRange(0x8000, 0, 0x80, bus=9)
 
@@ -60,7 +73,6 @@ class Newport(FixedSystem):
          (0x0520, 'psu1'),
          (0x0530, 'psu2'),
          (0x0540, 'beacon'),
-         (0x0550, 'fan_status'),
       ])
 
       scd.newComponent(Ucd9090A, scd.i2cAddr(3, 0x75), causes={

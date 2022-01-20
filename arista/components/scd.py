@@ -539,11 +539,11 @@ class Scd(PciComponent):
    def addFanLed(self, desc):
       return self.inventory.addLed(self.driver.getFanLed(desc))
 
-   def addFanSlotBlock(self, slotCount, fanCount):
+   def addFanSlotBlock(self, slotCount, fanCount, statusLed=None):
       for i, slotId in enumerate(incrange(1, slotCount)):
-         self.addFanSlot(i, slotId, fanCount)
+         self.addFanSlot(i, slotId, fanCount, statusLed=statusLed)
 
-   def addFanSlot(self, idx, slotId, fanCount):
+   def addFanSlot(self, idx, slotId, fanCount, statusLed=None):
       led = LedDesc(name='fan%d' % slotId,
                     colors=[LedColor.GREEN, LedColor.RED, LedColor.OFF])
       fanDescs = [FanDesc(fanId=idx * fanCount + j, position=list(FanPosition)[j])
@@ -552,7 +552,7 @@ class Scd(PciComponent):
       return self.newComponent(
          FanSlot,
          slotId=slotId,
-         led=self.addFanLed(led),
+         led=self.addLed(*statusLed) if statusLed else self.addFanLed(led),
          fans=[self.addFan(desc) for desc in fanDescs]
       )
 
