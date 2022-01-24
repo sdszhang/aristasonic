@@ -13,6 +13,47 @@ def getKey(data, key, default="N/A"):
 def tupleFmt(data, fmt, *args):
    return fmt % tuple(getKey(data, k) for k in args)
 
+class Row():
+   def __init__(self, fmt, *args):
+      self.fmt = fmt
+      self.args = args
+
+   def render(self, data, indent=0):
+      spacer = ' ' * indent
+      print('%s%s' % (spacer, tupleFmt(data, self.fmt, *self.args)))
+
+class List():
+   def __init__(self, title=None, attr=None, header=None, tree=None):
+      self.title = title
+      self.attr = attr
+      self.header = header
+      self.tree = tree or []
+
+   def renderItem(self, item, indent, spacing):
+      spacer = ' ' * indent
+      print('%s%s' % (spacer, tupleFmt(item, *self.header)))
+      indent += spacing
+
+      spacer = ' ' * indent
+      for row in self.tree:
+         if isinstance(row, List):
+            row.render(item, indent) # XXX
+         else:
+            row.render(item, indent=indent)
+
+   def render(self, data, indent=0, spacing=2, newline=False):
+      if self.title:
+         print('%s%s' % (' ' * indent, self.title))
+         indent += spacing
+
+      if self.attr is not None:
+         data = getKey(data, self.attr)
+
+      for item in data:
+         self.renderItem(item, indent, spacing)
+
+      if data and newline:
+          print()
 
 class Col():
    def __init__(self, name, attr, size):

@@ -39,6 +39,9 @@ class PsuImpl(PsuInv):
    def getCapacity(self):
       return self.model.CAPACITY
 
+   def getMfr(self):
+      return self.model.identifier.metadata
+
    def getFans(self):
       return self.psu.getInventory().getFans()
 

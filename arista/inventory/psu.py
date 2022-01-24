@@ -53,6 +53,10 @@ class Psu(InventoryInterface):
    def getCapacity(self):
       raise NotImplementedError
 
+   @diagmethod('mfr')
+   def getMfr(self):
+      raise NotImplementedError
+
    @diagmethod('fans', diag=True)
    def getFans(self):
       raise NotImplementedError

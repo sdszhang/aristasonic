@@ -13,7 +13,7 @@ from ...drivers.dpm.adm1266 import Adm1266UserDriver
 from ...libs.date import datetimeToStr
 from ...libs.retry import retryGet
 
-from .pmbus import PmbusComponent
+from .pmbus import PmbusDpm
 
 logging = getLogger(__name__)
 
@@ -47,12 +47,12 @@ class AdmReloadCauseProvider(ReloadCauseProviderHelper):
          'powerup': retryGet(self.adm.getPowerupCounter, wait=0.2, before=True),
       }
 
-class Adm1266(PmbusComponent):
+class Adm1266(PmbusDpm):
 
    DRIVER = Adm1266UserDriver
    PRIORITY = Priority.DPM
 
-   class Registers(PmbusComponent.Registers):
+   class Registers(PmbusDpm.Registers):
       RUN_TIME_CLOCK = 0xdf
 
       IC_DEVICE_ID = 0xad

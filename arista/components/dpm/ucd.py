@@ -15,7 +15,7 @@ from ...drivers.dpm.ucd import UcdUserDriver
 
 from ...libs.date import datetimeToStr
 
-from .pmbus import PmbusComponent
+from .pmbus import PmbusDpm
 
 logging = getLogger(__name__)
 
@@ -46,12 +46,12 @@ class UcdReloadCauseProvider(ReloadCauseProviderHelper):
    def process(self):
       self.causes = self.ucd.getReloadCauses()
 
-class Ucd(PmbusComponent):
+class Ucd(PmbusDpm):
 
    DRIVER = UcdUserDriver
    PRIORITY = Priority.DPM
 
-   class Registers(PmbusComponent.Registers):
+   class Registers(PmbusDpm.Registers):
       RUN_TIME_CLOCK = 0xd7
 
       LOGGED_FAULTS = 0xea

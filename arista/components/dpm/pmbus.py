@@ -46,3 +46,12 @@ class PmbusComponent(I2cComponent):
          logging.info('%s time: %s', self, self.getRunTimeClock())
       except Exception: # pylint: disable=broad-except
          logging.error('%s: failed to set run time clock', self)
+
+   def __diag__(self, ctx):
+      return {
+         "name": str(self),
+         "version": self.getVersion() if ctx.performIo else "N/A",
+      }
+
+class PmbusDpm(PmbusComponent):
+    pass
