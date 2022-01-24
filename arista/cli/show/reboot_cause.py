@@ -9,8 +9,8 @@ class ShowRebootCause(Renderer):
 
    NAME = 'reboot-cause'
 
-   def data(self, show):
-      rcm = getReloadCauseManager(show.platform)
+   def getData(self, show):
+      rcm = getReloadCauseManager(show.platforms[0])
       if show.args.history:
          return [rp.toDict() for rp in rcm.allReports()]
       else:

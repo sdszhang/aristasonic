@@ -13,7 +13,7 @@ class ShowCardStatus(Renderer):
 
    NAME = 'status'
 
-   def data(self, show):
+   def getData(self, show):
       data = []
       for card, metadata in show.inventories:
          tmp = {

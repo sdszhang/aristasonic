@@ -3,13 +3,13 @@ from __future__ import print_function
 
 from ...core.diag import DiagContext
 
-from . import Renderer
+from . import Renderer, Table, Col
 
 class ShowEnvironment(Renderer):
 
    NAME = 'environment'
 
-   def data(self, show):
+   def getData(self, show):
       ctx = DiagContext()
       data = {
          'fans': [],
@@ -25,50 +25,29 @@ class ShowEnvironment(Renderer):
             data['psuSlots'].append(slot.__diag__(ctx))
       return data
 
-   def _getKey(self, data, key, default="N/A"):
-      try:
-         for member in key.split('.'):
-            data = data[member]
-      except Exception: # pylint: disable=broad-except
-         data = default
-      return data
-
-   def _renderCollection(self, hdr, collection):
-      if not collection:
-         return
-
-      fmt = ' '.join('%%-%ds' % sz for _, _, sz in hdr)
-      print(fmt % tuple(n for n, _, _ in hdr))
-      print(fmt % tuple('-' * sz for _, _, sz in hdr))
-      for item in collection:
-         print(fmt % tuple(self._getKey(item, k) for _, k, _ in hdr))
-
    def renderText(self, show):
       data = self.data(show)
 
-      tempHdr = [
-         ('Name', 'name', 40),
-         ('Temp', 'value', 8),
-         ('Alert', 'highThresh', 8),
-         ('Critical', 'highCritThresh', 8),
-      ]
-      fanHdr = [
-         ('Name', 'name', 10),
-         ('Model', 'model', 15),
-         ('Status', 'status', 6),
-         ('Speed', 'speed', 5),
-         ('Rpm', 'rpm', 5)
-      ]
-      psuHdr = [
-         ('Name', 'name', 10),
-         ('Model', 'psu.model', 19),
-         ('Serial', 'psu.serial', 15),
-         ('Max', 'psu.capacity', 5),
-         ('Status', 'status', 6),
-      ]
+      Table([
+         Col('Name', 'name', 40),
+         Col('Temp', 'value', 8),
+         Col('Alert', 'highThresh', 8),
+         Col('Critical', 'highCritThresh', 8),
+      ]).render(data['temps'], newline=True)
 
-      self._renderCollection(tempHdr, data['temps'])
-      print()
-      self._renderCollection(fanHdr, data['fans'])
-      print()
-      self._renderCollection(psuHdr, data['psuSlots'])
+      Table([
+         Col('Name', 'name', 10),
+         Col('Model', 'model', 15),
+         Col('Status', 'status', 6),
+         Col('Speed', 'speed', 5),
+         Col('Rpm', 'rpm', 5)
+      ]).render(data['fans'], newline=True)
+
+      Table([
+         Col('Name', 'name', 10),
+         Col('Model', 'psu.model', 19),
+         Col('Serial', 'psu.serial', 15),
+         Col('Power', 'psu.rails.0.power', 7),
+         Col('Max', 'psu.capacity', 5),
+         Col('Status', 'status', 6),
+      ]).render(data['psuSlots'])

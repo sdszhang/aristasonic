@@ -5,7 +5,7 @@ class ShowEeprom(Renderer):
 
    NAME = 'eeprom'
 
-   def data(self, show):
+   def getData(self, show):
       ret = []
       for inventory, metadata in show.inventories:
          inventory.update(metadata)
