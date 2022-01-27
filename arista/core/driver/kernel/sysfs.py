@@ -457,6 +457,7 @@ class TempSysfsImpl(Temp, GenericSysfs):
 class ResetSysfsImpl(Reset):
    def __init__(self, driver, desc, **kwargs):
       self.driver = driver
+      self.desc = desc
       self.addr = desc.addr
       self.bit = desc.bit
       self.name = desc.name
@@ -480,6 +481,7 @@ class ResetSysfsImpl(Reset):
 class GpioSysfsImpl(Gpio):
    def __init__(self, driver, desc, hwActiveLow=False, **kwargs):
       self.driver = driver
+      self.desc = desc
       self.addr = desc.addr
       self.bit = desc.bit
       self.name = desc.name

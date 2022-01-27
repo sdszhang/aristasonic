@@ -2,6 +2,7 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
+from ..core.quirk import PciConfigQuirk
 from ..core.register import Register, RegBitField, SetClearRegister
 from ..core.types import PciAddr
 from ..core.utils import incrange
@@ -40,7 +41,6 @@ class WoodleafCpldRegisters(LorikeetCpldRegisters):
       RegBitField(0, 'asicPowerGood'),
    )
 
-
 @registerPlatform()
 class Woodleaf(FixedSystem):
 
@@ -74,8 +74,6 @@ class Woodleaf(FixedSystem):
 
       scd = self.newComponent(Scd, addr=PciAddr(bus=0x01))
       self.scd = scd
-
-      self.newComponent(Tofino2, addr=PciAddr(bus=0x04))
 
       scd.createWatchdog()
       scd.setMsiRearmOffset(0x180)
@@ -111,9 +109,9 @@ class Woodleaf(FixedSystem):
       ])
 
       scd.addResets([
-         ResetDesc('switch_chip_core_reset', addr=0x4000, bit=16),
-         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=17),
-         ResetDesc('switch_chip_power_on_reset', addr=0x4000, bit=18),
+         ResetDesc('switch_chip_core_reset', addr=0x4000, bit=16, auto=False),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=17, auto=False),
+         ResetDesc('switch_chip_power_on_reset', addr=0x4000, bit=18, auto=False),
          ResetDesc('cpld_right_reset', addr=0x4000, bit=19),
          ResetDesc('cpld_left_reset', addr=0x4000, bit=20),
          ResetDesc('tpm_reset', addr=0x4000, bit=21),
@@ -181,3 +179,30 @@ class Woodleaf(FixedSystem):
          mdios = [scd.addMdio(i, 0)]
          phy = self.PHY(phyId, mdios, reset=reset)
          self.inventory.addPhy(phy)
+
+
+      bridgeAddr = PciAddr(device=0x03, func=1)
+      self.newComponent(Tofino2, addr=PciAddr(bus=0x04),
+         powerGpios=[
+            self.syscpld.addGpio('gearboxLeftPower'),
+            self.syscpld.addGpio('gearboxRightPower'),
+            self.syscpld.addGpio('asicPower'),
+         ],
+         powerGoodGpios=[
+            self.syscpld.addGpio('gearboxLeftPowerGood'),
+            self.syscpld.addGpio('gearboxRightPowerGood'),
+            self.syscpld.addGpio('asicPowerGood'),
+         ],
+         coreResets=[
+            scd.inventory.getReset('switch_chip_power_on_reset'),
+            scd.inventory.getReset('switch_chip_core_reset'),
+         ],
+         pcieResets=[
+            scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
+         pciResetDelay=200,
+         quirks=[
+            PciConfigQuirk(bridgeAddr, 'BRIDGE_CONTROL=0x1:0x1', 'enable SERR'),
+            PciConfigQuirk(bridgeAddr, 'CAP_EXP+0x10.w=0x20:0x20', 'enable Training'),
+         ],
+      )

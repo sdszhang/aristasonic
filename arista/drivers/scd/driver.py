@@ -168,12 +168,12 @@ class ScdKernelDriver(PciKernelDriver):
       super(ScdKernelDriver, self).finish()
 
    def resetSim(self, value):
-      resets = [reset.getName() for reset in self.scd.getResets()]
+      resets = [reset.getName() for reset in self.scd.getResets(autoOnly=True)]
       logging.debug('resetting devices %s', resets)
 
    @utils.simulateWith(resetSim)
    def reset(self, value):
-      for reset in self.scd.getResets():
+      for reset in self.scd.getResets(autoOnly=True):
          if value:
             reset.resetIn()
          else:

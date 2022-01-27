@@ -592,8 +592,8 @@ class Scd(PciComponent):
       for i, addr in enumerate(addrs, 0):
          self.addUartPort(addr, i)
 
-   def getResets(self, xcvrs=True):
-      resets = self.resets
+   def getResets(self, xcvrs=True, autoOnly=False):
+      resets = [r for r in self.resets if not autoOnly or r.desc.auto == True]
       if xcvrs:
          resets += [self.inventory.getReset('qsfp%d_reset' % xcvrId)
                     for _, xcvrId in self.qsfps]
