@@ -2,12 +2,13 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
+from ..core.register import Register, RegBitField, SetClearRegister
 from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.bfn.tofino2 import Tofino2
 from ..components.dpm.ucd import Ucd90320, UcdGpi
-from ..components.phy.babbagelp import BabbageLP
+from ..components.phy.b52 import B52
 from ..components.psu.liteon import PS2242
 from ..components.scd import Scd
 from ..components.tmp468 import Tmp468
@@ -18,7 +19,27 @@ from ..descs.sensor import Position, SensorDesc
 
 from .chassis.yuba import Yuba
 
-from .cpu.lorikeet import LorikeetCpu
+from .cpu.lorikeet import LorikeetCpu, LorikeetCpldRegisters
+
+class WoodleafCpldRegisters(LorikeetCpldRegisters):
+   PWR_CYC_EN = SetClearRegister(0x11, 0x13,
+      RegBitField(4, 'powerCycleOnDpPowerFail', ro=False),
+      RegBitField(3, 'powerCycleOnOvertemp', ro=False),
+      RegBitField(1, 'powerCycleOnWatchdog', ro=False),
+      RegBitField(0, 'powerCycleOnCrc', ro=False),
+   )
+   FAULT_SUICIDE = Register(0x1B,
+      RegBitField(3, 'suicideOnOvertemp', ro=False),
+   )
+   DATAPLANE_PWR = Register(0x32,
+      RegBitField(6, 'gearboxLeftPower', ro=False),
+      RegBitField(5, 'gearboxRightPower', ro=False),
+      RegBitField(4, 'asicPower', ro=False),
+      RegBitField(2, 'gearboxLeftPowerGood'),
+      RegBitField(1, 'gearboxRightPowerGood'),
+      RegBitField(0, 'asicPowerGood'),
+   )
+
 
 @registerPlatform()
 class Woodleaf(FixedSystem):
@@ -28,7 +49,7 @@ class Woodleaf(FixedSystem):
 
    CHASSIS = Yuba
 
-   PHY = BabbageLP
+   PHY = B52
 
    PORTS = PortLayout(
       qsfps=incrange(1, 64),
@@ -38,7 +59,8 @@ class Woodleaf(FixedSystem):
    def __init__(self):
       super(Woodleaf, self).__init__()
 
-      self.cpu = self.newComponent(LorikeetCpu)
+      self.cpu = self.newComponent(LorikeetCpu,
+                                   cpldRegisterCls=WoodleafCpldRegisters)
       self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(0x11),
                                  causes={
@@ -48,7 +70,7 @@ class Woodleaf(FixedSystem):
          'watchdog': UcdGpi(10),
       })
 
-      # TODO: add syscpld
+      self.syscpld = self.cpu.syscpld
 
       scd = self.newComponent(Scd, addr=PciAddr(bus=0x01))
       self.scd = scd
@@ -56,6 +78,7 @@ class Woodleaf(FixedSystem):
       self.newComponent(Tofino2, addr=PciAddr(bus=0x04))
 
       scd.createWatchdog()
+      scd.setMsiRearmOffset(0x180)
 
       scd.addSmbusMasterRange(0x8000, 9, 0x80)
 

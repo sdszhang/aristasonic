@@ -85,7 +85,7 @@ class RookCpu(Cpu):
       cpld.createPowerCycle()
 
       self.syscpld = self.newComponent(RookSysCpld, cpld.i2cAddr(8, 0x23),
-                                       registerCli=cpldRegisterCls)
+                                       registerCls=cpldRegisterCls)
 
    def addCpuDpm(self, addr=None, causes=None):
       addr = addr or self.cpuDpmAddr()

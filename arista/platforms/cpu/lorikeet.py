@@ -2,6 +2,10 @@ from ...core.cpu import Cpu
 from ...core.types import PciAddr
 
 from ...components.cpu.amd.k10temp import K10Temp
+from ...components.cpu.lorikeet import (
+    LorikeetCpldRegisters,
+    LorikeetSysCpld,
+)
 from ...components.dpm.adm1266 import Adm1266, AdmPin, AdmPriority
 from ...components.max6658 import Max6658
 from ...components.scd import Scd
@@ -12,7 +16,8 @@ class LorikeetCpu(Cpu):
 
    PLATFORM = 'lorikeet'
 
-   def __init__(self, addr=PciAddr(device=0x18, func=7), **kwargs):
+   def __init__(self, addr=PciAddr(device=0x18, func=7),
+                cpldRegisterCls=LorikeetCpldRegisters, **kwargs):
       super(LorikeetCpu, self).__init__(**kwargs)
 
       self.newComponent(K10Temp, addr=PciAddr(device=0x18, func=3), sensors=[
@@ -49,6 +54,9 @@ class LorikeetCpu(Cpu):
          slotCount=self.parent.CHASSIS.FAN_SLOTS,
          fanCount=self.parent.CHASSIS.FAN_COUNT,
       )
+
+      self.syscpld = self.newComponent(LorikeetSysCpld, cpld.i2cAddr(4, 0x23),
+                                       registerCls=cpldRegisterCls)
 
       # TODO: Add ISL69247 temp sensors
 
