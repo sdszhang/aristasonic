@@ -2,6 +2,8 @@
 import select
 import time
 
+from arista.core.config import Config
+
 REMOVED = 0
 INSERTED = 1
 I2C_BUS_STUCK = 2
@@ -75,7 +77,7 @@ class EventWatcher(object):
             return
 
       intrf = item.get_interrupt_file()
-      if intrf:
+      if intrf and Config().api_event_use_interrupts:
          event = EpollEvent(uid, item, name, intrf)
          event.clear()
          self.epollItems[item] = event
