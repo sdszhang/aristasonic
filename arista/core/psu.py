@@ -3,6 +3,7 @@ import copy
 
 from .component import Priority
 from .component.slot import SlotComponent
+from .component.unmanaged import UnmanagedComponent
 from .log import getLogger
 from .utils import JsonStoredData, inSimulation
 
@@ -204,14 +205,15 @@ class PsuSlot(SlotComponent):
       return self.model
 
    def addPsu(self, desc):
-      if not self.addrFunc:
-         return None
-      addr = self.addrFunc(self.model.PMBUS_ADDR)
-      psu = self.newComponent(
-         self.model.PMBUS_CLS,
-         name=self.model.DRIVER,
-         addr=addr,
-      )
+      if self.addrFunc:
+         addr = self.addrFunc(self.model.PMBUS_ADDR)
+         psu = self.newComponent(
+            self.model.PMBUS_CLS,
+            name=self.model.DRIVER,
+            addr=addr,
+         )
+      else:
+         psu = self.newComponent(UnmanagedComponent)
       psu.addTempSensors(desc.sensors)
       psu.addFans(desc.fans)
       psu.addRails(desc.rails)
