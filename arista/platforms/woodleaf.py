@@ -18,7 +18,7 @@ from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
 
-from .chassis.yuba import Yuba
+from .chassis.tuba import Tuba
 
 from .cpu.lorikeet import LorikeetCpu, LorikeetCpldRegisters
 
@@ -47,7 +47,7 @@ class Woodleaf(FixedSystem):
    SID = ['Woodleaf']
    SKU = ['DCS-7170B-64C']
 
-   CHASSIS = Yuba
+   CHASSIS = Tuba
 
    PHY = B52
 
@@ -79,15 +79,6 @@ class Woodleaf(FixedSystem):
       scd.setMsiRearmOffset(0x180)
 
       scd.addSmbusMasterRange(0x8000, 9, 0x80)
-
-      # TODO: figure out led between CPLD & SCD
-      scd.addLeds([
-         (0x6050, 'status'),
-         (0x6060, 'fan_status'),
-         (0x6070, 'psu1'),
-         (0x6080, 'psu2'),
-         (0x6090, 'beacon'),
-      ])
 
       scd.newComponent(Tmp468, addr=scd.i2cAddr(0, 0x49), sensors=[
          SensorDesc(diode=0, name='Switch card',
@@ -166,7 +157,7 @@ class Woodleaf(FixedSystem):
             presentGpio=scd.inventory.getGpio("%s_present" % name),
             inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
             outputOkGpio=scd.inventory.getGpio("%s_status" % name),
-            led=scd.inventory.getLed('%s' % name),
+            led=self.cpu.cpld.inventory.getLed('%s' % name),
             psus=[
                PS2242,
             ],
