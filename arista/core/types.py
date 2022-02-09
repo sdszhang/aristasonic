@@ -3,6 +3,8 @@ import os
 
 from collections import namedtuple
 
+from ..libs.i2c import i2cBusFromName
+
 Register = namedtuple("Register", ["addr", "ro"])
 NamedRegister = namedtuple("NamedRegister", Register._fields + ("name", ))
 
@@ -52,6 +54,31 @@ class PciAddr(SysfsPath):
 
    def getSysfsPath(self):
       return os.path.join('/sys/bus/pci/devices', str(self))
+
+class I2cBusAddr(I2cAddr):
+   def __init__(self, bus, address):
+      super().__init__(bus, address)
+
+   @property
+   def bus(self):
+      return self.bus_.bus
+
+class I2cBus(object):
+
+   ADDR_CLS = I2cBusAddr
+
+   def __init__(self, name):
+      self.name_ = name
+      self.bus_ = None
+
+   @property
+   def bus(self):
+      if self.bus_ is None:
+         self.bus_ = i2cBusFromName(self.name_)
+      return self.bus_
+
+   def i2cAddr(self, address, **kwargs):
+      return self.ADDR_CLS(self, address, **kwargs)
 
 class MdioClause(enum.IntEnum):
    C22 = 1

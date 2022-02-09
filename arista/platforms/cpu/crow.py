@@ -1,9 +1,10 @@
 from ...core.cpu import Cpu
 from ...core.fan import FanSlot
-from ...core.types import I2cAddr, PciAddr
+from ...core.types import PciAddr
 from ...core.utils import incrange
 
 from ...components.cpu.amd.k10temp import K10Temp
+from ...components.cpu.amd.piix import PiixI2cBus
 from ...components.cpu.crow import (
    CrowCpldRegisters,
    CrowFanCpld,
@@ -48,6 +49,7 @@ class CrowCpu(Cpu):
             ]
          )
 
-      self.syscpld = self.newComponent(CrowSysCpld, I2cAddr(1, 0x23),
+      bus = PiixI2cBus(1, 0x0b20)
+      self.syscpld = self.newComponent(CrowSysCpld, addr=bus.i2cAddr(0x23),
                                        registerCls=registerCls)
       self.syscpld.createPowerCycle()
