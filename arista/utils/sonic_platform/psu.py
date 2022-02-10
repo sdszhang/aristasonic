@@ -39,6 +39,8 @@ class Psu(PsuBase):
 
    @property
    def rail(self):
+      if self.psu is None:
+          return None
       rails = self.psu.psu.getInventory().getRails()
       return rails[0] if rails else None
 
