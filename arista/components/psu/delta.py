@@ -142,7 +142,7 @@ class ECD26020037(DeltaPsu):
       PsuIdent('ECD26020037', 'PWR-3001-DC-RED', Airflow.EXHAUST),
    ]
 
-class ECD16020097(DeltaPsu):
+class ECD3000M(DeltaPsu):
    PMBUS_ADDR = 0x40
    DRIVER = 'dps800'
    CAPACITY = 3000
@@ -156,20 +156,7 @@ class ECD16020097(DeltaPsu):
    )
    IDENTIFIERS = [
       PsuIdent('ECD16020097', 'PWR-D1-3041-AC-BLUE', Airflow.INTAKE),
-   ]
-
-class ECD16020035(DeltaPsu):
-   PMBUS_ADDR = 0x40
-   DRIVER = 'dps800'
-   CAPACITY = 3000
-   DUAL_INPUT = True
-   DESCRIPTION = psuDescHelper(
-      sensors=[
-         ('inlet', Position.OTHER, 60, 65, 70),
-         ('primary hotspot', Position.OTHER, 70, 115, 120),
-         ('secondary hotspot', Position.OTHER, 70, 120, 130),
-      ],
-   )
-   IDENTIFIERS = [
       PsuIdent('ECD16020035', 'PWR-D2-3041-DC-BLUE', Airflow.INTAKE),
+      PsuIdent('ECD56020024', 'PWR-D3-3041-AC-BLUE', Airflow.INTAKE),
+      PsuIdent('ECD56020026', 'PWR-D4-3041-AC-BLUE', Airflow.INTAKE),
    ]
