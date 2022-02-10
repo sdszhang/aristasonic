@@ -255,7 +255,9 @@ class FanSysfsImpl(Fan, GenericSysfs):
       return self.desc.name
 
    def getModel(self):
-      return self.model.read()
+      if self.model.exists():
+          return self.model.read()
+      return self.desc.model
 
    def getSpeed(self):
       if self.pwm.exists():

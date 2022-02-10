@@ -13,7 +13,7 @@ class FanDesc(HwDesc):
    OID_FIELD = 'fanId'
 
    def __init__(self, fanId, name='fan%(fanId)s', position=FanPosition.UNKNOWN,
-                airflow=Airflow.UNKNOWN, ledId=None, **kwargs):
+                airflow=Airflow.UNKNOWN, ledId=None, model='N/A', **kwargs):
       super(FanDesc, self).__init__(**kwargs)
       self.fmt = name
       self.name = None
@@ -21,6 +21,7 @@ class FanDesc(HwDesc):
       self.ledId = ledId
       self.position = position
       self.airflow = airflow
+      self.model = model
 
    def renderName(self, **kwargs):
       values = kwargs.copy()
