@@ -89,6 +89,8 @@ class CatalinaP(FixedSystem):
       ])
 
       scd.addResets([
+         ResetDesc('phy3_reset', addr=0x4000, bit=7),
+         ResetDesc('phy2_reset', addr=0x4000, bit=6),
          ResetDesc('phy1_reset', addr=0x4000, bit=5),
          ResetDesc('phy0_reset', addr=0x4000, bit=4),
          ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=3),
