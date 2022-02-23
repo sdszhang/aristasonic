@@ -64,11 +64,15 @@ class I2cEeprom(I2cComponent):
       maybeClearCache(self.eepromName())
 
 class I2cSeeprom(I2cEeprom):
+   def __init__(self, *args, hdrSz=8, **kwargs):
+      super().__init__(*args, **kwargs)
+      self.hdrSz = hdrSz
+
    def readPrefdl(self):
-      return Prefdl.fromBinFile(self.driver.eepromPath(), skip=8)
+      return Prefdl.fromBinFile(self.driver.eepromPath(), skip=self.hdrSz)
 
    def readPrefdlRaw(self):
-      header = self.driver.read(8)
+      header = self.driver.read(hdrSz)
       return header + self.readPrefdl().getRaw()
 
 class At24C64(I2cSeeprom):

@@ -9,20 +9,10 @@ from ...drivers.rook import (
    RookStatusLedKernelDriver,
 )
 
-from ..cpld import SysCpld, SysCpldCommonRegisters
+from ..cpld import SysCpld, SysCpldCommonRegistersV2
 
-class RookCpldRegisters(SysCpldCommonRegisters):
-   INTERRUPT_STS = Register(0x08,
-      RegBitField(0, 'scdCrcError'),
-   )
-   SCD_CTRL_STS = Register(0x0A,
-      RegBitField(0, 'scdConfDone'),
-      RegBitField(1, 'scdInitDone'),
-      RegBitField(5, 'scdReset', ro=False),
-   )
-   PWR_CYC_EN = Register(0x17,
-      RegBitField(0, 'powerCycleOnCrc', ro=False),
-   )
+class RookCpldRegisters(SysCpldCommonRegistersV2):
+   pass
 
 class RookSysCpld(SysCpld):
    REGISTER_CLS = RookCpldRegisters
