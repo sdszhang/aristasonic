@@ -18,7 +18,7 @@ class Xcvr(InventoryInterface):
    def getId(self):
       raise NotImplementedError
 
-   @diagmethod('addr', diag=True)
+   @diagmethod('addr', fmt=str)
    def getI2cAddr(self):
       raise NotImplementedError
 
