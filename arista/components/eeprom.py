@@ -72,7 +72,7 @@ class I2cSeeprom(I2cEeprom):
       return Prefdl.fromBinFile(self.driver.eepromPath(), skip=self.hdrSz)
 
    def readPrefdlRaw(self):
-      header = self.driver.read(hdrSz)
+      header = self.driver.read(self.hdrSz)
       return header + self.readPrefdl().getRaw()
 
 class At24C64(I2cSeeprom):
