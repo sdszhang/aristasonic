@@ -6,7 +6,10 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident3 import Trident3
+from ..components.psu.fixed import Fixed100AC
 from ..components.scd import Scd
+
+from ..descs.gpio import GpioDesc
 
 @registerPlatform()
 class PikeZ(FixedSystem):
@@ -40,9 +43,10 @@ class PikeZ(FixedSystem):
         #     ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=0),
         # ])
 
-        # scd.addGpios([
-        #     GpioDesc("psu1_status", 0x5000, 8, ro=True)
-        # ])
+        scd.addGpios([
+            GpioDesc("psu1_status", 0x5000, 8, ro=True),
+            GpioDesc("psu2_status", 0x5000, 9, ro=True),
+        ])
 
         scd.addLeds([
             (0x6040, 'beacon'),
@@ -55,17 +59,20 @@ class PikeZ(FixedSystem):
             (0x60B0, 'speed'),
         ])
 
-        # for psuId in incrange(1, 1):
-        #     name = "psu%d" % psuId
-        #     scd.newComponent(
-        #         PsuSlot,
-        #         slotId=psuId,
-        #         presentGpio=True,
-        #         inputOkGpio=scd.inventory.getGpio("%s_status" % name),
-        #         outputOkGpio=scd.inventory.getGpio("%s_status" % name),
-        #         led=scd.inventory.getLed(name),
-
-        #     )
+        for psuId in incrange(1, 2):
+            name = "psu%d" % psuId
+            scd.newComponent(
+                PsuSlot,
+                slotId=psuId,
+                presentGpio=True,
+                inputOkGpio=scd.inventory.getGpio("%s_status" % name),
+                outputOkGpio=scd.inventory.getGpio("%s_status" % name),
+                led=scd.inventory.getLed("psu_status"),
+                forcePsuLoad=True,
+                psus=[
+                    Fixed100AC,
+                ]
+            )
 
         intrRegs = [
             scd.createInterrupt(addr=0x3000, num=0),
