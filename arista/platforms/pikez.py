@@ -12,6 +12,8 @@ from ..components.scd import Scd, ScdCause
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 
+from .cpu.prairie import PrairieCpu
+
 class PikeZ1PChassis(FixedChassis):
     FAN_SLOTS = 1
     FAN_COUNT = 2
@@ -21,7 +23,6 @@ class PikeZ2PChassis(PikeZ1PChassis):
     PSU_SLOTS = 2
 
 class PikeZ(FixedSystem):
-    # TODO: Cpu
     # TODO: Fans
 
     PORTS = PortLayout(
@@ -32,7 +33,7 @@ class PikeZ(FixedSystem):
     def __init__(self):
         super().__init__()
 
-        # self.cpu = self.newComponent(PrairieCpu)
+        self.cpu = self.newComponent(PrairieCpu)
         scd = self.newComponent(Scd, PciAddr(device=0x18, func=7))
         self.scd = scd
         scd.createWatchdog()
