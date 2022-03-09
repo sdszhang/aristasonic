@@ -10,6 +10,7 @@ from ..components.psu.fixed import Fixed100AC
 from ..components.scd import Scd
 
 from ..descs.gpio import GpioDesc
+from ..descs.reset import ResetDesc
 
 class PikeZ1PChassis(FixedChassis):
     FAN_SLOTS = 1
@@ -22,7 +23,6 @@ class PikeZ2PChassis(PikeZ1PChassis):
 class PikeZ(FixedSystem):
     # TODO: Cpu
     # TODO: Fans
-    # TODO: resets
 
     PORTS = PortLayout(
         ethernets=incrange(1, 48),
@@ -39,12 +39,14 @@ class PikeZ(FixedSystem):
         scd.createPowerCycle()
         scd.addSmbusMasterRange(0x8000, 0, 0x80, bus=5)
 
-        # Resets: 0x4000
-        # scd.addResets([
-        #     ResetDesc('phy_reset', addr=0x4000, bit=8),
-        #     ResetDesc('switch_chip_reset', addr=0x4000, bit=1),
-        #     ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=0),
-        # ])
+        scd.addResets([
+            ResetDesc('ext_mux_reset', addr=0x4000, bit=8),
+            ResetDesc('phy_reset', addr=0x4000, bit=7),
+            ResetDesc('link_flap_reset', addr=0x4000, bit=6),
+            ResetDesc('cpu_reset', addr=0x4000, bit=2),
+            ResetDesc('switch_chip_reset', addr=0x4000, bit=1, auto=False),
+            ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=0, auto=False),
+        ])
 
         scd.addLeds([
             (0x6040, 'beacon'),
@@ -59,15 +61,15 @@ class PikeZ(FixedSystem):
 
         for psuId in incrange(1, self.CHASSIS.PSU_SLOTS):
             name = "psu%d" % psuId
-            scd.addGpio(
+            statusGpio = scd.addGpio(
                 GpioDesc("%s_status" % name, 0x5000, 7 + psuId, ro=True)
             )
             scd.newComponent(
                 PsuSlot,
                 slotId=psuId,
                 presentGpio=True,
-                inputOkGpio=scd.inventory.getGpio("%s_status" % name),
-                outputOkGpio=scd.inventory.getGpio("%s_status" % name),
+                inputOkGpio=statusGpio,
+                outputOkGpio=statusGpio,
                 led=scd.inventory.getLed("psu_status"),
                 forcePsuLoad=True,
                 psus=[
@@ -93,7 +95,14 @@ class PikeZ(FixedSystem):
             intrBitFn=lambda xcvrId: 5 + xcvrId - 49
         )
 
-        # self.newComponent(Trident3, PciAddr(bus=1))
+        self.newComponent(Trident3, PciAddr(bus=1),
+            coreResets=[
+                scd.inventory.getReset('switch_chip_reset'),
+            ],
+            pcieResets=[
+                scd.inventory.getReset('switch_chip_pcie_reset'),
+            ]
+        )
 
 @registerPlatform()
 class PikeZF(PikeZ):
