@@ -1,4 +1,4 @@
-from ..core.fixed import FixedSystem
+from ..core.fixed import FixedChassis, FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
@@ -11,15 +11,18 @@ from ..components.scd import Scd
 
 from ..descs.gpio import GpioDesc
 
-@registerPlatform()
+class PikeZ1PChassis(FixedChassis):
+    FAN_SLOTS = 1
+    FAN_COUNT = 2
+    PSU_SLOTS = 1
+
+class PikeZ2PChassis(PikeZ1PChassis):
+    PSU_SLOTS = 2
+
 class PikeZ(FixedSystem):
     # TODO: Cpu
     # TODO: Fans
-    # TODO: PSUs
     # TODO: resets
-
-    SID = ['PikeIslandZ']
-    SKU = ['CCS-720DT-48S']
 
     PORTS = PortLayout(
         ethernets=incrange(1, 48),
@@ -43,11 +46,6 @@ class PikeZ(FixedSystem):
         #     ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=0),
         # ])
 
-        scd.addGpios([
-            GpioDesc("psu1_status", 0x5000, 8, ro=True),
-            GpioDesc("psu2_status", 0x5000, 9, ro=True),
-        ])
-
         scd.addLeds([
             (0x6040, 'beacon'),
             (0x6050, 'status'),
@@ -59,8 +57,11 @@ class PikeZ(FixedSystem):
             (0x60B0, 'speed'),
         ])
 
-        for psuId in incrange(1, 2):
+        for psuId in incrange(1, self.CHASSIS.PSU_SLOTS):
             name = "psu%d" % psuId
+            scd.addGpio(
+                GpioDesc("%s_status" % name, 0x5000, 7 + psuId, ro=True)
+            )
             scd.newComponent(
                 PsuSlot,
                 slotId=psuId,
@@ -93,3 +94,35 @@ class PikeZ(FixedSystem):
         )
 
         # self.newComponent(Trident3, PciAddr(bus=1))
+
+@registerPlatform()
+class PikeZF(PikeZ):
+
+    CHASSIS = PikeZ1PChassis
+
+    SID = ['PikeIslandZ-F']
+    SKU = ['CCS-720DT-48S-F']
+
+@registerPlatform()
+class PikeZ2F(PikeZ):
+
+    CHASSIS = PikeZ2PChassis
+
+    SID = ['PikeIslandZ', 'PikeIslandZ-2F']
+    SKU = ['CCS-720DT-48S', 'CCS-720DT-48S-2F']
+
+@registerPlatform()
+class PikeZR(PikeZ):
+
+    CHASSIS = PikeZ1PChassis
+
+    SID = ['PikeIslandZ-R']
+    SKU = ['CCS-720DT-48S-R']
+
+@registerPlatform()
+class PikeZ2R(PikeZ):
+
+    CHASSIS = PikeZ2PChassis
+
+    SID = ['PikeIslandZ-2R']
+    SKU = ['CCS-720DT-48S-2R']

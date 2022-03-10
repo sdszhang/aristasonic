@@ -31,4 +31,5 @@ class FixedSystem(Sku):
 class FixedChassis(object):
    FAN_SLOTS = None
    FAN_COUNT = None
+   PSU_SLOTS = None
    HEIGHT_RU = None
