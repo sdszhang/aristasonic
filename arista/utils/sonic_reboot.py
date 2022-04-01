@@ -16,6 +16,7 @@ from arista.core.linecard import LCpuCtx
 from arista.core.platform import getPlatform
 from arista.core.supervisor import Supervisor
 from arista.core.utils import klog
+from arista.libs.procfs import inKdump
 from .sonic_utils import getInventory
 
 def powerOffLinecards(chassis):
@@ -52,6 +53,9 @@ def powerOffCards(platform):
    This ensures linecards are not running with inconsistent state, e.g., if ARP requests
    come in while the supervisor is down."""
    if not isinstance(platform, Supervisor):
+      return
+   if inKdump():
+      print('Not shutting down linecards on kdump kernel')
       return
 
    chassis = platform.getChassis()

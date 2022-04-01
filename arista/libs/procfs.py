@@ -1,5 +1,6 @@
 
 import datetime
+import os
 import time
 
 from .fs import readFileContent
@@ -45,3 +46,6 @@ def getCmdlineDict(path='/proc/cmdline'):
 
    cmdlineDict = data
    return data
+
+def inKdump(path='/proc/vmcore'):
+   return os.path.exists(path)
