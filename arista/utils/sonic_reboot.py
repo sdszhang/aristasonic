@@ -23,11 +23,11 @@ def powerOffLinecards(chassis):
    for linecard in chassis.iterLinecards():
       try:
          print('Power off linecard %s...' % linecard, end='')
-         if linecard.slot.getPresence():
+         if linecard.slot.getPresence() and linecard.poweredOn():
             linecard.powerOnIs(False)
             print('SUCCESS')
          else:
-            print('(not present)')
+            print('SKIPPED')
       except:
          print('FAILED')
          klog('Failed to power off linecard %s' % linecard, level=0)
@@ -37,11 +37,11 @@ def powerOffFabrics(chassis):
    for fabric in chassis.iterFabrics():
       try:
          print('Power off fabric card %s...' % fabric, end='')
-         if fabric.slot.getPresence():
+         if fabric.slot.getPresence() and fabric.poweredOn():
             fabric.powerOnIs(False)
             print('SUCCESS')
          else:
-            print('(not present)')
+            print('SKIPPED')
       except:
          print('FAILED')
          klog('Failed to power off fabric %s' % fabric, level=0)
