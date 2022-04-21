@@ -36,6 +36,12 @@ class Config():
          cls.instance_.etc_path = '/etc/sonic'
          cls.instance_.api_rpc_host = '127.0.0.1'
          cls.instance_.api_rpc_port = '12322'
+         cls.instance_.cooling_data_points = 10
+         cls.instance_.cooling_export_path = None
+         cls.instance_.cooling_max_decrease = 10
+         cls.instance_.cooling_max_increase = 25
+         cls.instance_.cooling_min_speed = 30
+         cls.instance_.cooling_target_offset = 0
          cls.instance_._parseConfig()
          cls.instance_._parseCmdline()
       return cls.instance_

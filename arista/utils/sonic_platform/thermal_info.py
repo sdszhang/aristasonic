@@ -7,6 +7,7 @@ try:
       import ThermalPolicyInfoBase
    from sonic_platform_base.sonic_thermal_control.thermal_json_object \
       import thermal_json_object
+   from arista.core.cooling import CoolingAlgorithm
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
 
@@ -75,10 +76,11 @@ class PsuInfo(ThermalPolicyInfo):
 @thermal_json_object("control_info")
 class ControlInfo(ThermalPolicyInfo):
    def __init__(self):
-      self.sensorsToFanSpeed = None
+      self.algo = None
 
    def collect(self, chassis):
-      self.sensorsToFanSpeed = chassis.getThermalControl().sensorsToFanSpeed
+      if self.algo is None:
+         self.algo = CoolingAlgorithm(chassis._platform)
 
 @thermal_json_object("chassis_info")
 class ChassisInfo(ControlInfo):

@@ -307,7 +307,7 @@ class MockPlatformTest(unittest.TestCase):
       self.assertIsInstance(desc.target, float)
       self.assertIsInstance(desc.overheat, float)
       self.assertIsInstance(desc.critical, float)
-      self.assertTrue(desc.target <= desc.overheat <= desc.critical)
+      self.assertTrue(desc.target < desc.overheat <= desc.critical)
       self.assertIsInstance(temp.getName(), str)
       self.assertIsInstance(temp.getPresence(), bool)
       self.assertIsInstance(temp.getStatus(), bool)

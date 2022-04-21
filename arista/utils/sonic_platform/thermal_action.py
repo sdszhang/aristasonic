@@ -40,8 +40,5 @@ class SetFanSpeedAllAction(SetFanSpeedAction):
 @thermal_json_object("thermal_control.control")
 class ThermalControlAction(ThermalPolicyAction):
    def execute(self, thermal_info_dict):
-      sensorsToFanSpeed = thermal_info_dict['control_info'].sensorsToFanSpeed
-      fanSpeed = sensorsToFanSpeed(
-            thermal_info_dict['thermal_info'].thermals.values())
-      for fan in thermal_info_dict['fan_info'].fans.values():
-         fan.set_speed(fanSpeed)
+      algo = thermal_info_dict['control_info'].algo
+      algo.run()
