@@ -45,8 +45,10 @@ class CatalinaP(FixedSystem):
                                  causes={
          'overtemp': UcdGpi(1),
          'powerloss': UcdGpi(3),
+         'psufault': UcdGpi(4),
          'watchdog': UcdGpi(5),
-         'reboot': UcdGpi(6),
+         'cpu': UcdGpi(6),
+         'reboot': UcdGpi(8),
       })
       # TODO sys cpld
       #self.syscpld = self.cpu.syscpld
