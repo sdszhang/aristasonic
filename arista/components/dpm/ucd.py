@@ -177,7 +177,7 @@ class Ucd(PmbusDpm):
             cause = UcdReloadCauseEntry(
                cause=name,
                rcTime=datetimeToStr(time),
-               rcDesc='%s on rail %d' % (name, page + 1),
+               rcDesc='%s on rail %d' % (name, page),
                score=ReloadCauseScore.EVENT | ReloadCauseScore.DETAILED |
                      ReloadCauseScore.getPriority(UcdPriority.NONE),
             )
