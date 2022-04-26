@@ -61,13 +61,13 @@ class Lodoga(FixedSystem):
          (0x6090, 'beacon'),
       ])
 
-      scd.newComponent(Ucd90120A, scd.i2cAddr(13, 0x4e, t=3), causes={
-         'reboot': UcdGpi(1),
-         'watchdog': UcdGpi(2),
-         'overtemp': UcdGpi(4),
-         'powerloss': UcdGpi(5),
-         'systempowerloss': UcdGpi(6),
-      })
+      scd.newComponent(Ucd90120A, scd.i2cAddr(13, 0x4e, t=3), causes=[
+         UcdGpi(1, 'reboot'),
+         UcdGpi(2, 'watchdog'),
+         UcdGpi(4, 'overtemp'),
+         UcdGpi(5, 'powerloss', 'PSU AC'),
+         UcdGpi(6, 'powerloss', 'PSU DC'),
+      ])
 
       scd.addResets([
          ResetDesc('switch_chip_reset', addr=0x4000, bit=1),

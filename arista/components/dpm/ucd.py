@@ -14,6 +14,7 @@ from ...core.log import getLogger
 from ...drivers.dpm.ucd import UcdUserDriver
 
 from ...libs.date import datetimeToStr
+from ...libs.integer import iterBits, listToIntLsb
 
 from .pmbus import PmbusDpm
 
@@ -26,14 +27,24 @@ class UcdPriority():
    HIGH = 30
 
 class UcdGpi():
-   def __init__(self, bit, priority=UcdPriority.NORMAL):
+   TYPE = 'gpi'
+   def __init__(self, bit, name='unknown', description=None,
+                priority=UcdPriority.NORMAL):
       self.bit = bit
+      self.name = name
+      self.description = description
       self.priority = priority
 
-class UcdMon():
-   def __init__(self, val, priority=UcdPriority.NORMAL):
-      self.val = val
-      self.priority = priority
+   def getReason(self, page=None, detailed=False):
+      ptype = self.TYPE if page is None else f'{self.TYPE} {page}'
+      ftype = 'detailed fault' if detailed else 'fault'
+      reason = f'{ptype} {ftype} - {self.name}'
+      if self.description is not None:
+         reason += f' - {self.description}'
+      return reason
+
+class UcdMon(UcdGpi):
+   TYPE = 'mon'
 
 class UcdReloadCauseEntry(ReloadCauseEntry):
    pass
@@ -46,10 +57,46 @@ class UcdReloadCauseProvider(ReloadCauseProviderHelper):
    def process(self):
       self.causes = self.ucd.getReloadCauses()
 
+class UcdFaultDesc():
+   def __init__(self, paged, typ, description, unit=None, conv=None):
+      self.paged = paged
+      self.typ = typ
+      self.description = description
+      self.conv = conv
+      self.unit = unit
+
+   def getReason(self, page=None):
+      if not self.paged:
+         return self.description
+      return '%s on rail %s' % (self.description, page)
+
+class UcdFaultRegister():
+    def __init__(self, np=1, gpi=1, fan=2, pages=9):
+        self.np = np
+        self.gpi = gpi
+        self.fan = fan
+        self.pages = pages
+
+    def parse(self, reg):
+        return UcdFaultRegister()
+
 class Ucd(PmbusDpm):
 
    DRIVER = UcdUserDriver
    PRIORITY = Priority.DPM
+
+   FAULTS = {(f.paged, f.typ): f for f in [
+      UcdFaultDesc(False, 2, 'resequence-error'),
+      UcdFaultDesc(False, 3, 'watchdog-timeout'),
+      UcdFaultDesc(True, 0, 'over-voltage'),
+      UcdFaultDesc(True, 1, 'under-voltage'),
+      UcdFaultDesc(True, 2, 'timeout-power-good'),
+      UcdFaultDesc(True, 3, 'over-current'),
+      UcdFaultDesc(True, 4, 'under-current'),
+      UcdFaultDesc(True, 5, 'over-temperature'),
+      UcdFaultDesc(True, 6, 'seq-on-timeout'),
+      UcdFaultDesc(True, 7, 'seq-off-timeout'),
+   ]}
 
    class Registers(PmbusDpm.Registers):
       RUN_TIME_CLOCK = 0xd7
@@ -67,6 +114,7 @@ class Ucd(PmbusDpm):
          return '%s()' % self.__class__.__name__
 
    gpiSize = 1
+   npfSize = 1
    faultValueSize = 2
 
    faultTimeBase = datetime.datetime(1970, 1, 1)
@@ -74,9 +122,21 @@ class Ucd(PmbusDpm):
 
    def __init__(self, addr=None, causes=None, **kwargs):
       super().__init__(addr=addr, **kwargs)
-      self.causes = causes or {}
+      self.causes = self._buildCauses(causes)
       self.oldestTime = datetime.datetime(1970, 1, 1)
       self.inventory.addReloadCauseProvider(UcdReloadCauseProvider(self))
+
+   def _buildCauses(self, causes):
+      if causes is None:
+         return []
+      if isinstance(causes, list):
+         return causes
+
+      res = []
+      for name, cause in causes.items():
+         cause.name = name
+         res.append(cause)
+      return res
 
    def setRunTimeClock(self):
       diff = datetime.datetime.now() - self.oldestTime
@@ -105,20 +165,6 @@ class Ucd(PmbusDpm):
    def getVersion(self):
       return self.driver.getVersion()
 
-   def _getGpiFaults(self, reg):
-      causes = []
-      for name, typ in self.causes.items():
-         if not isinstance(typ, UcdGpi):
-            continue
-         if reg & (1 << (typ.bit - 1)):
-            causes.append(UcdReloadCauseEntry(
-               cause=name,
-               rcDesc='gpi fault',
-               score=ReloadCauseScore.LOGGED |
-                     ReloadCauseScore.getPriority(typ.priority),
-            ))
-      return causes
-
    def _parseFaultDetail(self, reg):
       msecs = (reg[0] << 24) | (reg[1] << 16) | (reg[2] << 8) | reg[3]
       fid = (reg[4] << 24) | (reg[5] << 16) | (reg[6] << 8) | reg[7]
@@ -146,63 +192,135 @@ class Ucd(PmbusDpm):
       logging.debug('paged=%d type=%d page=%d value=0x%04x time=%s',
                     paged, ftype, page, value, time)
 
+      found = False
       if not paged and ftype == 9:
-         # this is a Gpi
-         for name, typ in self.causes.items():
-            if isinstance(typ, UcdGpi) and typ.bit == page:
-               logging.debug('found: %s', name)
-               causes.append(UcdReloadCauseEntry(
-                  cause=name,
-                  rcTime=datetimeToStr(time),
-                  rcDesc='gpi detailed fault',
-                  score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
-                        ReloadCauseScore.getPriority(typ.priority),
-               ))
-      elif paged and ftype in [ 0, 1, 2 ]:
-         # this is a Mon
-         found = False
-         for name, typ in self.causes.items():
-            if isinstance(typ, UcdMon) and typ.val == page:
-               logging.debug('found: %s', name)
-               causes.append(UcdReloadCauseEntry(
-                  cause=name,
-                  rcTime=datetimeToStr(time),
-                  rcDesc='mon detailed fault',
-                  score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
-                        ReloadCauseScore.getPriority(typ.priority),
-               ))
-               found = True
-         if not found:
-            name = ['over-voltage', 'under-voltage', 'timeout-power-good'][ftype]
-            cause = UcdReloadCauseEntry(
-               cause=name,
+         cause = self._getCause(page)
+         if cause is not None:
+            logging.debug('found detailed gpi: %s', cause.name)
+            causes.append(UcdReloadCauseEntry(
+               cause=cause.name,
                rcTime=datetimeToStr(time),
-               rcDesc='%s on rail %d' % (name, page),
+               rcDesc=cause.getReason(page=page, detailed=True),
+               score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
+                     ReloadCauseScore.getPriority(cause.priority),
+            ))
+         else:
+            logging.debug('found unknown detailed gpi: %s', page)
+            causes.append(UcdReloadCauseEntry(
+                cause='gpi-%s' % page,
+                rcTime=datetimeToStr(time),
+                rcDesc='gpi %s detailed fault' % page,
+                score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
+                      ReloadCauseScore.getPriority(UcdPriority.NONE),
+            ))
+         found = True
+      elif paged:
+         cause = self._getCause(page, typ=UcdMon)
+         if cause is not None:
+            logging.debug('found detailed mon: %s', cause.name)
+            causes.append(UcdReloadCauseEntry(
+               cause=cause.name,
+               rcTime=datetimeToStr(time),
+               rcDesc=cause.getReason(page=page, detailed=True),
+               score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
+                     ReloadCauseScore.getPriority(cause.priority),
+            ))
+            found = True
+
+      if not found:
+         fault = self.FAULTS.get((paged, ftype))
+         if fault is not None:
+            cause = UcdReloadCauseEntry(
+               cause=fault.description,
+               rcTime=datetimeToStr(time),
+               rcDesc=fault.getReason(page),
                score=ReloadCauseScore.EVENT | ReloadCauseScore.DETAILED |
                      ReloadCauseScore.getPriority(UcdPriority.NONE),
             )
-            logging.debug('found: %s', cause.description)
+            logging.debug('found detailed fault: %s', cause.description)
             causes.append(cause)
+         else:
+            logging.debug('unhandled detailed fault')
+
+      return causes
+
+   def _parseFaults(self, reg):
+      npf = None
+      gpi = None
+
+      idx = 0
+      if self.npfSize:
+         npf = listToIntLsb(reg[idx:idx+self.npfSize]) & ~0x01
+         npf &= ~0x01 # ignore LOG_NOT_EMPTY
+         idx += self.npfSize
+
+      if self.gpiSize:
+         gpi = listToIntLsb(reg[idx:idx+self.gpiSize])
+         idx += self.gpiSize
+
+      return npf, gpi
+
+   def _getCause(self, value, typ=UcdGpi):
+      for cause in self.causes:
+         if cause.TYPE != typ.TYPE:
+            continue
+         if cause.bit == value:
+            return cause
+      return None
+
+   def _getSimpleFaults(self, reg):
+      npf, gpi = self._parseFaults(reg)
+      causes = []
+
+      if npf is not None:
+         for bitpos, bit in enumerate(iterBits(npf)):
+            if not bit:
+               continue
+            fault = self.FAULTS.get((False, bitpos))
+            if fault is not None:
+               logging.debug('found non paged fault: %s', fault.description)
+               causes.append(UcdReloadCauseEntry(
+                  cause=fault.getReason(),
+                  rcDesc='non paged fault',
+                  score=ReloadCauseScore.LOGGED |
+                        ReloadCauseScore.getPriority(UcdPriority.NORMAL),
+               ))
+            else:
+               logging.debug('found unknown non paged fault: %s', npf)
+
+      if gpi is not None:
+         for bitpos, bit in enumerate(iterBits(gpi), 1):
+            if not bit:
+               continue
+            cause = self._getCause(bitpos)
+            if cause is not None:
+               logging.debug('found gpi: %s', cause.name)
+               causes.append(UcdReloadCauseEntry(
+                  cause=cause.name,
+                  rcDesc=cause.getReason(page=bitpos),
+                  score=ReloadCauseScore.LOGGED |
+                        ReloadCauseScore.getPriority(cause.priority),
+               ))
+            else:
+               logging.debug('found unknown gpi: %s', bitpos)
+               causes.append(UcdReloadCauseEntry(
+                  cause='gpi-%d' % bitpos,
+                  rcDesc='unknown gpi fault',
+                  score=ReloadCauseScore.LOGGED |
+                        ReloadCauseScore.getPriority(UcdPriority.NONE),
+               ))
+
+      logging.debug('found %d faults', len(causes))
 
       return causes
 
    def _getReloadCauses(self, drv):
-      reg = drv.readFaults()
-      if reg[ 0 ]:
-         logging.debug('some non paged faults were detected')
-
       causes = []
-      if self.gpiSize:
-         gpi = 0
-         for i in range(0, self.gpiSize):
-            gpi |= reg[1 + i] << (8 * i)
-         causes = self._getGpiFaults(gpi)
-         logging.debug('found %d gpi faults', len(causes))
-         for cause in causes:
-            logging.debug('found: %s', cause)
+
+      causes.extend(self._getSimpleFaults(drv.readFaults()))
 
       faultCount = drv.getFaultCount()
-      logging.debug('found %d faults', faultCount)
+      logging.debug('found %d detailed faults', faultCount)
       for i in range(0, faultCount):
          causes.extend(self._getFaultNum(drv.getFaultNum(i)))
 
