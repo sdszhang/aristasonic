@@ -225,3 +225,8 @@ class Chassis(ChassisBase):
    def init_midplane_switch(self):
       return True
 
+   def get_module_index(self, module_name):
+      for index, module in enumerate(self.get_all_modules()):
+         if module.get_name() == module_name:
+            return index
+      return None

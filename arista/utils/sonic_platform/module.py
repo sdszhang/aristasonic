@@ -5,6 +5,7 @@ from __future__ import print_function
 try:
    from arista.core.onie import OnieEeprom
    from arista.libs.ping import ping
+   from arista.utils.sonic_platform.common import getGlobalRpcClient
    from arista.utils.sonic_platform.fan import Fan
    from arista.utils.sonic_platform.thermal import Thermal
    from sonic_platform_base.module_base import ModuleBase
@@ -87,7 +88,6 @@ class Module(ModuleBase):
       return False
 
    def set_admin_state(self, up):
-      # TODO: implement power on/off methods
       return False
 
    def get_maximum_consumed_power(self):
@@ -133,6 +133,13 @@ class FabricModule(Module):
          self._asic_list.append((global_asic_index, str(asic.addr)))
       return self._asic_list
 
+   def set_admin_state(self, up):
+      if up:
+         result = getGlobalRpcClient().fabricSetup(self._sku.getSlotId())
+      else:
+         result = getGlobalRpcClient().fabricClean(self._sku.getSlotId())
+      return result.get('status', False)
+
 class LinecardModule(Module):
    def get_name(self):
       return '%s%s' % (self.MODULE_TYPE_LINE, self._sku.getRelativeSlotId())
@@ -150,6 +157,13 @@ class LinecardModule(Module):
       for asic_index, asic in enumerate(self._sku.asics):
          self._asic_list.append((asic_index, str(asic.addr)))
       return self._asic_list
+
+   def set_admin_state(self, up):
+      if up:
+         result = getGlobalRpcClient().linecardSetup(self._sku.getSlotId())
+      else:
+         result = getGlobalRpcClient().linecardClean(self._sku.getSlotId())
+      return result.get('status', False)
 
 class LinecardSelfModule(LinecardModule):
    def is_midplane_reachable(self):
