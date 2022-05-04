@@ -110,8 +110,7 @@ class BlackhawkTD4(FixedSystem):
 
       # TODO: Lorikeet DPM component
 
-      # TODO: Proper PSU tweaking
-      for psuId, bus in [(1, 12), (2, 11)]:
+      for psuId, bus in [(1, 11), (2, 12)]:
          addrFunc=lambda addr, bus=bus: \
                   scd.i2cAddr(bus, addr, t=3, datr=2, datw=3)
          name = "psu%d" % psuId
