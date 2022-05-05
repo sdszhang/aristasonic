@@ -34,6 +34,46 @@ class LedGpioImpl(Led):
    def isStatusLed(self):
       return True
 
+class MultiLedGpioImpl(Led):
+   def __init__(self, driver, name, gpios, **kwargs):
+      self.name = name
+      self.driver = driver
+      self.gpios = gpios
+      self.__dict__.update(kwargs)
+
+   def getName(self):
+      return self.name
+
+   def _colorFrom(self, colors):
+      if len(colors) == 1:
+         return colors[0]
+      if LedColor.GREEN in colors and LedColor.RED in colors:
+         return LedColor.AMBER
+      return LedColor.OFF
+
+   def _colorTo(self, color):
+      if color in [LedColor.GREEN, LedColor.RED, LedColor.BLUE]:
+         return [color]
+      if color == LedColor.AMBER:
+         return [LedColor.GREEN, LedColor.RED]
+      return []
+
+   def getColor(self):
+      colors = []
+      for color, gpio in self.gpios.items():
+         if gpio.isActive():
+            colors.append(color)
+      return self._colorFrom(colors)
+
+   def setColor(self, color):
+      colors = self._colorTo(color)
+      for color, gpio in self.gpios.items():
+         gpio.setActive(color in colors)
+      return True
+
+   def isStatusLed(self):
+      return True
+
 PCA9555_INPUT_REG = 0x0
 PCA9555_OUTPUT_REG = 0x2
 PCA9555_CONFIG_REG = 0x6
@@ -77,6 +117,13 @@ class Pca9555I2cDevDriver(I2cDevDriver):
 
    def getGpioLed(self, name, **kwargs):
       return LedGpioImpl(self, name, self.getGpio(name), **kwargs)
+
+   def getRedGreenGpioLed(self, name, rname, gname, **kwargs):
+      gpios = {
+         LedColor.RED: self.getGpio(rname),
+         LedColor.GREEN: self.getGpio(gname),
+      }
+      return MultiLedGpioImpl(self, name, gpios, **kwargs)
 
    def __diag__(self, ctx):
       return {

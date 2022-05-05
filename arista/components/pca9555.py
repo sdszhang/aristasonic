@@ -18,5 +18,9 @@ class Pca9555(I2cComponent):
    def addGpioLed(self, name, **kwargs):
       return self.inventory.addLed(self.driver.getGpioLed(name, **kwargs))
 
+   def addRedGreenGpioLed(self, name, rname, gname, **kwargs):
+      return self.inventory.addLed(
+                   self.driver.getRedGreenGpioLed(name, rname, gname, **kwargs))
+
    def __getattr__(self, key):
       return getattr(self.driver.regs, key)

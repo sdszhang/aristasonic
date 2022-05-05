@@ -3,9 +3,11 @@ from ...core.register import Register, RegisterMap
 from ...core.types import PciAddr
 
 from ...components.cpu.amd.k10temp import K10Temp
+from ...components.rpc import LinecardRpcClient
 from ...components.scd import Scd
 from ...components.watchdog import FakeWatchdog
 
+from ...descs.led import LedDesc, LedColor
 from ...descs.sensor import SensorDesc, Position
 
 class HedgehogCpuCpld(RegisterMap):
@@ -29,3 +31,8 @@ class HedgehogCpu(Cpu):
       ])
 
       self.inventory.addWatchdog(FakeWatchdog())
+
+      self.rpc = self.newComponent(LinecardRpcClient)
+      self.rpc.addLed(
+         LedDesc('status', colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF]))
+

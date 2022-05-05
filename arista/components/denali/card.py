@@ -8,6 +8,7 @@ from ...core.fabric import Fabric
 from ...core.linecard import Linecard
 from ...core.log import getLogger
 from ...core.types import PciAddr
+from ...descs.led import LedColor
 from ...libs.pci import readSecondaryBus
 from ...libs.wait import waitFor
 
@@ -71,6 +72,8 @@ class DenaliCard(Card):
                                           label='card_%d' % self.slot.slotId)
       self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11))
       self.createGpio1()
+      if self.gpio1 is not None:
+         self.gpio1.addRedGreenGpioLed('status', 'statusRed', 'statusGreen')
       self.createPlx()
 
    def standbyDomain(self):
@@ -113,13 +116,11 @@ class DenaliCard(Card):
          waitFor(self.plx.smbusPing, "Can't take Plx out of reset.")
          self.setupPlx()
          self.enablePlxPcieUpstreamLink(True)
-         self.gpio1.statusRed(False)
-         self.gpio1.statusGreen(True)
+         self.getInventory().getLed('status').setColor(LedColor.AMBER)
       else:
          self.enablePlxPcieUpstreamLink(False)
          self.gpio1.pcieReset(True)
-         self.gpio1.statusRed(False)
-         self.gpio1.statusGreen(False)
+         self.getInventory().getLed('status').setColor(LedColor.OFF)
 
    def getAsicPciAddr(self, asicId, asic):
       plxDownstreamAddr = PciAddr(bus=self.plxDownstreamBus,
