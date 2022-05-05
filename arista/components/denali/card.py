@@ -173,6 +173,8 @@ class DenaliCard(Card):
          self.powerStandbyDomainIs(False)
 
    def poweredOn(self):
+      if self.runningOnLcpu():
+         return True
       if self.gpio1 is None:
          # Linecard is likely unsupported or not loaded
          return False

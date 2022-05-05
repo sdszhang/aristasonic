@@ -152,3 +152,11 @@ class LinecardModule(Module):
       for asic_index, asic in enumerate(self._sku.asics):
          self._asic_list.append((asic_index, str(asic.addr)))
       return self._asic_list
+
+class LinecardSelfModule(LinecardModule):
+   def is_midplane_reachable(self):
+      # FIXME: do not hardcode ip
+      return ping('127.100.1.1')
+
+   def get_all_asics(self):
+      return []

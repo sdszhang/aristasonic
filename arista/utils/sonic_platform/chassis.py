@@ -15,6 +15,7 @@ try:
    from arista.core.onie import OnieEeprom
    from arista.core.platform import getPlatform, readPrefdl
    from arista.core.supervisor import Supervisor
+   from arista.core.linecard import Linecard
    from arista.utils.sonic_platform.eeprom import Eeprom
    from arista.utils.sonic_platform.fan import Fan
    from arista.utils.sonic_platform.fan_drawer import FanDrawer, FanDrawerLegacy
@@ -22,6 +23,7 @@ try:
       SupervisorModule,
       FabricModule,
       LinecardModule,
+      LinecardSelfModule,
    )
    from arista.utils.sonic_platform.psu import Psu
    from arista.utils.sonic_platform.sfp import Sfp
@@ -80,6 +82,8 @@ class Chassis(ChassisBase):
          for slot in chassis.iterPsus():
             self._psu_list.append(Psu(slot.psuSlot))
          self._chassis = chassis
+      elif isinstance(self._platform, Linecard):
+         self._module_list.append(LinecardSelfModule(self._platform))
       else:
          for slot in self._inventory.getPsuSlots():
             self._psu_list.append(Psu(slot))
@@ -166,7 +170,10 @@ class Chassis(ChassisBase):
    def get_supervisor_slot(self):
       if isinstance(self._platform, Supervisor):
          return self._platform.getSlotId()
-      # FIXME: Linecards need to compute the slot id of the supervisor
+      if isinstance(self._platform, Linecard):
+         # FIXME: Linecards need to compute the slot id of the supervisor
+         #        for now always return 1 as we don't support dual sup
+         return 1
       return SupervisorModule.MODULE_INVALID_SLOT
 
    def get_my_slot(self):

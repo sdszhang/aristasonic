@@ -30,6 +30,9 @@ class Card(Sku):
       else:
          self.loadCpuDomain()
 
+   def runningOnLcpu(self):
+      return self.cpu is not None
+
    def getInventory(self):
       if Config().use_metainventory:
          return MetaInventory(self.iterInventory())
@@ -42,6 +45,8 @@ class Card(Sku):
       return self.slot.slotId - self.ABSOLUTE_CARD_OFFSET
 
    def getPresence(self):
+      if self.runningOnLcpu():
+         return True
       return self.slot.getPresence()
 
    def loadStandbyDomain(self):
