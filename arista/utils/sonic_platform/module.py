@@ -155,6 +155,3 @@ class LinecardSelfModule(LinecardModule):
    def is_midplane_reachable(self):
       # FIXME: do not hardcode ip
       return ping('127.100.1.1')
-
-   def get_all_asics(self):
-      return []
