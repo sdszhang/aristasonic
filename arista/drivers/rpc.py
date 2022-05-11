@@ -14,12 +14,10 @@ class RpcLedImpl(Led):
       return self.desc.name
 
    def getColor(self):
-      # TODO: do RPC code here
-      return LedColor.OFF
+      return self.driver.client.linecardStatusLedColorGet()
 
    def setColor(self, color):
-      # TODO: do RPC code here
-      return True
+      return self.driver.client.linecardStatusLedColorSet(color)
 
    def isStatusLed(self):
       return True
