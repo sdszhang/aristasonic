@@ -33,6 +33,9 @@ class DownstreamPlxPort(DownstreamPciPort):
    def disable(self):
       return self.parent.disablePort(self)
 
+   def available(self):
+      return self.parent.isPortAvailable(self)
+
 class UpstreamPlxPort(UpstreamPciPort):
    def __init__(self, desc=None, **kwargs):
       super(UpstreamPlxPort, self).__init__(port=desc.port, **kwargs)
@@ -86,6 +89,10 @@ class PlxPciSwitch(PciSwitch):
 
    def disablePort(self, port):
       return self.plx.disablePort(port)
+
+   def isPortAvailable(self, port):
+      # TODO: handle case where vs is not enabled
+      return port.desc.vs == self.upstream.desc.vs
 
 class Plx(I2cComponent):
 

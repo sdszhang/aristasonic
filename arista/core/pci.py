@@ -138,13 +138,16 @@ class PciPort(PciComponent):
       while not value:
          with open(path) as f:
             value = f.read()
-      return int(value)
+      return int(value, 0)
 
    def enable(self):
       pass
 
    def disable(self):
       pass
+
+   def available(self):
+      return True
 
    def reachable(self):
       if not self.upstream.reachable():

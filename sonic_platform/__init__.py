@@ -10,6 +10,7 @@ from . import (
    fan,
    fan_drawer,
    module,
+   pcie,
    platform,
    psu,
    sfp,
