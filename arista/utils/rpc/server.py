@@ -87,6 +87,7 @@ class RpcServer():
 
    async def handleConnection(self, reader, writer):
       addr = writer.get_extra_info('peername')
+      logging.info(f'[client {addr!r}] New connection')
       try:
          data = b''
          while not reader.at_eof():
@@ -97,31 +98,26 @@ class RpcServer():
             except ValueError:
                pass
 
-            logging.info(f'Received {message!r} from {addr!r}')
-
             if message is None:
                response = self.errorResponse(JsonRpcError.PARSE_ERROR, 'Parse Error')
-            elif isinstance(message, dict):
-               response = await self.handleRequest(message)
-            elif isinstance(message, list):
-               response = await asyncio.gather(self.handleRequest(x) for x in message)
             else:
-               response = json.dumps({
-                  'jsonrpc': '2.0',
-                  'error': {
-                     'code': JsonRpcError.INVALID_REQUEST,
-                     'message': 'JSON is not a valid JSON-RPC request',
-                  },
-                  'id': None
-               })
+               logging.info(f'[client {addr!r}] Received {message!r}')
+               if isinstance(message, dict):
+                  response = await self.handleRequest(message)
+               elif isinstance(message, list):
+                  response = await asyncio.gather(self.handleRequest(x) for x in message)
+               else:
+                  response = self.errorResponse(JsonRpcError.INVALID_REQUEST,
+                                                'JSON is not a valid JSON-RPC request')
 
             if response:
                response += '\n'
+               logging.info(f'[client {addr!r}] Send {response!r}')
                writer.write(response.encode('utf-8'))
             else:
-               logging.info('No response')
+               logging.debug(f'[client {addr!r}] No response')
       except: # pylint: disable=bare-except
-         logging.exception(f'Failed to handle request from {addr!r}')
+         logging.exception(f'[client {addr!r}] Failed to handle request')
          response = self.errorResponse(JsonRpcError.INTERNAL_ERROR,
                                        'Internal error',
                                        uid=None)
@@ -129,4 +125,5 @@ class RpcServer():
             response += '\n'
             writer.write(response.encode('utf-8'))
       finally:
+         logging.info(f'[client {addr!r}] Close connection')
          writer.close()
