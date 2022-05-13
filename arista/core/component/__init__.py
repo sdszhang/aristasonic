@@ -77,6 +77,7 @@ class Component(object):
    def iterInventory(self, filters=None):
       for component in self.iterComponents(filters=filters):
          yield component.inventory
+      yield self.inventory
 
    def addDrivers(self, drivers):
       if drivers:
