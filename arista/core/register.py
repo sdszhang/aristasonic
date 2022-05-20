@@ -1,6 +1,7 @@
 
 import copy
 
+from .driver.user.gpio import GpioFuncImpl
 from .log import getLogger
 
 logging = getLogger(__name__)
@@ -256,6 +257,9 @@ class RegisterMap(object):
       for key, value in attrs.items():
          self.attributes_.append(key)
          setattr(self, key, value)
+
+   def getGpio(self, name):
+      return GpioFuncImpl(self, getattr(self, name))
 
    def __diag__(self, ctx):
       res = []

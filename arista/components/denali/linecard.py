@@ -44,17 +44,15 @@ class DenaliLinecard(DenaliLinecardBase):
       self.asics = []
       for desc in self.ASICS:
          downstream = self.plx.pci.portByName('je%d' % desc.asicId)
-         # TODO: use sysfs entries for the asic resets
-         rst = getattr(self.scd.regs, 'je%dReset' % desc.rstIdx)
-         prst = getattr(self.scd.regs, 'je%dPcieReset' % desc.rstIdx)
          # TODO: avoid the rescan on the lcpu side, look into plx vs hotswap
+         # TODO: attach pcie reset signal to a PciEndpoint object
          upstream = downstream.pciEndpoint()
          asic = upstream.newComponent(
             desc.cls,
             addr=upstream.addr,
             rescan=True,
-            resetGpio=rst,
-            pcieResetGpio=prst,
+            coreResets=[self.scd.regs.getGpio('je%dReset' % desc.rstIdx)],
+            pcieResets=[self.scd.regs.getGpio('je%dPcieReset' % desc.rstIdx)],
          )
          self.asics.append(asic)
 

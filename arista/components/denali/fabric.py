@@ -31,6 +31,20 @@ class DenaliFabric(DenaliFabricBase):
       self.gpio1 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x20),
                                          registerCls=Gpio1Registers)
 
+   def createAsics(self):
+      self.asics = []
+      for desc in self.ASICS:
+         downstream = self.plx.pci.portByName('ramon%d' % desc.asicId)
+         # TODO: attach pcie reset signal to a PciEndpoint object
+         upstream = downstream.pciEndpoint()
+         asic = upstream.newComponent(
+            desc.cls,
+            addr=upstream.addr,
+            coreResets=[self.gpio2.getGpio('ramon%dSysReset' % desc.asicId)],
+            pcieResets=[self.gpio2.getGpio('ramon%dPcieReset' % desc.asicId)],
+         )
+         self.asics.append(asic)
+
    def powerStandbyDomainIs(self, on):
       '''Turn on card Ecbs and fan Ecbs. On Denali fabric, we expect
          Dpms will then be turned on as well as Pols by hardware. So no need to

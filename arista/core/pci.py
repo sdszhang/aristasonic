@@ -8,6 +8,9 @@ from .utils import inSimulation
 
 from ..libs.wait import waitForPath
 
+class PciNotReady(Exception):
+   pass
+
 class RootPciAddr(SysfsPath):
    def __init__(self, parent=None, device=0, func=0):
       self.parent = parent
@@ -55,7 +58,10 @@ class DownstreamPciAddr(SysfsPath):
       return self.port.bus
 
    def __str__(self):
-      return '%04x:%02x:%02x.%d' % (self.domain, self.bus, self.device, self.func)
+      try:
+         return '%04x:%02x:%02x.%d' % (self.domain, self.bus, self.device, self.func)
+      except PciNotReady:
+         return '----:--:%02x.%d' % (self.device, self.func)
 
    def getSysfsPath(self):
       return os.path.join(self.upstream.addr.getSysfsPath(), str(self))
@@ -107,27 +113,37 @@ class PciPort(PciComponent):
 
    @property
    def secondary(self):
-      if self.secondary_ is None:
-         self.secondary_ = self.readSecondaryBus()
+      # NOTE: reading this attribute ends up reading the sysfs every time
+      #       it is wasteful but necessary to deal with corner cases.
+      #       the file could not exist or be erroneous if read to early.
+      self.secondary_ = self.readSecondaryBus()
       return self.secondary_
 
    @property
    def subordinate(self):
-      if self.subordinate_ is None:
-         self.subordinate_ = self.readSubordinateBus()
+      # NOTE: reading this attribute ends up reading the sysfs every time
+      #       it is wasteful but necessary to deal with corner cases.
+      #       the file could not exist or be erroneous if read to early.
+      self.subordinate_ = self.readSubordinateBus()
       return self.subordinate_
 
    def readSecondaryBus(self):
       if inSimulation():
          return 1
-      return self.readSysfs('secondary_bus_number')
+      try:
+         return self.readSysfs('secondary_bus_number')
+      except FileNotFoundError as e:
+         raise PciNotReady from e
 
    def readSubordinateBus(self):
       if inSimulation():
          return 255
-      return self.readSysfs('subordinate_bus_number')
+      try:
+         return self.readSysfs('subordinate_bus_number')
+      except FileNotFoundError as e:
+         raise PciNotReady from e
 
-   def readSysfs(self, entry, wait=True):
+   def readSysfs(self, entry, wait=False):
       path = os.path.join(self.addr.getSysfsPath(), entry)
 
       if wait:

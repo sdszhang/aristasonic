@@ -40,10 +40,6 @@ class SwitchChip(PciComponent):
    def pciRescan(self):
       pciRescan()
 
-   def isInReset(self):
-      # FIXME: deprecate this method used by Denali
-      return self.resetGpio()
-
    def isPowerGood(self):
       for gpio in self.powerGoodGpios:
          if not gpio.isActive():
@@ -91,6 +87,12 @@ class SwitchChip(PciComponent):
          if quirk.DELAYED == delayed:
             logging.debug('%s: quirk: %s', self, quirk)
             quirk.run(self)
+
+   def isInReset(self):
+      for reset in self.coreResets + self.pcieResets:
+         if not reset.read():
+            return False
+      return True
 
    def isOutOfReset(self):
       for reset in self.coreResets + self.pcieResets:
@@ -147,9 +149,8 @@ class SwitchChip(PciComponent):
       begin = time.time()
       end = begin + timeout
       rescanTime = begin + 1 # rescan is only enable by platform request
-      devPath = self.addr.getSysfsPath()
 
-      logging.debug('waiting for switch chip %s', devPath)
+      logging.debug('%s: waiting for switch chip', self)
       if inSimulation():
          return True
 
@@ -158,6 +159,7 @@ class SwitchChip(PciComponent):
          now = time.time()
          if now > end:
             break
+         devPath = self.addr.getSysfsPath()
          if os.path.exists(devPath):
             logging.debug('switch chip is ready')
             klog('switch chip is ready')
@@ -169,5 +171,5 @@ class SwitchChip(PciComponent):
             rescanTime = end
          time.sleep(0.1)
 
-      logging.error('timed out waiting for the switch chip %s', devPath)
+      logging.error('%s: timed out waiting for the switch chip', self)
       return False

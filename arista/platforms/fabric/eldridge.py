@@ -65,22 +65,6 @@ class Eldridge(DenaliFabric):
       self.gpio2 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x21),
                                          registerCls=Gpio2Registers)
 
-   def createAsics(self):
-      self.asics = []
-      for desc in self.ASICS:
-         downstream = self.plx.pci.portByName('ramon%d' % desc.asicId)
-         sysRst = getattr(self.gpio2, 'ramon%dSysReset' % desc.asicId)
-         pcieRst = getattr(self.gpio2, 'ramon%dPcieReset' % desc.asicId)
-         # TODO: attach pcie reset signal to a PciEndpoint object
-         upstream = downstream.pciEndpoint()
-         asic = upstream.newComponent(
-            Ramon,
-            addr=upstream.addr,
-            resetGpio=sysRst,
-            pcieResetGpio=pcieRst,
-         )
-         self.asics.append(asic)
-
    def standbyDomain(self):
       self.createGpio2()
       self.pca.newComponent(Ucd90320, self.pca.i2cAddr(0x11))

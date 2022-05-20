@@ -50,3 +50,12 @@ class GpioFuncImpl(Gpio):
 
    def setActive(self, value):
       self.setRawValue(not value if self.isActiveLow() else value)
+
+   def resetIn(self):
+      return self.setActive(True)
+
+   def resetOut(self):
+      return self.setActive(False)
+
+   def read(self):
+      return self.isActive()
