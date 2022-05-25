@@ -47,6 +47,7 @@ class HedgehogCpu(Cpu):
       self.rpc = self.newComponent(LinecardRpcClient)
       self.rpc.addLed(
          LedDesc('status', colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF]))
+      self.rpc.addPowerCycle(None)
 
    def getSlotId(self):
       # NOTE: this slotId value is used by Plx to deduce the lcpu upstreamPort

@@ -15,6 +15,9 @@ from .context import ClientContext
 logging = getLogger(__name__)
 
 class RpcServer():
+
+   READER_MSG_SIZE = 4096
+
    def __init__(self, hosts, port, platform=None):
       self.api = RpcApi(platform)
       self.hosts = hosts
@@ -118,10 +121,15 @@ class RpcServer():
    async def handleConnection(self, reader, writer):
       ctx = ClientContext(writer.get_extra_info('peername'))
       logging.info('%s: New connection from %s', self, ctx)
+      exitReason = 'closed'
       try:
          data = b''
          while not reader.at_eof():
-            data = await reader.read(4096)
+            try:
+               data = await reader.read(self.READER_MSG_SIZE)
+            except ConnectionResetError:
+               exitReason = 'reset'
+               return
             message = None
             try:
                message = json.loads(data)
@@ -145,5 +153,5 @@ class RpcServer():
             response += '\n'
             writer.write(response.encode('utf-8'))
       finally:
-         logging.info('%s: Connection closed for %s', self, ctx)
+         logging.info('%s: Connection %s for %s', self, exitReason, ctx)
          writer.close()

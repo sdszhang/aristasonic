@@ -129,6 +129,11 @@ class RpcApi():
    async def linecardStatusLedColorSet(self, lc, color):
       return lc.getInventory().getLed('status').setColor(color)
 
+   @registerLinecardMethod
+   async def linecardPowerCycle(self, lc):
+      cmd = ('setup', '--on', '--lcpu', '--powerCycleIfOn')
+      return await self._runAristaLinecard(lc.getSlotId(), *cmd)
+
    @classmethod
    def methods(cls):
       if not cls._methods:

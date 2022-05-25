@@ -97,6 +97,10 @@ class Component(LegacyComponent):
    def addRails(self, descs, **kwargs):
       return [self.addRail(desc, **kwargs) for desc in descs]
 
+   def addPowerCycle(self, desc, **kwargs):
+      powerCycle = self.driver.getPowerCycle(desc, **kwargs)
+      return self.inventory.addPowerCycle(powerCycle)
+
    def finish(self, filters=Priority.defaultFilter):
       super(Component, self).finish(filters=filters)
       if Config().write_hw_thresholds:

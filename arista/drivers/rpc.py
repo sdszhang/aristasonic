@@ -3,6 +3,7 @@ from ..core.config import Config
 from ..core.driver.user import UserDriver
 from ..descs.led import LedColor
 from ..inventory.led import Led
+from ..inventory.powercycle import PowerCycle
 from ..utils.rpc.client import RpcClient
 
 class RpcLedImpl(Led):
@@ -22,6 +23,14 @@ class RpcLedImpl(Led):
    def isStatusLed(self):
       return True
 
+class RpcPowerCycleImpl(PowerCycle):
+   def __init__(self, driver, desc, **kwargs):
+      self.driver = driver
+      self.desc = desc
+
+   def powerCycle(self):
+      return self.driver.client.linecardPowerCycle()
+
 class LinecardRpcClientDriver(UserDriver):
    def __init__(self, slotId=None, **kwargs):
       super().__init__(**kwargs)
@@ -30,3 +39,5 @@ class LinecardRpcClientDriver(UserDriver):
    def getLed(self, desc, **kwargs):
       return RpcLedImpl(self, desc, **kwargs)
 
+   def getPowerCycle(self, desc, **kwargs):
+      return RpcPowerCycleImpl(self, desc, **kwargs)
