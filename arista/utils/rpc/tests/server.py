@@ -3,6 +3,7 @@ import json
 from ....tests.testing import mock, unittest
 
 from ..constants import JsonRpcError, JSONRPC_VERSION
+from ..context import ClientContext
 from ..server import RpcServer
 
 class RpcServerTest(unittest.IsolatedAsyncioTestCase):
@@ -19,21 +20,28 @@ class RpcServerTest(unittest.IsolatedAsyncioTestCase):
       self.assertEqual(set(result_dict['error'].keys()),
                        set(['code', 'message']))
 
+   def _newServer(self):
+      ctx = ClientContext(('127.0.0.1', '43000'))
+      server = RpcServer([RpcServerTest.HOST], RpcServerTest.PORT)
+      return server, ctx
+
    async def testHandleRequest(self):
-      server = RpcServer(RpcServerTest.HOST, RpcServerTest.PORT)
-      with mock.patch.object(server.api, 'linecardSetup') as mockObj:
+      server, ctx = self._newServer()
+      with mock.patch.object(server.api, 'linecardSetup',
+                             new_callable=mock.AsyncMock) as mockObj:
          method_result = {
             'status': True,
             'detail': None
          }
          mockObj.return_value = method_result
-         result = await server.handleRequest({
+         result = await server.handleRequest(ctx, {
             'jsonrpc': JSONRPC_VERSION,
             'id': 5,
             'method': 'linecardSetup',
             'params': [7],
          })
-         mockObj.assert_called_once_with(7)
+         mockObj.assert_called_once_with(ctx, 7)
+         print(result)
          self.assertEqual(json.loads(result), {
             'jsonrpc': JSONRPC_VERSION,
             'id': 5,
@@ -41,8 +49,8 @@ class RpcServerTest(unittest.IsolatedAsyncioTestCase):
          })
 
    async def testHandleRequestNoSuchMethod(self):
-      server = RpcServer(RpcServerTest.HOST, RpcServerTest.PORT)
-      result = await server.handleRequest({
+      server, ctx = self._newServer()
+      result = await server.handleRequest(ctx, {
          'jsonrpc': JSONRPC_VERSION,
          'id': 5,
          'method': 'methodThatDoesNotExist',
@@ -51,8 +59,8 @@ class RpcServerTest(unittest.IsolatedAsyncioTestCase):
       self._testErrorResult(json.loads(result), 5, JsonRpcError.METHOD_NOT_FOUND)
 
    async def testHandleRequestMethodFieldMissing(self):
-      server = RpcServer(RpcServerTest.HOST, RpcServerTest.PORT)
-      result = await server.handleRequest({
+      server, ctx = self._newServer()
+      result = await server.handleRequest(ctx, {
          'jsonrpc': JSONRPC_VERSION,
          'id': 5,
          'params': [7],
@@ -60,8 +68,8 @@ class RpcServerTest(unittest.IsolatedAsyncioTestCase):
       self._testErrorResult(json.loads(result), 5, JsonRpcError.INVALID_REQUEST)
 
    async def testHandleRequestVersionFieldMissing(self):
-      server = RpcServer(RpcServerTest.HOST, RpcServerTest.PORT)
-      result = await server.handleRequest({
+      server, ctx = self._newServer()
+      result = await server.handleRequest(ctx, {
          'id': 5,
          'method': 'linecardSetup',
          'params': [7],
@@ -69,28 +77,26 @@ class RpcServerTest(unittest.IsolatedAsyncioTestCase):
       self._testErrorResult(json.loads(result), 5, JsonRpcError.INTERNAL_ERROR)
 
    async def testHandleRequestParamsMissing(self):
-      server = RpcServer(RpcServerTest.HOST, RpcServerTest.PORT)
-      with mock.patch.object(server.api, 'linecardSetup'):
-         result = await server.handleRequest({
-            'jsonrpc': JSONRPC_VERSION,
-            'id': 5,
-            'method': 'linecardSetup',
-            'params': None,
-         })
+      server, ctx = self._newServer()
+      result = await server.handleRequest(ctx, {
+         'jsonrpc': JSONRPC_VERSION,
+         'id': 5,
+         'method': 'linecardSetup',
+         'params': None,
+      })
       self._testErrorResult(json.loads(result), 5, JsonRpcError.INVALID_PARAMS)
 
    async def testHandleRequestRaise(self):
-      server = RpcServer(RpcServerTest.HOST, RpcServerTest.PORT)
+      server, ctx = self._newServer()
       with mock.patch.object(server.api, 'linecardSetup') as mockObj:
          mockObj.side_effect = Exception('fake test exception')
-         result = await server.handleRequest({
+         result = await server.handleRequest(ctx, {
             'jsonrpc': JSONRPC_VERSION,
             'id': 5,
             'method': 'linecardSetup',
             'params': None,
          })
       self._testErrorResult(json.loads(result), 5, -1)
-
 
 if __name__ == '__main__':
    unittest.main()

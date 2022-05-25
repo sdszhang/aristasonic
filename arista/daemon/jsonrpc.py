@@ -16,8 +16,10 @@ class JsonRpcDaemonFeature(OneShotFeature):
 
    def run(self):
       if isinstance(self.daemon.platform, Supervisor):
-         logging.info('Setting up jsonrpc API server on supervisor')
-         self.server = RpcServer(Config().api_rpc_host, Config().api_rpc_port)
+         logging.info('%s: setting up server on supervisor', self)
+         hosts = [Config().api_rpc_host, Config().api_rpc_sup]
+         port = Config().api_rpc_port
+         self.server = RpcServer(hosts, port, self.daemon.platform)
          self.daemon.loop.create_task(self.server.start())
       else:
-         logging.info('Not supervisor, not setting up jsonrpc API')
+         logging.info('%s: not supervisor, nothing to do')

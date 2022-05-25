@@ -33,7 +33,7 @@ class RpcClient():
       self.poller = epoll()
       self.host = host
       self.port = port
-      self._connectSocket()
+      self.sock = None
       self._next_id = 0
 
    def next_id(self):
@@ -109,6 +109,8 @@ class RpcClient():
          raise RpcClientException(f'Could not decode JSON-RPC server response for message {uid}') from e
 
    def doCommand(self, call, *args, **kwargs):
+      if self.sock is None:
+         self._connectSocket()
       uid = self.next_id()
       params = args
       if not params:

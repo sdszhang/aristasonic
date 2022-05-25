@@ -34,6 +34,7 @@ class Config():
          cls.instance_.flash_path = '/host'
          cls.instance_.tmpfs_path = '/var/run/platform_cache/arista'
          cls.instance_.etc_path = '/etc/sonic'
+         cls.instance_.api_rpc_sup = '127.100.1.1'
          cls.instance_.api_rpc_host = '127.0.0.1'
          cls.instance_.api_rpc_port = '12322'
          cls.instance_.cooling_data_points = 10

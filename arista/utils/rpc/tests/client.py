@@ -48,12 +48,17 @@ class ClientTest(unittest.TestCase):
    HOST = 'localhost'
    PORT = '12345'
 
+   def _newClient(self):
+      client = RpcClient(ClientTest.HOST, ClientTest.PORT)
+      client._connectSocket()
+      return client
+
    def testDoCommandData(self):
       with mock.patch('socket.create_connection') as createMock, \
            mock.patch('arista.utils.rpc.client.epoll') as epollMock:
          createMock.side_effect = lambda x: FakeSocket()
          epollMock.side_effect = FakeEpoll
-         api = RpcClient(ClientTest.HOST, ClientTest.PORT)
+         api = self._newClient()
          api.sock.response_data = b'{"jsonrpc": "2.0", "id": 0, "result": null}'
          api.doCommand('test')
          self.assertEqual(json.loads(api.sock.sent_data.decode('utf-8')),
@@ -64,7 +69,7 @@ class ClientTest(unittest.TestCase):
            mock.patch('arista.utils.rpc.client.epoll') as epollMock:
          createMock.side_effect = lambda x: FakeSocket()
          epollMock.side_effect = FakeEpoll
-         api = RpcClient(ClientTest.HOST, ClientTest.PORT)
+         api = self._newClient()
          api.sock.response_data = b'{"jsonrpc": "2.0", "id": 0, "error": {"code": -1, "message": "foo"}}'
          with self.assertRaises(RpcServerException):
             api.doCommand('test')
@@ -74,7 +79,7 @@ class ClientTest(unittest.TestCase):
            mock.patch('arista.utils.rpc.client.epoll') as epollMock:
          createMock.side_effect = lambda x: FakeSocket()
          epollMock.side_effect = FakeEpoll
-         api = RpcClient(ClientTest.HOST, ClientTest.PORT)
+         api = self._newClient()
          api.sock.response_data = b'{"jsonrpc": "3.0", "id": 0, "result": null}'
          with self.assertRaises(RpcClientException):
             api.doCommand('test')
@@ -84,7 +89,7 @@ class ClientTest(unittest.TestCase):
            mock.patch('arista.utils.rpc.client.epoll') as epollMock:
          createMock.side_effect = lambda x: FakeSocket()
          epollMock.side_effect = FakeEpoll
-         api = RpcClient(ClientTest.HOST, ClientTest.PORT)
+         api = self._newClient()
          api.sock.response_data = b'{"jsonrpc": "2.0", "id": 1, "result": null}'
          with self.assertRaises(RpcClientException):
             api.doCommand('test')
@@ -94,7 +99,7 @@ class ClientTest(unittest.TestCase):
            mock.patch('arista.utils.rpc.client.epoll') as epollMock:
          createMock.side_effect = lambda x: FakeSocket()
          epollMock.side_effect = FakeEpoll
-         api = RpcClient(ClientTest.HOST, ClientTest.PORT)
+         api = self._newClient()
          api.sock.response_data = b'{"jsonrpc": "2.0", "id": 0}'
          with self.assertRaises(RpcClientException):
             api.doCommand('test')

@@ -1,7 +1,9 @@
 
+from ..core.config import Config
 from ..core.driver.user import UserDriver
 from ..descs.led import LedColor
 from ..inventory.led import Led
+from ..utils.rpc.client import RpcClient
 
 class RpcLedImpl(Led):
    def __init__(self, driver, desc, **kwargs):
@@ -23,11 +25,10 @@ class RpcLedImpl(Led):
       return True
 
 class LinecardRpcClientDriver(UserDriver):
-   def __init__(self, **kwargs):
+   def __init__(self, slotId=None, **kwargs):
       super().__init__(**kwargs)
-      # TODO init RPC client
-      self.client = None
+      self.client = RpcClient(Config().api_rpc_sup, Config().api_rpc_port)
 
    def getLed(self, desc, **kwargs):
-      return RpcLedImpl(self, desc)
+      return RpcLedImpl(self, desc, **kwargs)
 

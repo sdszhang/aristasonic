@@ -10,9 +10,16 @@ from ...core.log import getLogger
 
 logging = getLogger(__name__)
 
+class RpcPermissionError(Exception):
+   pass
+
 def registerMethod(method):
-   method.isRpcMethod = True
-   return method
+   def wrapper(self, ctx, *args, **kwargs):
+      if not ctx.localhost():
+         raise RpcPermissionError('method only available from localhost')
+      return method(self, *args, *kwargs)
+   wrapper.isRpcMethod = True
+   return wrapper
 
 class RpcApi():
    """An RpcApi object implements the functionality of the JSON-RPC API.
@@ -23,6 +30,9 @@ class RpcApi():
    supported."""
 
    _methods = []
+
+   def __init__(self, platform=None):
+      self.platform = platform
 
    async def _runCommand(self, cmd, *args):
       proc = await asyncio.create_subprocess_exec(
