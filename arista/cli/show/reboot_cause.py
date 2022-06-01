@@ -18,8 +18,9 @@ class ShowRebootCause(Renderer):
          return [rp.toDict()] if rp else []
 
    def _renderCauseText(self, cause, prefix=''):
-      print('%s%s %s (%s)' % (prefix, cause['time'], cause['cause'],
-                              cause['description']))
+      if cause['time'] != 'unknown':
+         prefix = f"{prefix}{cause['time']} "
+      print('%s%s (%s)' % (prefix, cause['cause'], cause['description']))
 
    def _renderProviderText(self, report):
       for provider in report['providers']:

@@ -7,7 +7,7 @@ from ..core.utils import incrange
 
 from ..components.asic.xgs.trident3 import Trident3
 from ..components.psu.fixed import Fixed100AC
-from ..components.scd import Scd
+from ..components.scd import Scd, ScdCause
 
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
@@ -38,6 +38,25 @@ class PikeZ(FixedSystem):
         scd.createWatchdog()
         scd.createPowerCycle()
         scd.addSmbusMasterRange(0x8000, 0, 0x80, bus=5)
+
+        scd.addReloadCauseProvider(addr=0x5010, causes=[
+            ScdCause(0x00, ScdCause.POWERLOSS),
+            ScdCause(0x02, ScdCause.WATCHDOG),
+            ScdCause(0x03, ScdCause.REBOOT, 'Button hard reset'),
+            ScdCause(0x04, ScdCause.RAIL, 'POS0V8'),
+            ScdCause(0x05, ScdCause.RAIL, 'POS1V2'),
+            ScdCause(0x06, ScdCause.RAIL, 'POS1V8'),
+            ScdCause(0x07, ScdCause.RAIL, 'CPU_SLP_S3'),
+            ScdCause(0x08, ScdCause.RAIL, 'POS0V88'),
+            ScdCause(0x09, ScdCause.RAIL, 'POS0V8'),
+            ScdCause(0x0a, ScdCause.RAIL, 'POS1V8'),
+            ScdCause(0x0b, ScdCause.RAIL, 'CPU_3V3'),
+            ScdCause(0x0c, ScdCause.REBOOT, 'Button factory reset'),
+            ScdCause(0x0d, ScdCause.RAIL, 'APU_VRM'),
+            ScdCause(0x0e, ScdCause.OVERTEMP),
+            ScdCause(0x0f, ScdCause.REBOOT, 'Software Reboot'),
+            ScdCause(0x10, ScdCause.KILLSWITCH),
+        ])
 
         scd.addResets([
             ResetDesc('ext_mux_reset', addr=0x4000, bit=8),
