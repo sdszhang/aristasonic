@@ -2,12 +2,13 @@ from ..core.fixed import FixedChassis, FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
+from ..core.types import I2cAddr, PciAddr
 from ..core.utils import incrange
 
-from ..components.asic.xgs.trident3 import Trident3
+from ..components.asic.xgs.trident3 import Trident3X2
 from ..components.psu.fixed import Fixed100AC
 from ..components.scd import Scd, ScdCause
+from ..components.vrm import Vrm
 
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
@@ -115,13 +116,18 @@ class PikeZ(FixedSystem):
             intrBitFn=lambda xcvrId: 5 + xcvrId - 49
         )
 
-        self.newComponent(Trident3, PciAddr(bus=1),
+        avs = self.newComponent(Vrm, I2cAddr(0, 0x14))
+
+        self.newComponent(Trident3X2, PciAddr(bus=1),
             coreResets=[
                 scd.inventory.getReset('switch_chip_reset'),
             ],
             pcieResets=[
                 scd.inventory.getReset('switch_chip_pcie_reset'),
-            ]
+            ],
+            quirks=[
+                Trident3X2.AvsQuirk(avs),
+            ],
         )
 
 @registerPlatform()

@@ -6,6 +6,9 @@ from .log import getLogger
 logging = getLogger(__name__)
 
 class Quirk(object):
+
+   DELAYED = False
+
    def run(self, component):
       raise NotImplementedError
 
@@ -18,7 +21,6 @@ class QuirkCmd(Quirk):
       return self.description
 
    def run(self, component):
-      logging.debug('%s: quirk: %s', component, self)
       subprocess.check_output(self.cmd)
 
 class PciConfigQuirk(QuirkCmd): # TODO: reparent when using PciTopology

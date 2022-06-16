@@ -74,6 +74,12 @@ class I2cDevDriver(UserDriver):
    def write_byte_data(self, reg, data):
       return self.bus.write_byte_data(self.addr.address, reg, data)
 
+   def read_word_data(self, reg):
+      return self.bus.read_word_data(self.addr.address, reg)
+
+   def write_word_data(self, reg, data):
+      return self.bus.write_word_data(self.addr.address, reg, data)
+
    def write_block_data(self, reg, data):
       return self.bus.write_block_data(self.addr.address, reg, data)
 

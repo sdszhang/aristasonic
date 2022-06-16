@@ -5,7 +5,9 @@ import time
 from ..libs.pci import pciRescan
 from ..libs.wait import waitFor
 
-from .component import DEFAULT_WAIT_TIMEOUT, PciComponent
+from .component import DEFAULT_WAIT_TIMEOUT
+from .component.pci import PciComponent
+from .driver.kernel.pci import PciKernelDriver
 from .log import getLogger
 from .utils import klog, inSimulation
 
@@ -13,7 +15,13 @@ logging = getLogger(__name__)
 
 ASIC_YIELD_TIME = os.getenv( 'ASIC_YIELD_TIME', 2 )
 
+class SwitchChipDriver(PciKernelDriver):
+   PASSIVE = True
+
 class SwitchChip(PciComponent):
+
+   DRIVER = SwitchChipDriver
+
    def __init__(self, addr, rescan=False, pcieResetDelay=500,
                 powerGpios=None, powerGoodGpios=None,
                 coreResets=None, pcieResets=None, quirks=None, **kwargs):
@@ -78,9 +86,11 @@ class SwitchChip(PciComponent):
                  description='waiting for power down')
          logging.debug('%s: power is off', self)
 
-   def applyQuirks(self):
+   def applyQuirks(self, delayed=False):
       for quirk in self.quirks:
-         quirk.run(self)
+         if quirk.DELAYED == delayed:
+            logging.debug('%s: quirk: %s', self, quirk)
+            quirk.run(self)
 
    def isOutOfReset(self):
       for reset in self.coreResets + self.pcieResets:
