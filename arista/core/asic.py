@@ -136,7 +136,7 @@ class SwitchChip(PciComponent):
    def waitForIt(self, timeout=DEFAULT_WAIT_TIMEOUT):
       begin = time.time()
       end = begin + timeout
-      rescanTime = begin + (timeout / 2)
+      rescanTime = begin + 1 # rescan is only enable by platform request
       devPath = self.addr.getSysfsPath()
 
       logging.debug('waiting for switch chip %s', devPath)
