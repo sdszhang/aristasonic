@@ -8,7 +8,7 @@ from ...core.utils import incrange
 from ...components.asic.dnx.jericho2 import Jericho2
 from ...components.denali.desc import DenaliAsicDesc
 from ...components.denali.linecard import DenaliLinecard, GpioRegisterMap
-from ...components.dpm.ucd import Ucd90320
+from ...components.dpm.ucd import Ucd90320, UcdGpi, UcdMon
 from ...components.eeprom import At24C512
 from ...components.lm73 import Lm73
 from ...components.lm75 import Tmp75
@@ -84,6 +84,17 @@ class ClearwaterBase(DenaliLinecard):
          self.createPorts()
          self.cpu.addSmbusComponents(self.scd)
 
+      self.pca.newComponent(Ucd90320, self.pca.i2cAddr(0x11), causes=[
+         UcdGpi(4, 'hotswap', 'lc eject'),
+         UcdGpi(5, 'asic-overtemp'),
+         UcdGpi(6, 'overtemp', 'system'),
+         UcdGpi(7, 'watchdog', 'lcpu'),
+         UcdGpi(8, 'mem-overtemp', 'asic memory'),
+         UcdGpi(10, 'reboot'),
+         UcdGpi(12, 'over-current', 'asic'),
+         UcdMon(14, 'powerloss'),
+      ])
+
    def mainDomain(self):
       self.cwMainDomainCommon()
 
@@ -153,8 +164,6 @@ class Clearwater(ClearwaterBase):
 
    def mainDomain(self):
       self.cwMainDomainCommon()
-
-      self.scd.newComponent(Ucd90320, self.scd.i2cAddr(0, 0x13))
 
       self.scd.newComponent(Max6581, self.scd.i2cAddr(8, 0x4d), sensors=[
          SensorDesc(diode=1, name='Board sensor 1', position=Position.OTHER,

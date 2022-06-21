@@ -58,6 +58,9 @@ class Chassis(ChassisBase):
       'killswitch': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
       'under-voltage': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
       'over-voltage': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
+      'asic-overtemp': ChassisBase.REBOOT_CAUSE_THERMAL_OVERLOAD_ASIC,
+      'cpu-overtemp': ChassisBase.REBOOT_CAUSE_THERMAL_OVERLOAD_CPU,
+      'over-current': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
    }
 
    # Intervals in milliseconds

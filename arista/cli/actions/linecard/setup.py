@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 
 from .. import registerAction
 from ...args.linecard.setup import setupParser
+from ....core.cause import getLinecardReloadCauseManager
 from ....core.component import Priority
 from ....core.config import Config
 from ....core.log import getLogger
@@ -39,6 +40,10 @@ def setupLinecard(linecard, args, lcpu):
             linecard.setupMain(Priority.defaultFilter)
          if args.late or not args.early:
             linecard.setupMain(Priority.backgroundFilter)
+
+      # Pull down the linecard reload causes from hardware DPM
+      logging.info('%s: Process reload cause info', linecard)
+      getLinecardReloadCauseManager(linecard, read=True)
 
 @registerAction(setupParser)
 def doSetup(ctx, args):

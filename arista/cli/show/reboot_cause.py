@@ -1,7 +1,7 @@
 
 from __future__ import print_function
 
-from ...core.cause import getReloadCauseManager
+from ...core.cause import getReloadCauseManager, getLinecardReloadCauseManager
 
 from . import Renderer
 
@@ -9,8 +9,7 @@ class ShowRebootCause(Renderer):
 
    NAME = 'reboot-cause'
 
-   def getData(self, show):
-      rcm = getReloadCauseManager(show.platforms[0])
+   def _getData(self, show, rcm):
       if show.args.history:
          return [rp.toDict() for rp in rcm.allReports()]
       else:
@@ -34,3 +33,26 @@ class ShowRebootCause(Renderer):
          self._renderCauseText(rp['cause'])
          if show.args.all:
             self._renderProviderText(rp)
+
+class ShowPlatformRebootCause(ShowRebootCause):
+   def getData(self, show):
+      rcm = getReloadCauseManager(show.platforms[0])
+      return self._getData(show, rcm)
+
+class ShowLinecardRebootCause(ShowRebootCause):
+   def getData(self, show):
+      lcdata = {}
+      for linecard, metadata in show.inventories:
+         rcm = getLinecardReloadCauseManager(linecard)
+         lcdata[str(linecard)] = self._getData(show, rcm)
+      return lcdata
+
+   def renderText(self, show):
+      data = self.data(show)
+      for name, lcdata in data.items():
+         print(name)
+         for rp in lcdata:
+            self._renderCauseText(rp['cause'])
+            if show.args.all:
+               self._renderProviderText(rp)
+         print()

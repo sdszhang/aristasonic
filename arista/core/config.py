@@ -22,6 +22,7 @@ class Config():
          cls.instance_.reboot_cause_file = 'last_reboot_cause'
          cls.instance_.persistent_presence_check = True
          cls.instance_.lock_file = '/var/lock/arista.lock'
+         cls.instance_.linecard_lock_file_pattern = '/var/lock/arista.linecard{:d}.lock'
          cls.instance_.linecard_standby_only = True
          cls.instance_.linecard_cpu_enable = False
          cls.instance_.power_off_linecard_on_reboot = True
