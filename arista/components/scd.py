@@ -187,6 +187,7 @@ class ScdInterruptRegister():
       self.setAddr = addr
       self.clearAddr = addr + 0x10
       self.statusAddr = addr + 0x20
+      self.watchdogMask = 0
       self.mask = mask
 
    def setReg(self, reg, wr):
@@ -226,6 +227,7 @@ class ScdInterruptRegister():
          ('interrupt_mask_read_offset%s' % self.num, str(self.readAddr)),
          ('interrupt_mask_set_offset%s' % self.num, str(self.setAddr)),
          ('interrupt_mask_clear_offset%s' % self.num, str(self.clearAddr)),
+         ('interrupt_mask_watchdog%s' % self.num, str(self.watchdogMask)),
          ('interrupt_status_offset%s' % self.num, str(self.statusAddr)),
          ('interrupt_mask%s' % self.num, str(self.mask)),
       ]))
@@ -233,6 +235,8 @@ class ScdInterruptRegister():
    def getInterruptBit(self, name, bit):
       if not Config().init_irq:
          return None
+      if name == 'watchdog':
+         self.watchdogMask = 1 << bit
       return self.scd.inventory.addInterrupt(ScdInterrupt(self, name, bit))
 
 class ScdCause(object):
@@ -371,9 +375,12 @@ class Scd(PciComponent):
    def getPowerCycles(self):
       return self.powerCycles
 
-   def createWatchdog(self, reg=0x0120):
+   def createWatchdog(self, reg=0x0120, intr=None, bit=None):
       watchdog = ScdWatchdog(self, reg=reg)
       self.inventory.addWatchdog(watchdog)
+      if intr is not None and bit is not None:
+         # Watchdog is handled via an interrupt and bit needs to be declared
+         intr.getInterruptBit('watchdog', 4)
       return watchdog
 
    def createInterrupt(self, addr, num, mask=0xffffffff):

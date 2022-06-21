@@ -111,9 +111,8 @@ class Newport(FixedSystem):
 
       # TODO: Newport fans: one fan-tray with two fans
 
-      intrRegs = [
-         scd.createInterrupt(addr=0x0200, num=0),
-      ]
+      intr = scd.createInterrupt(addr=0x0200, num=0)
+      scd.createWatchdog(intr=intr, bit=4)
 
       # TODO: Add support for Ethernet ports
       scd.addEthernetSlotBlock(
@@ -126,7 +125,7 @@ class Newport(FixedSystem):
          addr=0x0800,
          bus=4,
          ledAddr=0x0700,
-         intrRegs=intrRegs,
+         intrRegs=[intr],
          intrRegIdxFn=lambda xcvrId: 0,
          intrBitFn=lambda xcvrId: 5 + xcvrId - 49
       )
