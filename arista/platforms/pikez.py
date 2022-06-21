@@ -103,7 +103,8 @@ class PikeZ(FixedSystem):
         ]
 
         scd.addEthernetSlotBlock(
-            ethernetRange=self.PORTS.ethernetRange
+            ethernetRange=self.PORTS.ethernetRange,
+            ledAddr=0x6190,
         )
 
         scd.addSfpSlotBlock(

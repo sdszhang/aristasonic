@@ -43,8 +43,6 @@ class Newport(FixedSystem):
 
       self.cpu = self.newComponent(NewportCpu)
 
-      self.newComponent(Trident3, PciAddr(bus=0x04))
-
       scd = self.newComponent(Scd, PciAddr(device=0x18, func=5))
       self.scd = scd
 
@@ -120,6 +118,7 @@ class Newport(FixedSystem):
       # TODO: Add support for Ethernet ports
       scd.addEthernetSlotBlock(
          ethernetRange=self.PORTS.ethernetRange,
+         ledAddr=0x6000,
       )
 
       scd.addSfpSlotBlock(
