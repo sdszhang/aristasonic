@@ -6,7 +6,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident3 import Trident3
-from ..components.dpm.ucd import Ucd9090A, UcdGpi
+from ..components.dpm.ucd import Ucd9090A, UcdGpi, UcdMon
 from ..components.phy.broncos import Broncos
 from ..components.psu.fixed import Fixed150AC
 from ..components.scd import Scd
@@ -77,7 +77,7 @@ class Newport(FixedSystem):
          'overtemp': UcdGpi(5),
          'reboot': UcdGpi(7),
          'watchdog': UcdGpi(8),
-         'powerloss': UcdGpi(10),
+         'powerloss': UcdMon(10),
       })
 
       scd.addResets([
