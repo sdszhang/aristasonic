@@ -380,7 +380,7 @@ class Scd(PciComponent):
       self.inventory.addWatchdog(watchdog)
       if intr is not None and bit is not None:
          # Watchdog is handled via an interrupt and bit needs to be declared
-         intr.getInterruptBit('watchdog', 4)
+         intr.getInterruptBit('watchdog', bit)
       return watchdog
 
    def createInterrupt(self, addr, num, mask=0xffffffff):
