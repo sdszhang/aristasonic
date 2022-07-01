@@ -22,8 +22,16 @@ class Trident3X2(Trident3):
 
       DELAYED = True
 
-      def __init__(self, avs):
+      TPS549D22 = {
+         0x1: 0x019a, # 0.800V
+         0x2: 0x01a6, # 0.825V
+         0x4: 0x01b3, # 0.850V
+         0x8: 0x01c0, # 0.875V
+      }
+
+      def __init__(self, avs, mapping):
          self.avs = avs
+         self.mapping = mapping
 
       def waitAsicRegisterReady(self, asic):
          waitFor(
@@ -34,10 +42,6 @@ class Trident3X2(Trident3):
       def run(self, component):
          self.waitAsicRegisterReady(component)
          value = component.driver.regs.avsValue()
-         vout = {
-            0x1: 0x018d, # 0.800V
-            0x2: 0x019a, # 0.825V
-            0x4: 0x01a7, # 0.850V
-         }.get(value)
+         vout = self.mapping.get(value)
          if vout is not None:
-             self.avs.voutCommand(vout)
+            self.avs.voutCommand(vout)

@@ -127,7 +127,7 @@ class PikeZ(FixedSystem):
                 scd.inventory.getReset('switch_chip_pcie_reset'),
             ],
             quirks=[
-                Trident3X2.AvsQuirk(avs),
+                Trident3X2.AvsQuirk(avs, Trident3X2.AvsQuirk.TPS549D22),
             ],
         )
 
