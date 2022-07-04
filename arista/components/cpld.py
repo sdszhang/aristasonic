@@ -175,10 +175,6 @@ class SysCpld(I2cComponent):
    def addPowerCycle(self):
       return self.inventory.addPowerCycle(SysCpldPowerCycle(self))
 
-   def createPowerCycle(self):
-      # TODO: deprecate this method in favor of addPowerCycle
-      return self.addPowerCycle()
-
    def resetScd(self, sleep=1, wait=True):
       state = self.driver.regs.scdReset()
       logging.debug('%s: scd reset: %s', self, state)

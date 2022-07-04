@@ -52,4 +52,4 @@ class CrowCpu(Cpu):
       bus = PiixI2cBus(1, 0x0b20)
       self.syscpld = self.newComponent(CrowSysCpld, addr=bus.i2cAddr(0x23),
                                        registerCls=registerCls)
-      self.syscpld.createPowerCycle()
+      self.syscpld.addPowerCycle()
