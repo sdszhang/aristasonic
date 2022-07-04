@@ -210,6 +210,36 @@ class SetClearRegister(Register):
       addr = self.addrSet if value else self.addrClear
       self.parent.write(addr, 1 << bitpos)
 
+class RegisterArray(Register):
+   def __init__(self, addrBegin, addrEnd, *fields, **kwargs):
+      super().__init__(addrBegin, *fields, **kwargs)
+      self.addrBegin = addrBegin
+      self.addrEnd = addrEnd
+
+   def read(self):
+      return [self.parent.read(addr)
+              for addr in range(self.addrBegin, self.addrEnd + 1)]
+
+   def write(self, value):
+      if not isinstance(value, list):
+         raise ValueError('value should be a list')
+      if len(value) != self.addrEnd - self.addrBegin + 1:
+         raise ValueError('value is not of the correct size')
+      for i, v in enumerate(value):
+         self.parent.write(self.addrBegin + i, v)
+
+   def readBit(self, bitpos):
+      raise NotImplementedError
+
+   def readBits(self, bitstart, bitend):
+      raise NotImplementedError
+
+   def writeBit(self, bitpos, value):
+      raise NotImplementedError
+
+   def writeBits(self, bitstart, bitend, value):
+      raise NotImplementedError
+
 class RegisterMap(object):
    def __init__(self, parent, offset=0):
       self.parent_ = parent

@@ -32,6 +32,7 @@ from ..core.xcvr import (
    EthernetSlot,
 )
 
+from ..descs.cause import ReloadCauseDesc
 from ..descs.fan import FanDesc, FanPosition
 from ..descs.led import LedColor, LedDesc
 from ..descs.gpio import GpioDesc
@@ -239,30 +240,8 @@ class ScdInterruptRegister():
          self.watchdogMask = 1 << bit
       return self.scd.inventory.addInterrupt(ScdInterrupt(self, name, bit))
 
-class ScdCause(object):
-
-   KILLSWITCH = 'killswitch'
-   OVERTEMP = 'overtemp'
-   POWERLOSS = 'powerloss'
-   RAIL = 'rail'
-   REBOOT = 'reboot'
-   WATCHDOG = 'watchdog'
-
-   DEFAULT_DESCRIPTIONS = {
-      KILLSWITCH: 'Kill switch',
-      OVERTEMP: 'Thermal trip fault',
-      POWERLOSS: 'System lost power',
-      RAIL: 'Rail fault',
-      REBOOT: 'Rebooted by user',
-      WATCHDOG: 'Watchdog fired',
-   }
-
-   def __init__(self, code, typ, description=None):
-      self.code = code
-      self.typ = typ
-      self.description = self.DEFAULT_DESCRIPTIONS.get(typ)
-      if description is not None:
-         self.description = f'{self.description} - {description}'
+class ScdCause(ReloadCauseDesc):
+   pass
 
 class ScdReloadCauseEntry(ReloadCauseEntry):
    pass

@@ -1,14 +1,31 @@
+import datetime
 import time
 
+from ..core.cause import (
+   ReloadCauseEntry,
+   ReloadCauseProviderHelper,
+   ReloadCauseScore,
+)
 from ..core.component import Priority
 from ..core.component.i2c import I2cComponent
 from ..core.driver import modprobe
 from ..core.log import getLogger
-from ..core.register import Register, RegBitField, RegisterMap
+from ..core.register import (
+   Register,
+   RegisterArray,
+   RegisterMap,
+   RegBitField,
+   RegBitRange,
+)
+from ..core.utils import inSimulation
+
+from ..descs.cause import ReloadCauseDesc
 
 from ..drivers.cpld import SysCpldI2cDriver
 
 from ..inventory.powercycle import PowerCycle
+
+from ..libs.date import datetimeToStr
 
 logging = getLogger(__name__)
 
@@ -38,6 +55,16 @@ class SysCpldCommonRegistersV2(SysCpldCommonRegisters):
       RegBitField(0, 'powerCycleOnCrc', ro=False),
    )
 
+class SysCpldReloadCauseRegisters(RegisterMap):
+   FAULT_REGISTER = Register(0x20,
+      RegBitRange(0, 5, 'cause', ro=False),
+   )
+   FAULT_TIME = RegisterArray(0x21, 0x26, name='faultTime')
+   FAULT_CONTROL = Register(0x28,
+      RegBitField(0, 'clearFault', ro=False),
+   )
+   RTC = RegisterArray(0x30, 0x35, name='rtc', ro=False)
+
 class SysCpldPowerCycle(PowerCycle):
    def __init__(self, parent):
       self.parent = parent
@@ -49,6 +76,97 @@ class SysCpldPowerCycle(PowerCycle):
       logging.info("Initiating powercycle through CPLD")
       self.parent.driver.regs.powerCycle(0xDE)
       logging.info("Powercycle triggered from CPLD")
+
+class SysCpldCause(ReloadCauseDesc):
+   pass
+
+class SysCpldReloadCauseEntry(ReloadCauseEntry):
+   pass
+
+class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
+
+   FAULT_TIME_BASE = datetime.datetime(2000, 1, 1)
+
+   def __init__(self, cpld, regmap, causes):
+      super().__init__()
+      self.cpld = cpld
+      self.regmap = regmap
+      self.causes = causes
+      self.regs_ = None
+
+   def __str__(self):
+      return self.__class__.__name__
+
+   def getSourceName(self):
+      return str(self.cpld)
+
+   @property
+   def regs(self):
+      if self.regs_ is None:
+         self.regs_ = self.regmap(self.cpld.driver)
+      return self.regs_
+
+   def process(self):
+      cause = self.getReloadCause()
+      self.causes = [cause] if cause is not None else []
+
+   def clearFaults(self):
+      logging.debug('clearing faults')
+      if self.regs.clearFault():
+         self.regs.clearFault(0x01)
+      self.regs.cause(0)
+
+   def getReloadCauseTime(self):
+      time = self.regs.faultTime()
+      secs = time[0] << 24 | time[1] << 16 | time[2] << 8 | time[3]
+      msecs = (time[4] << 8 | time[5]) / 2**16
+      date = self.FAULT_TIME_BASE + datetime.timedelta(seconds=secs + msecs)
+      return datetimeToStr(date)
+
+   def setRunTimeClock(self):
+      delta = datetime.datetime.now() - self.FAULT_TIME_BASE
+      now = delta.total_seconds()
+      secs = int(now)
+      ticks = int(2**16 * (now - secs))
+      self.regs.rtc([
+         (secs >> 24) & 0xff,
+         (secs >> 16) & 0xff,
+         (secs >> 8) & 0xff,
+         secs & 0xff,
+         (ticks >> 8) & 0xff,
+         ticks & 0xff
+      ])
+
+   def getReloadCause(self):
+      if inSimulation():
+         return None
+
+      # FIXME: implement RTC properly
+      self.setRunTimeClock()
+
+      logging.debug('reading reboot causes for %s', self)
+      code = self.regs.cause()
+      logging.debug('last cause code %#04x', code)
+      self.clearFaults()
+
+      for cause in self.causes:
+         if code != cause.code:
+            continue
+         logging.debug('found cause %s %s', cause.typ, cause.description)
+         return SysCpldReloadCauseEntry(
+            cause=cause.typ,
+            rcTime=self.getReloadCauseTime(),
+            rcDesc=cause.description,
+            score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED,
+         )
+
+      logging.debug('unhandled cause %02x', code)
+      return ScdReloadCauseEntry(
+         cause='unknown',
+         rcTime=self.getReloadCauseTime(),
+         rcDesc=f'unknown logged fault {code:#04x}',
+         score=ReloadCauseScore.LOGGED,
+      )
 
 class SysCpld(I2cComponent):
    DRIVER = SysCpldI2cDriver
@@ -91,3 +209,6 @@ class SysCpld(I2cComponent):
             gpios.append(self.addGpio(info))
       return gpios
 
+   def addReloadCauseProvider(self, causes, regmap=SysCpldReloadCauseRegisters):
+      provider = SysCpldReloadCauseProvider(self, regmap, causes)
+      return self.inventory.addReloadCauseProvider(provider)

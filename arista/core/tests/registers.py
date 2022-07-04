@@ -7,6 +7,7 @@ from ..register import (
    ClearOnReadRegister,
    RegisterMap,
    Register,
+   RegisterArray,
    RegBitField,
    RegBitRange,
    SetClearRegister,
@@ -44,6 +45,7 @@ class FakeRegisterMap(RegisterMap):
       RegBitRange(0, 3, name='range03', ro=False),
       RegBitRange(5, 6, name='range56', ro=False, flip=True),
    )
+   REG_ARRAY = RegisterArray(0x10, 0x13, name='regArray', ro=False)
 
 class FakeDriver(object):
    def __init__(self):
@@ -57,6 +59,10 @@ class FakeDriver(object):
          0x07: 0, # set
          0x08: 0, # clear returns value of 0x07
          0x09: 0, # bit range reg
+         0x10: 0, # array begin
+         0x11: 0, # array
+         0x12: 0, # array
+         0x13: 0, # array end
       }
 
    def read(self, reg):
@@ -216,6 +222,18 @@ class CoreRegisterTest(unittest.TestCase):
       val = 0b1
       self.regs.range56(val)
       self.assertEqual(self.regs.range56(), val)
+
+   def testRegArray(self):
+      self.assertEqual(self.regs.regArray(), [0, 0, 0, 0])
+      val = [1, 2, 3, 4]
+      self.regs.regArray(val)
+      self.assertEqual(self.regs.regArray(), val)
+
+      with self.assertRaises(ValueError):
+         self.regs.regArray(1)
+
+      with self.assertRaises(ValueError):
+         self.regs.regArray([1, 2])
 
 if __name__ == '__main__':
    unittest.main()

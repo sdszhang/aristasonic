@@ -6,6 +6,7 @@ from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk import Tomahawk
+from ..components.cpld import SysCpldCause
 from ..components.cpu.crow import KoiCpldRegisters
 from ..components.dpm.ucd import Ucd90120A, UcdGpi
 from ..components.max6697 import Max6697
@@ -36,6 +37,7 @@ class Upperlake(FixedSystem):
       self.newComponent(Tomahawk, PciAddr(bus=0x01))
 
       scd = self.newComponent(Scd, PciAddr(bus=0x02))
+      self.scd = scd
 
       cpu = self.newComponent(CrowCpu, scd, hwmonBus=1, registerCls=KoiCpldRegisters)
       self.cpu = cpu
@@ -55,12 +57,7 @@ class Upperlake(FixedSystem):
       ])
 
       scd.newComponent(Ucd90120A, scd.i2cAddr(1, 0x4e, t=3))
-      scd.newComponent(Ucd90120A, scd.i2cAddr(5, 0x4e, t=3), causes={
-         'reboot': UcdGpi(1),
-         'watchdog': UcdGpi(2),
-         'overtemp': UcdGpi(4),
-         'powerloss': UcdGpi(5),
-      })
+      self.configureSwitchDpm()
 
       scd.addSmbusMasterRange(0x8000, 5, 0x80)
 
@@ -127,7 +124,39 @@ class Upperlake(FixedSystem):
          isHwLpModeAvail=False
       )
 
+   def configureSwitchDpm(self):
+      self.scd.newComponent(Ucd90120A, self.scd.i2cAddr(5, 0x4e, t=3), causes={
+         'reboot': UcdGpi(1),
+         'watchdog': UcdGpi(2),
+         'overtemp': UcdGpi(4),
+         'powerloss': UcdGpi(5),
+      })
+
 @registerPlatform()
 class UpperlakePlus(Upperlake):
    SID = ['UpperlakePlus']
    SKU = ['DCS-7060CX2-32S']
+
+@registerPlatform()
+class UpperlakeElite(Upperlake):
+   SID = ['UpperlakeElite']
+   SKU = ['DCS-7060CX-32C']
+
+   def configureSwitchDpm(self):
+      self.syscpld.addReloadCauseProvider(causes=[
+         SysCpldCause(0x00, 'unknown'),
+         SysCpldCause(0x01, 'reboot'),
+         SysCpldCause(0x02, 'watchdog'),
+         SysCpldCause(0x03, 'powerloss', 'PSU AC'),
+         SysCpldCause(0x04, 'overtemp'),
+         SysCpldCause(0x06, 'powerloss', 'PSU DC'),
+         SysCpldCause(0x08, 'rail', 'POS5V_STANDBY'),
+         SysCpldCause(0x09, 'rail', 'POS3V3'),
+         SysCpldCause(0x0a, 'rail', 'POS1V8'),
+         SysCpldCause(0x0b, 'rail', 'POS1V25'),
+         SysCpldCause(0x0c, 'rail', 'POS1V0_CORE'),
+         SysCpldCause(0x0d, 'rail', 'POS3V3_QSFP'),
+         SysCpldCause(0x0e, 'rail', 'POS1V0A'),
+         SysCpldCause(0x0f, 'rail', 'POS1V2'),
+         SysCpldCause(0x10, 'rail', 'POS2V5'),
+      ])
