@@ -501,7 +501,7 @@ class Scd(PciComponent):
          for _ in range(ledLanes):
             ledAddr += ledAddrOffsetFn(i)
 
-   def addEthernetSlot(self, xcvrId, prefix='rj45', **kwargs):
+   def addEthernetSlot(self, xcvrId, prefix='rj45_', **kwargs):
       name = '%s%d' % (prefix, xcvrId)
 
       return self._addXcvrSlot(
