@@ -29,6 +29,8 @@ struct scd_fan;
 struct scd_fan_group;
 
 #define FAN_ATTR_NAME_MAX_SZ 16
+#define MASK_UNAVAIL 0
+#define OFFSET_UNAVAIL 0xFFFFFFFF
 struct scd_fan_attribute {
    struct sensor_device_attribute sensor_attr;
    struct scd_fan *fan;
@@ -78,6 +80,7 @@ struct scd_fan_group {
 #define FAN_INFO_SIZE_POS 5
 #define FAN_INFO_SIZE_MASK GENMASK(FAN_INFO_SIZE_POS, FAN_INFO_SIZE_POS)
 enum fan_info_type {
+   FAN_NA = 0b000000,
    FAN_7010_F = 0b000011,
    FAN_7010_F_Z = 0b000010,
    FAN_7010_R = 0b000111,
@@ -132,10 +135,12 @@ struct fan_platform {
    u32 red_led_offset;
 
    u32 speed_offset;
-   u32 speed_steps[3];
    u32 speed_pwm_offset;
+   u32 speed_pwm_steps[3];
    u32 speed_tach_outer_offset;
+   u32 speed_tach_outer_steps[3];
    u32 speed_tach_inner_offset;
+   u32 speed_tach_inner_steps[3];
 
    u32 mask_platform;
    u32 mask_size;
@@ -152,17 +157,19 @@ struct fan_platform {
 #define FAN_LED_COLOR_RED(_fan) \
     (0xff & (_fan)->fan_group->platform->mask_green_red)
 
+#define FAN_HAS_REG(_group, _type) \
+   ((_group)->platform->_type##_offset != OFFSET_UNAVAIL)
 /* Helpers to calculate register address */
 #define FAN_ADDR(_group, _type) \
     ((_group)->addr_base + (_group)->platform->_type##_offset)
 #define FAN_ADDR_2(_group, _type, _index) \
     (FAN_ADDR(_group, _type) + (_group)->platform->_type##_step * (_index))
-#define FAN_SPEED_ADDR(_group, _index) \
+#define FAN_SPEED_ADDR(_group, _index, _type) \
     (FAN_ADDR(_group, speed) + \
-     (_group)->platform->speed##_steps[(_group)->fan_count] * (_index))
+    (_group)->platform->speed##_##_type##_steps[(_group)->fan_count] * (_index))
 #define FAN_SPEED_TYPE_ADDR(_group, _index, _type) \
-    (FAN_SPEED_ADDR(_group, _index) + \
-     (_group)->platform->speed##_##_type##_offset)
+    (FAN_SPEED_ADDR(_group, _index, _type) + \
+    (_group)->platform->speed##_##_type##_offset)
 
 extern int scd_fan_group_add(struct scd_context *ctx, u32 addr, u32 platform_id,
                              u32 slot_count, u32 fan_count);

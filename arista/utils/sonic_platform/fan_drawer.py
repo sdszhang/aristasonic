@@ -55,21 +55,3 @@ class FanDrawer(FanDrawerBase):
 
    def get_interrupt_file(self):
       return None
-
-class FanDrawerLegacy(FanDrawerBase):
-   def __init__(self, fan):
-      FanDrawerBase.__init__(self)
-      # XXX: temporary 1:1 fan to fan_drawer mapping
-      self._fan_list = [fan]
-
-   def get_name(self):
-      return self._fan_list[0].get_name()
-
-   def get_status_led(self, color=None):
-      return self._fan_list[0].get_status_led(color)
-
-   def set_status_led(self, color):
-      return self._fan_list[0].set_status_led(color)
-
-   def get_interrupt_file(self):
-      return None

@@ -10,6 +10,7 @@ from ..components.psu.fixed import Fixed100AC
 from ..components.scd import Scd, ScdCause
 from ..components.vrm import Vrm
 
+from ..descs.fan import FanDesc, FanPosition
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 
@@ -24,7 +25,6 @@ class PikeZ2PChassis(PikeZ1PChassis):
     PSU_SLOTS = 2
 
 class PikeZ(FixedSystem):
-    # TODO: Fans
 
     PORTS = PortLayout(
         ethernets=incrange(1, 48),
@@ -40,6 +40,11 @@ class PikeZ(FixedSystem):
         scd.createWatchdog()
         scd.createPowerCycle()
         scd.addSmbusMasterRange(0x8000, 0, 0x80, bus=5)
+        # TODO: Add reporting for -R fans
+        scd.addFanGroup(0x2000, 4, self.CHASSIS.FAN_SLOTS, self.CHASSIS.FAN_COUNT)
+        for i in incrange(1, self.CHASSIS.FAN_COUNT):
+            desc = FanDesc(i, position=FanPosition.OUTLET)
+            scd.addFan(desc)
 
         scd.addReloadCauseProvider(addr=0x5010, causes=[
             ScdCause(0x00, ScdCause.POWERLOSS),

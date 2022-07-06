@@ -223,6 +223,17 @@ static const struct fan_info p3_fan_infos[] = {
    },
 };
 
+static const struct fan_info p4_fan_infos[] = {
+   {
+      .id = 0,
+      .hz = 100000,
+      .rotors = 1,
+      .pulses = 2,
+      .forward = true,
+      .present = true,
+      .model = "FAN-147-F",
+   },
+};
 
 /* List of fan platforms */
 static const struct fan_platform fan_platforms[] = {
@@ -238,23 +249,28 @@ static const struct fan_platform fan_platforms[] = {
       .id_offset = 0x180,
       .id_step = 0x0, // unused
 
-      .platform_offset = 0x0, // unused
+      .platform_offset = OFFSET_UNAVAIL,
       .present_offset = 0x1c0,
-      .ok_offset = 0x0, // unused
+      .ok_offset = OFFSET_UNAVAIL,
       .green_led_offset = 0xffffe550,
       .red_led_offset = 0xffffe550,
 
       .speed_offset = 0x10,
-      .speed_steps = {
-         0x0, // unused
-         0x0, // unused
+      .speed_pwm_offset = 0x0,
+      .speed_pwm_steps = {
+         0x0,
+         0x0,
          0x60,
       },
-      .speed_pwm_offset = 0x0,
       .speed_tach_outer_offset = 0x10,
-      .speed_tach_inner_offset = 0x0, // unused
+      .speed_tach_outer_steps = {
+         0x0,
+         0x0,
+         0x60,
+      },
+      .speed_tach_inner_offset = OFFSET_UNAVAIL,
 
-      .mask_platform = GENMASK(0, 0), // unused
+      .mask_platform = MASK_UNAVAIL,
       .mask_id = GENMASK(2, 0),
       .mask_pwm = GENMASK(7, 0),
       .mask_tach = GENMASK(15, 0),
@@ -280,14 +296,24 @@ static const struct fan_platform fan_platforms[] = {
       .red_led_offset = 0x1f0,
 
       .speed_offset = 0x10,
-      .speed_steps = {
-        0x0,
-        0x60,
-        0x30,
-      },
       .speed_pwm_offset = 0x0,
+      .speed_pwm_steps = {
+         0x0,
+         0x60,
+         0x30,
+      },
       .speed_tach_outer_offset = 0x10,
+      .speed_tach_outer_steps = {
+         0x0,
+         0x60,
+         0x30,
+      },
       .speed_tach_inner_offset = 0x20,
+      .speed_tach_inner_steps = {
+         0x0,
+         0x60,
+         0x30,
+      },
 
       .mask_platform = GENMASK(1, 0),
       .mask_size = GENMASK(0, 0),
@@ -297,6 +323,47 @@ static const struct fan_platform fan_platforms[] = {
       .mask_green_led = 1,
       .mask_red_led = 2
    },
+   {
+      .id = 4,
+      .max_slot_count = 1,
+      .max_attr_count = 2,
+      .fan_infos = p4_fan_infos,
+      .fan_info_count = ARRAY_SIZE(p4_fan_infos),
+
+      .size_offset = OFFSET_UNAVAIL,
+
+      .id_offset = OFFSET_UNAVAIL,
+      .id_step = 0x0,
+
+      .platform_offset = 0x0,
+      .present_offset = OFFSET_UNAVAIL,
+      .ok_offset = OFFSET_UNAVAIL,
+      .green_led_offset = OFFSET_UNAVAIL,
+      .red_led_offset = OFFSET_UNAVAIL,
+
+      .speed_offset = 0x10,
+      .speed_pwm_offset = 0x0,
+      .speed_pwm_steps = {
+         0x0,
+         0x0,
+         0x0,
+      },
+      .speed_tach_outer_offset = 0x10,
+      .speed_tach_outer_steps = {
+         0x0,
+         0x0,
+         0x10,
+      },
+      .speed_tach_inner_offset = OFFSET_UNAVAIL,
+
+      .mask_platform = GENMASK(1, 0),
+      .mask_size = MASK_UNAVAIL,
+      .mask_id = MASK_UNAVAIL,
+      .mask_pwm = GENMASK(7, 0),
+      .mask_tach = GENMASK(15, 0),
+      .mask_green_led = MASK_UNAVAIL,
+      .mask_red_led = MASK_UNAVAIL
+   }
 };
 
 static const struct fan_platform *fan_platform_find(u32 id) {
@@ -365,6 +432,9 @@ static ssize_t scd_fan_present_show(struct device *dev,
    u32 address = FAN_ADDR(group, present);
    u32 reg = scd_read_register(group->ctx->pdev, address);
 
+   if (!FAN_HAS_REG(group, present)) {
+      return sprintf(buf, "1\n");
+   }
    return sprintf(buf, "%u\n", !!(reg & (1 << fan->index)));
 }
 
@@ -405,7 +475,11 @@ static ssize_t scd_fan_fault_show(struct device *dev, struct device_attribute *d
    struct scd_fan *fan = to_scd_fan_attr(attr)->fan;
    u32 address = FAN_ADDR(group, ok);
    u32 reg = scd_read_register(group->ctx->pdev, address);
-
+   // TODO: platforms without OK register should have alternate way of reporting
+   // fault, e.g. if tach reading is invalid
+   if (!FAN_HAS_REG(group, ok)) {
+      return sprintf(buf, "0\n");
+   }
    return sprintf(buf, "%u\n", !(reg & (1 << fan->index)));
 }
 
@@ -666,18 +740,24 @@ static int scd_fan_add(struct scd_fan_group *fan_group, u32 index) {
    struct scd_fan *fan;
    const struct fan_info *fan_info;
    size_t i;
-   u32 fan_id = scd_fan_id_read(fan_group, index);
-   u32 size = scd_fan_size_read(fan_group);
 
-   fan_info = fan_info_find(fan_group->platform->fan_infos,
-                            fan_group->platform->fan_info_count, fan_id, size);
-   if (!fan_info) {
-      dev_err(get_scd_dev(ctx), "no infomation for fan%u with id=%u", index + 1,
-              fan_id);
-      return -EINVAL;
-   } else if (!fan_info->present) {
-      dev_warn(get_scd_dev(ctx), "fan%u with id=%u is not present", index + 1,
+   if (FAN_HAS_REG(fan_group, id) && FAN_HAS_REG(fan_group, size)) {
+      u32 fan_id = scd_fan_id_read(fan_group, index);
+      u32 size = scd_fan_size_read(fan_group);
+
+      fan_info = fan_info_find(fan_group->platform->fan_infos,
+                              fan_group->platform->fan_info_count, fan_id, size);
+      if (!fan_info) {
+         dev_err(get_scd_dev(ctx), "no infomation for fan%u with id=%u", index + 1,
                fan_id);
+         return -EINVAL;
+      } else if (!fan_info->present) {
+         dev_warn(get_scd_dev(ctx), "fan%u with id=%u is not present", index + 1,
+                  fan_id);
+      }
+   }
+   else {
+      fan_info = &fan_group->platform->fan_infos[0];
    }
 
    fan = kzalloc(sizeof(*fan), GFP_KERNEL);
@@ -716,7 +796,6 @@ int scd_fan_group_add(struct scd_context *ctx, u32 addr, u32 platform_id,
    const struct fan_platform *platform;
    size_t i;
    int err;
-   u32 reg;
 
    platform = fan_platform_find(platform_id);
    if (!platform) {
@@ -728,13 +807,6 @@ int scd_fan_group_add(struct scd_context *ctx, u32 addr, u32 platform_id,
    if (slot_count > platform->max_slot_count) {
       dev_warn(get_scd_dev(ctx), "the fan slot_count argument is larger than %zu",
                platform->max_slot_count);
-      return -EINVAL;
-   }
-
-   reg = scd_read_register(ctx->pdev, addr + platform->platform_offset);
-   if ((reg & platform->mask_platform) != platform_id) {
-      dev_warn(get_scd_dev(ctx),
-               "fan group for platform id=%u does not match hardware", platform_id);
       return -EINVAL;
    }
 

@@ -18,7 +18,7 @@ try:
    from arista.core.linecard import Linecard
    from arista.utils.sonic_platform.eeprom import Eeprom
    from arista.utils.sonic_platform.fan import Fan
-   from arista.utils.sonic_platform.fan_drawer import FanDrawer, FanDrawerLegacy
+   from arista.utils.sonic_platform.fan_drawer import FanDrawer
    from arista.utils.sonic_platform.module import (
       SupervisorModule,
       FabricModule,
@@ -93,11 +93,8 @@ class Chassis(ChassisBase):
          for slot in self._inventory.getFanSlots():
             self._fan_drawer_list.append(FanDrawer(self, slot))
       else:
-         # TODO: Remove this block of code once FanDrawer is implemented everywhere
          for fan in self._inventory.getFans():
             self._fan_list.append(Fan(None, fan))
-         for fan in self._fan_list:
-            self._fan_drawer_list.append(FanDrawerLegacy(fan))
 
       self._sfp_list = []
       xcvrSlots = self._inventory.getXcvrSlots()
