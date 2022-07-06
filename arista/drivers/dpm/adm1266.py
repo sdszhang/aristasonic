@@ -113,7 +113,7 @@ class Adm1266UserDriver(PmbusUserDriver):
 
    def getPowerupCounter(self):
       data = self.read_i2c_block_data(self.registers.POWERUP_COUNTER, 3)[1:]
-      return struct.unpack('<H', bytearray(data))
+      return struct.unpack('<H', bytearray(data))[0]
 
    def getUserData(self, idx=0, length=32):
       cmd = [self.registers.USER_DATA, 3, length, idx & 0xff, (idx >> 8) & 0xff]
