@@ -78,6 +78,7 @@ class Wolverine(DenaliLinecard):
       # mode.
       if self.cpu:
          self.createPorts()
+         self.cpu.addSmbusComponents(self.scd)
 
    def createGpio1(self):
       self.gpio1 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x74),

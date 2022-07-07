@@ -6,6 +6,7 @@ from ...core.types import PciAddr
 from ...core.utils import getCmdlineDict
 
 from ...components.cpu.amd.k10temp import K10Temp
+from ...components.cpu.amd.sbtsi import SbTsi
 from ...components.rpc import LinecardRpcClient
 from ...components.scd import Scd
 from ...components.watchdog import FakeWatchdog
@@ -48,6 +49,12 @@ class HedgehogCpu(Cpu):
       self.rpc.addLed(
          LedDesc('status', colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF]))
       self.rpc.addPowerCycle(None)
+
+   def addSmbusComponents(self, scd):
+      scd.newComponent(SbTsi, addr=scd.i2cAddr(9, 0x4c), sensors=[
+         SensorDesc(diode=0, name='Cpu SBTSI',
+                    position=Position.OTHER, target=60, overheat=90, critical=95),
+      ])
 
    def getSlotId(self):
       # NOTE: this slotId value is used by Plx to deduce the lcpu upstreamPort

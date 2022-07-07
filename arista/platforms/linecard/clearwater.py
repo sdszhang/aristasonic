@@ -81,6 +81,7 @@ class ClearwaterBase(DenaliLinecard):
       # mode.
       if self.cpu:
          self.createPorts()
+         self.cpu.addSmbusComponents(self.scd)
 
    def mainDomain(self):
       self.cwMainDomainCommon()
