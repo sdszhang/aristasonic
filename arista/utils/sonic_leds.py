@@ -53,7 +53,7 @@ class LedControlSysfs(LedControlCommon):
       for xcvrSlot in self.inventory.getXcvrSlots().values():
          for led in xcvrSlot.getLeds():
             ledName = led.getName()
-            port = int(re.search(r'\d+$', ledName).group(0))
+            port = int(re.search(r'(rj45_|.?sfp)(\d+)', ledName).group(2))
             self.portSysfsMapping[port].append(self.LED_SYSFS_PATH.format(ledName))
 
    def _setIntfColor(self, port, idx, color):
