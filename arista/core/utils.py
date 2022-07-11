@@ -458,7 +458,10 @@ def locateHwmonFolder(devicePath, index=0):
    if inSimulation():
       return os.path.join(devicePath, 'hwmon', 'simulation')
    hwmonFolder = os.path.join(devicePath, 'hwmon')
-   paths = [p for p in sorted(os.listdir(hwmonFolder)) if p.startswith('hwmon')]
+   try:
+      paths = [p for p in sorted(os.listdir(hwmonFolder)) if p.startswith('hwmon')]
+   except FileNotFoundError:
+      return os.path.join(hwmonFolder, 'hwmonX')
    return os.path.join(hwmonFolder, paths[index])
 
 # Hwmon directories that need to be navigated

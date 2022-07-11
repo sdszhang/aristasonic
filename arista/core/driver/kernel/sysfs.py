@@ -196,6 +196,9 @@ class GenericSysfsImpl(GenericSysfs):
             return default
       return None
 
+   def exists(self):
+      return self.input.exists()
+
    def getDesc(self):
       return self.desc
 
@@ -630,13 +633,14 @@ class RailSysfsImpl(Rail):
       )
 
    def _tryComputeDiv(self, dividend, divisor):
-      if not dividend or not divisor:
+      if not dividend or not divisor or \
+         not dividend.exists() or not divisor.exists():
          return 0
       divisor = divisor.getInput()
       return dividend.getInput() / divisor if divisor != 0 else 0
 
    def _tryComputeMul(self, val1, val2):
-      if not val1 or not val2:
+      if not val1 or not val2 or not val1.exists() or not val2.exists:
          return 0
       return val1.getInput() * val2.getInput()
 
