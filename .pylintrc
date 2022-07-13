@@ -16,7 +16,11 @@ disable=invalid-name,
         too-many-statements,
         too-many-locals,
         too-many-instance-attributes,
-        too-many-branches
+        too-many-branches,
+        consider-using-f-string,
+        useless-object-inheritance,
+        super-with-arguments,
+        no-member,
 
 [BASIC]
 bad-functions=apply,input

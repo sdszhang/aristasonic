@@ -43,7 +43,8 @@ PY_BUILD_ARGS ?=
 PY2_BUILD_ARGS ?= $(PY_BUILD_ARGS) --build-base=$(BUILD_DIR)/python2
 PY3_BUILD_ARGS ?= $(PY_BUILD_ARGS) --build-base=$(BUILD_DIR)/python3
 PYLINTRC ?= $(BASE_DIR)/.pylintrc
-PYLINT_BLACKLIST ?= $(shell "cat $(BASE_DIR)/.pylint_blacklist | tr '\n' ','")
+PY3K_EXCLUDEFILELIST ?= $(shell tr '\n' ',' <$(BASE_DIR)/.py3k_excludefilelist)
+PYLINT_EXCLUDEFILELIST ?= $(shell tr '\n' ',' <$(BASE_DIR)/.pylint_excludefilelist)
 PYLINT_JOBS ?= 4
 PYTEST_ARGS ?=
 PY_TARGETS ?= py3
@@ -173,20 +174,29 @@ test-py3:
 
 test-py: $(addprefix test-,$(PY_TARGETS))
 
-pylint:
-	# NOTE: for now we only check py2/py3 compatibility.
-	#       once these are solved we should enable the more generic pylint.
+py3k:
+	# NOTE: the python3 version of pylint does not support the py3k argument.
+	#       Thus we require the python2 version here.
 	# FIXME: make this fatal as soon as possible
-	-pylint --py3k \
+	-which python2 >/dev/null 2>&1 && \
+	python2 -m pylint --py3k \
 	   --jobs=$(PYLINT_JOBS) \
 	   --rcfile=$(PYLINTRC) \
-	   --ignore=$(PYLINT_BLACKLIST) \
+	   --ignore=$(PY3K_EXCLUDEFILELIST) \
 	   $(PACKAGE_NAME)
+
+pylint:
+	# FIXME: make this fatal as soon as possible
+	-python3 -m pylint \
+	   --jobs=$(PYLINT_JOBS) \
+	   --rcfile=$(PYLINTRC) \
+	   --ignore=$(PYLINT_EXCLUDEFILELIST) \
+	   $(PACKAGE_NAME) | scripts/pylint-filter
 
 pycoverage:
 	$(PYTHON3) -m pytest --cov-config=.coveragerc --cov-report term-missing:skip-covered --cov $(PACKAGE_NAME)
 
-test: test-py pylint
+test: test-py py3k pylint
 
 #
 # dev tools

@@ -26,6 +26,8 @@ if sys.version_info.major == 2:
    package_exclude.extend([
       '*.daemon',
       '*.daemon.*',
+      '*.rpc',
+      '*.rpc.*',
    ])
    file_exclude.extend([
       '*/daemon.py',
