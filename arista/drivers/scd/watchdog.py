@@ -64,21 +64,22 @@ class WatchdogState(object):
       return self.lastTimeout - elapsed
 
 class ScdWatchdog(Watchdog):
+
    MAX_TIMEOUT = 65535
 
-   def __init__(self, scd, reg=0x0120):
+   def __init__(self, scd, reg=0x0120, action=2):
       self.scd = scd
       self.reg = reg
+      self.action = action
       self.state = WatchdogState(localStorage=Config().watchdog_state_file)
 
-   @staticmethod
-   def armReg(timeout):
+   def armReg(self, timeout):
       regValue = 0
       if timeout > 0:
          # Set enable bit
          regValue |= 1 << 31
          # Powercycle
-         regValue |= 2 << 29
+         regValue |= self.action << 29
          # Timeout value
          regValue |= timeout
       return regValue

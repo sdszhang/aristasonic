@@ -80,7 +80,7 @@ class Wolverine(DenaliLinecard):
       # mode.
       if self.cpu:
          self.createPorts()
-         self.cpu.addSmbusComponents(self.scd)
+         self.cpu.addScdComponents(self.scd)
 
    def controlDomain(self):
       super(Wolverine, self).controlDomain()
