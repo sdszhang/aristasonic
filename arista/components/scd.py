@@ -39,12 +39,10 @@ from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 
 from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
+from ..drivers.scd.watchdog import ScdWatchdog
 
 from ..inventory.interrupt import Interrupt
 from ..inventory.powercycle import PowerCycle
-from ..inventory.watchdog import Watchdog
-
-from ..libs.python import monotonicRaw
 
 logging = getLogger(__name__)
 
@@ -62,88 +60,6 @@ class ScdI2cAddr(I2cAddr):
    @property
    def bus(self):
       return self.scd_.i2cOffset + self.bus_
-
-class ScdWatchdog(Watchdog):
-   MAX_TIMEOUT = 65535
-
-   def __init__(self, scd, reg=0x0120):
-      self.scd = scd
-      self.reg = reg
-      self.armTimeStamp = 0
-
-   @staticmethod
-   def armReg(timeout):
-      regValue = 0
-      if timeout > 0:
-         # Set enable bit
-         regValue |= 1 << 31
-         # Powercycle
-         regValue |= 2 << 29
-         # Timeout value
-         regValue |= timeout
-      return regValue
-
-   def armSim(self, timeout):
-      if timeout > ScdWatchdog.MAX_TIMEOUT:
-         logging.error("watchdog timeout %s exceeds max timeout %s",
-                       timeout, ScdWatchdog.MAX_TIMEOUT)
-         return False
-      self.armTimeStamp = monotonicRaw()
-      regValue = self.armReg(timeout)
-      logging.info("watchdog arm reg={0:32b}".format(regValue))
-      return True
-
-   @simulateWith(armSim)
-   def arm(self, timeout):
-      if timeout > ScdWatchdog.MAX_TIMEOUT:
-         logging.error("watchdog timeout %s exceeds max timeout %s",
-                       timeout, ScdWatchdog.MAX_TIMEOUT)
-         return False
-      self.armTimeStamp = monotonicRaw()
-      regValue = self.armReg(timeout)
-      try:
-         with self.scd.getMmap() as mmap:
-            logging.info('arm reg = {0:32b}'.format(regValue))
-            mmap.write32(self.reg, regValue)
-      except RuntimeError as e:
-         logging.error("watchdog arm/stop error: {}".format(e))
-         return False
-      return True
-
-   def stopSim(self):
-      logging.info("watchdog stop")
-      return True
-
-   @simulateWith(stopSim)
-   def stop(self):
-      return self.arm(0)
-
-   def statusSim(self):
-      logging.info("watchdog status")
-      return { "enabled": True, "timeout": 300, "remainingTime": 100 }
-
-   @simulateWith(statusSim)
-   def status(self):
-      try:
-         with self.scd.getMmap() as mmap:
-            regValue = mmap.read32(self.reg)
-            enabled = bool(regValue >> 31)
-            timeout = regValue & ((1<<16)-1)
-         # No HW support for retrieving remaining time, so it needs to be done
-         # here instead. Will only be correct if ran from the same process that
-         # armed the watchdog; otherwise the remaining time will be 0.
-         if not enabled:
-            remainingTime = -1
-         else:
-            remainingTime = 0
-            if self.armTimeStamp > 0:
-               timeDiff = 100 * int(monotonicRaw() - self.armTimeStamp)
-               remainingTime = timeout - timeDiff
-         return { "enabled": enabled, "timeout": timeout,
-                  "remainingTime": remainingTime }
-      except RuntimeError as e:
-         logging.error("watchdog status error: {}".format(e))
-         return None
 
 class ScdPowerCycle(PowerCycle):
    def __init__(self, scd, reg=0x7000, wr=0xDEAD):

@@ -1,4 +1,5 @@
 import fcntl
+import inspect
 import json
 import mmap
 import os
@@ -331,9 +332,10 @@ class NoopObj():
       return self.noop(attr)
 
 class StoredData():
-   def __init__(self, name, lifespan='temporary', path=None):
+   def __init__(self, name, lifespan='temporary', path=None, append=True):
       self.name = name
       self.lifespan = lifespan
+      self.mode = 'a+' if append else 'w+'
       if path is None:
          dirPath = tmpfsPath() if lifespan == 'temporary' else flashPath()
          self.maybeCreatePath(dirPath)
@@ -351,7 +353,8 @@ class StoredData():
    def exist(self):
       return os.path.isfile(self.path)
 
-   def write(self, data, mode='a+'):
+   def write(self, data, mode=None):
+      mode = mode or self.mode
       assert os.path.isdir(os.path.dirname(self.path)), \
             'Base directory for %s file %s not found!' % (self.lifespan, self.name)
       if not os.path.isfile(self.path):
@@ -384,11 +387,19 @@ class JsonStoredData(StoredData):
 
    @staticmethod
    def _createObj(data, dataType):
-      obj = dataType()
+      obj = dataType() if inspect.isclass(dataType) else dataType
       obj.__dict__.update(data)
       return obj
 
-   def write(self, data, mode='a+'):
+   @staticmethod
+   def _dataDict(obj):
+      denylist = getattr(obj, 'STORE_IGNORE', None)
+      if denylist is None:
+         return obj.__dict__
+      return {k : v for k, v in obj.__dict__.items() if k not in denylist}
+
+   def write(self, data, mode=None):
+      mode = mode or self.mode
       super().write(json.dumps(data, indent=3, separators=(',', ': ')), mode)
 
    def read(self):
@@ -404,10 +415,10 @@ class JsonStoredData(StoredData):
       return [self._createObj(data, dataType) for data in self.read()]
 
    def writeObj(self, data):
-      self.write(data.__dict__)
+      self.write(self._dataDict(data))
 
    def writeList(self, data):
-      self.write([item.__dict__ for item in data])
+      self.write([self._dataDict(item) for item in data])
 
 # debug flag, if enabled should use the most tracing possible
 debug = False

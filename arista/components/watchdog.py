@@ -1,24 +1,27 @@
 
+from ..core.config import Config
 from ..inventory.watchdog import Watchdog
+from ..drivers.scd.watchdog import WatchdogState
 
 class FakeWatchdog(Watchdog):
+
+   MAX_TIMEOUT = 65535
+
    def __init__(self):
-      self.armed = False
-      self.timeout = -1
+      self.state = WatchdogState(localStorage=Config().watchdog_state_file)
 
    def arm(self, timeout):
-      self.armed = True
-      self.timeout = timeout
+      self.state.arm(timeout)
       return True
 
    def stop(self):
-      self.armed = False
-      self.timeout = -1
+      self.state.arm(0)
       return True
 
    def status(self):
+      remaining = self.state.remaining()
       return {
-         'enabled': self.armed,
-         'timeout': self.timeout,
-         'remainingTime': self.timeout,
+         'enabled': self.state.lastArmed != 0,
+         'timeout': self.state.lastTimeout,
+         'remainingTime': remaining,
       }

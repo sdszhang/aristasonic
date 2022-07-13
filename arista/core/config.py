@@ -29,6 +29,7 @@ class Config():
          cls.instance_.use_metainventory = True
          cls.instance_.write_hw_thresholds = True
          cls.instance_.report_hw_thresholds = False
+         cls.instance_.watchdog_state_file = 'watchdog.json'
          cls.instance_.api_use_sfpoptoe = True
          cls.instance_.api_event_use_interrupts = False
          cls.instance_.flash_path = '/host'
