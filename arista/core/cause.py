@@ -8,7 +8,7 @@ from .inventory import ReloadCause, ReloadCauseProvider
 from .log import getLogger
 from .utils import JsonStoredData
 
-from ..descs.cause import ReloadCauseScore
+from ..descs.cause import ReloadCausePriority, ReloadCauseScore
 
 from ..libs.date import datetimeToStr, strToDatetime, epochToDatetime
 from ..libs.procfs import bootDatetime

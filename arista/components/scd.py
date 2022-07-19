@@ -6,6 +6,7 @@ from collections import OrderedDict, namedtuple
 
 from ..core.cause import (
    ReloadCauseEntry,
+   ReloadCausePriority,
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
@@ -197,7 +198,8 @@ class ScdReloadCauseProvider(ReloadCauseProviderHelper):
                rcDesc=cause.description,
                # NOTE: even though there is no great details it needs to play
                #       nicely with devices that do report detailed faults.
-               score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED,
+               score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
+                     ReloadCauseScore.getPriority(ReloadCausePriority.NORMAL),
             )
 
       logging.debug('unhandled cause %#02x', code)

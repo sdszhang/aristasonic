@@ -1,6 +1,7 @@
 
 from ...core.cause import (
    ReloadCauseEntry,
+   ReloadCausePriority,
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
@@ -17,11 +18,8 @@ from .pmbus import PmbusDpm
 
 logging = getLogger(__name__)
 
-class AdmPriority():
-   NONE = 0
-   LOW = 10
-   NORMAL = 20
-   HIGH = 30
+class AdmPriority(ReloadCausePriority):
+   pass
 
 class AdmPin():
 

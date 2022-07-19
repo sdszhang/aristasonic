@@ -3,6 +3,7 @@ import time
 
 from ..core.cause import (
    ReloadCauseEntry,
+   ReloadCausePriority,
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
@@ -157,7 +158,8 @@ class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
             cause=cause.typ,
             rcTime=self.getReloadCauseTime(),
             rcDesc=cause.description,
-            score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED,
+            score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
+                  ReloadCauseScore.getPriority(ReloadCausePriority.NORMAL),
          )
 
       logging.debug('unhandled cause %02x', code)

@@ -1,4 +1,10 @@
 
+class ReloadCausePriority(object):
+   NONE = 0
+   LOW = 10
+   NORMAL = 20
+   HIGH = 30
+
 class ReloadCauseScore(object):
    # DO NOT CHANGE EXISTING VALUES UNLESS YOU UNDERSTAND THE IMPLICATIONS
    # format:

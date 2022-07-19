@@ -4,6 +4,7 @@ import datetime
 
 from ...core.cause import (
    ReloadCauseEntry,
+   ReloadCausePriority,
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
@@ -20,11 +21,8 @@ from .pmbus import PmbusDpm
 
 logging = getLogger(__name__)
 
-class UcdPriority():
-   NONE = 0
-   LOW = 10
-   NORMAL = 20
-   HIGH = 30
+class UcdPriority(ReloadCausePriority):
+   pass
 
 class UcdGpi():
    TYPE = 'gpi'
