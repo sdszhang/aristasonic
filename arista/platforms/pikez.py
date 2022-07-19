@@ -1,4 +1,5 @@
 from ..core.fixed import FixedChassis, FixedSystem
+from ..core.hwapi import HwApi
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
@@ -8,7 +9,9 @@ from ..core.utils import incrange
 from ..components.asic.xgs.trident3 import Trident3X2
 from ..components.psu.fixed import Fixed100AC
 from ..components.scd import Scd, ScdCause
-from ..components.vrm import Vrm
+from ..components.vrm import Vrm, VrmDetector
+from ..components.vrm.sic450 import Sic450
+from ..components.vrm.tps549d22 import Tps549D22
 
 from ..descs.fan import FanDesc, FanPosition
 from ..descs.gpio import GpioDesc
@@ -122,7 +125,26 @@ class PikeZ(FixedSystem):
             intrBitFn=lambda xcvrId: 5 + xcvrId - 49
         )
 
-        avs = self.newComponent(Vrm, I2cAddr(0, 0x14))
+        addr = I2cAddr(0, 0x14)
+        vrm = VrmDetector([
+            self.newComponent(Tps549D22, addr=addr, vouts={
+                800: 0x0175, # 0.804V
+                825: 0x0180, # 0.828V
+                850: 0x018C, # 0.854V
+                875: 0x0196, # 0.875V
+            }),
+            self.newComponent(Sic450, addr=addr, vouts={
+                800: 0x0118, # 0.805V
+                825: 0x0120, # 0.828V
+                850: 0x0128, # 0.851V
+                875: 0x0130, # 0.876V
+            } if self.getHwApi() >= HwApi(3) else {
+                800: 0x019a, # 0.800V
+                825: 0x01a6, # 0.825V
+                850: 0x01b3, # 0.850V
+                875: 0x01c0, # 0.875V
+            }),
+        ])
 
         self.newComponent(Trident3X2, PciAddr(bus=1),
             coreResets=[
@@ -132,7 +154,7 @@ class PikeZ(FixedSystem):
                 scd.inventory.getReset('switch_chip_pcie_reset'),
             ],
             quirks=[
-                Trident3X2.AvsQuirk(avs, Trident3X2.AvsQuirk.TPS549D22),
+                Trident3X2.AvsQuirk(vrm),
             ],
         )
 

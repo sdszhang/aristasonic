@@ -4,6 +4,8 @@ from ....core.register import RegisterMap, Register, RegBitRange
 
 from ....libs.wait import waitFor
 
+from ...vrm import VrmDetector
+
 from . import XgsSwitchChip
 
 class Trident3(XgsSwitchChip):
@@ -22,16 +24,21 @@ class Trident3X2(Trident3):
 
       DELAYED = True
 
-      TPS549D22 = {
-         0x1: 0x019a, # 0.800V
-         0x2: 0x01a6, # 0.825V
-         0x4: 0x01b3, # 0.850V
-         0x8: 0x01c0, # 0.875V
+      ASIC_TO_MILLIVOLT = {
+         0x1: 800,
+         0x2: 825,
+         0x4: 850,
+         0x8: 875,
       }
 
-      def __init__(self, avs, mapping):
-         self.avs = avs
-         self.mapping = mapping
+      def __init__(self, vrm):
+         self.vrm_ = vrm
+
+      @property
+      def vrm(self):
+         if isinstance(self.vrm_, VrmDetector):
+             return self.vrm_.vrm
+         return self.vrm
 
       def waitAsicRegisterReady(self, asic):
          waitFor(
@@ -42,6 +49,6 @@ class Trident3X2(Trident3):
       def run(self, component):
          self.waitAsicRegisterReady(component)
          value = component.driver.regs.avsValue()
-         vout = self.mapping.get(value)
+         vout = self.ASIC_TO_MILLIVOLT.get(value)
          if vout is not None:
-            self.avs.voutCommand(vout)
+            self.vrm.setVoutValue(vout)
