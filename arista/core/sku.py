@@ -1,7 +1,7 @@
 
 from .component.component import Component
+from .hwapi import HwApi
 from .port import PortLayout
-from .utils import HwApi
 
 class Sku(Component):
 

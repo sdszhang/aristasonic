@@ -17,34 +17,6 @@ from ..libs.python import isinteger
 
 logging = getLogger(__name__)
 
-class HwApi():
-   def __init__(self, *values):
-      self.values = [int(v) for v in values]
-
-   def __gt__(self, other):
-      if not isinstance(other, HwApi):
-         return False
-      return self.values > other.values
-
-   def __lt__(self, other):
-      if not isinstance(other, HwApi):
-         return False
-      return self.values < other.values
-
-   def __eq__(self, other):
-      if not isinstance(other, HwApi):
-         return False
-      return self.values == other.values
-
-   def __str__(self):
-      return 'HwApi(%s)' % '.'.join(str(v) for v in self.values)
-
-   @classmethod
-   def parse(cls, value):
-      if isinteger(value):
-         return HwApi(value)
-      return HwApi((int(v) for v in value.split('.')))
-
 class ResourceAccessor():
    ''' Base abstraction for accessing resource like files '''
    def __init__(self, path):

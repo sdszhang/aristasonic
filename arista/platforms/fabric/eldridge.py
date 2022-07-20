@@ -1,7 +1,8 @@
 from ...core.cooling import Airflow
+from ...core.hwapi import HwApi
 from ...core.platform import registerPlatform
 from ...core.register import RegBitField, RegisterMap
-from ...core.utils import incrange, HwApi
+from ...core.utils import incrange
 
 from ...components.asic.dnx.ramon import Ramon
 from ...components.denali.desc import DenaliAsicDesc

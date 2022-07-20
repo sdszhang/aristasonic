@@ -1,8 +1,9 @@
 
+from ...core.hwapi import HwApi
 from ...core.platform import registerPlatform
 from ...core.port import PortLayout
 from ...core.types import MdioSpeed
-from ...core.utils import incrange, HwApi
+from ...core.utils import incrange
 
 from ...components.asic.dnx.jericho2 import Jericho2
 from ...components.denali.desc import DenaliAsicDesc
