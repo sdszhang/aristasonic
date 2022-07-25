@@ -48,6 +48,7 @@ PYLINT_EXCLUDEFILELIST ?= $(shell tr '\n' ',' <$(BASE_DIR)/.pylint_excludefileli
 PYLINT_JOBS ?= 4
 PYTEST_ARGS ?=
 PY_TARGETS ?= py3
+ARISTA_PYLINT3_COMMAND ?= -python3 -m pylint
 
 # scd
 ARISTA_SCD_DRIVER_CONFIG ?= m
@@ -186,8 +187,7 @@ py3k:
 	   $(PACKAGE_NAME)
 
 pylint:
-	# FIXME: make this fatal as soon as possible
-	-python3 -m pylint \
+	$(ARISTA_PYLINT3_COMMAND) \
 	   --jobs=$(PYLINT_JOBS) \
 	   --rcfile=$(PYLINTRC) \
 	   --ignore=$(PYLINT_EXCLUDEFILELIST) \
