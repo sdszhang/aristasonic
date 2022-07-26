@@ -1,3 +1,4 @@
+from ..core.hwapi import HwApi
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
@@ -8,7 +9,7 @@ from ..core.utils import incrange
 from ..components.asic.xgs.tomahawk4 import Tomahawk4
 from ..components.dpm.ucd import Ucd90320, UcdGpi
 from ..components.lm73 import Lm73
-from ..components.max6581 import Max6581
+from ..components.tmp464 import Tmp464
 from ..components.phy.babbagelp import BabbageLP
 from ..components.psu.liteon import PS2242
 from ..components.scd import Scd
@@ -60,19 +61,13 @@ class CatalinaP(FixedSystem):
 
       scd.createWatchdog()
 
-      scd.newComponent(Max6581, addr=scd.i2cAddr(8, 0x4d), sensors=[
-         SensorDesc(diode=0, name='Board sensor',
+      scd.newComponent(Tmp464, addr=scd.i2cAddr(8, 0x48), sensors=[
+         SensorDesc(diode=0, name='Switch card',
                     position=Position.OTHER, target=85, overheat=95, critical=105),
-         SensorDesc(diode=1, name='Switch board middle sensor',
-                    position=Position.OTHER, target=85, overheat=95, critical=105),
-         SensorDesc(diode=2, name='Switch board left sensor',
-                    position=Position.OTHER, target=85, overheat=95, critical=105),
-         SensorDesc(diode=3, name='Front-panel temp sensor',
+         SensorDesc(diode=1, name='Air outlet',
+                    position=Position.OUTLET, target=85, overheat=95, critical=105),
+         SensorDesc(diode=2, name='Air inlet',
                     position=Position.INLET, target=85, overheat=95, critical=105),
-         SensorDesc(diode=6, name='Switch chip diode 1 sensor',
-                    position=Position.OTHER, target=85, overheat=95, critical=105),
-         SensorDesc(diode=7, name='Switch chip diode 2 sensor',
-                    position=Position.OTHER, target=85, overheat=95, critical=105),
       ])
 
       scd.newComponent(Lm73, self.scd.i2cAddr(13, 0x48), sensors=[
