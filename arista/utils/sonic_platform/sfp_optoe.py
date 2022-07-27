@@ -24,7 +24,8 @@ class SfpOptoe(SfpOptoeBase):
          self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
                                                sfp.getI2cAddr().address)
       self._sfp_type = None
-      self._thermal_list.append(SfpThermal(self))
+      if not slot.getName().startswith('rj45'):
+         self._thermal_list.append(SfpThermal(self))
 
    @property
    def sfp_type(self):
