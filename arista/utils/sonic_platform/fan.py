@@ -68,6 +68,9 @@ class Fan(FanBase):
    def set_status_led(self, color):
       if self._parent or not self._fan.getLed:
          return self._parent.set_status_led(color)
+      led = self._fan.getLed()
+      if led is None:
+         raise NotImplementedError("fan %s doesn't have an led" % self.get_name())
       try:
          self._fan.getLed().setColor(color)
          return True
@@ -77,7 +80,10 @@ class Fan(FanBase):
    def get_status_led(self, color=None):
       if self._parent:
          return self._parent.get_status_led(color=color)
-      return self._fan.getLed().getColor()
+      led = self._fan.getLed()
+      if led is None:
+         raise NotImplementedError("fan %s doesn't have an led" % self.get_name())
+      return led.getColor()
 
    def get_status(self):
       return self._fan.getStatus()
