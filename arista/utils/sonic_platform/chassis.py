@@ -8,6 +8,7 @@ import time
 
 try:
    from sonic_platform_base.chassis_base import ChassisBase
+   from sonic_platform_base.sfp_base import SfpBase
    from arista.core import thermal_control
    from arista.core.card import Card
    from arista.core.cause import getReloadCauseManager
@@ -213,6 +214,34 @@ class Chassis(ChassisBase):
 
    def getThermalControl(self):
       return thermal_control
+
+   def get_port_or_cage_type(self, index):
+      portLayout = self._platform.PORTS
+
+      if not hasattr( SfpBase, 'SFP_PORT_TYPE_BIT_RJ45' ):
+         raise NotImplementedError
+
+      if index in portLayout.ethernetRange:
+         return SfpBase.SFP_PORT_TYPE_BIT_RJ45
+
+      if index in portLayout.sfpRange:
+         return ( SfpBase.SFP_PORT_TYPE_BIT_SFP |
+                  SfpBase.SFP_PORT_TYPE_BIT_SFP_PLUS |
+                  SfpBase.SFP_PORT_TYPE_BIT_SFP28 |
+                  SfpBase.SFP_PORT_TYPE_BIT_SFP_DD )
+
+      if index in portLayout.qsfpRange:
+         return ( SfpBase.SFP_PORT_TYPE_BIT_QSFP |
+                  SfpBase.SFP_PORT_TYPE_BIT_QSFP_PLUS |
+                  SfpBase.SFP_PORT_TYPE_BIT_QSFP28 |
+                  SfpBase.SFP_PORT_TYPE_BIT_QSFP56 |
+                  SfpBase.SFP_PORT_TYPE_BIT_QSFPDD )
+
+      if index in portLayout.osfpRange:
+         return ( SfpBase.SFP_PORT_TYPE_BIT_OSFP |
+                  SfpBase.SFP_PORT_TYPE_BIT_QSFPDD )
+
+      return 0x00000000
 
    def get_position_in_parent(self):
       return -1
