@@ -72,7 +72,7 @@ class Fan(FanBase):
       if led is None:
          raise NotImplementedError("fan %s doesn't have an led" % self.get_name())
       try:
-         self._fan.getLed().setColor(color)
+         led.setColor(color)
          return True
       except (IOError, OSError, ValueError):
          return False
