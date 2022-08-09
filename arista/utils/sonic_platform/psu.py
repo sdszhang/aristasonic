@@ -116,16 +116,22 @@ class Psu(PsuBase):
    #      in the sonic daemons but it's not the case today.
    #      use a dumb policy of taking the first sensor
    def get_temperature(self):
+      if not self.get_num_thermals():
+         return 'N/A'
       return self.get_thermal(0).get_temperature()
 
    def get_temperature_high_threshold(self):
+      if not self.get_num_thermals():
+         return 'N/A'
       return self.get_thermal(0).get_high_threshold()
 
    def get_voltage_high_threshold(self):
-      return self.rail.voltage.getHighThreshold()
+      rail = self.rail
+      return rail.voltage.getHighThreshold() if rail else "N/A"
 
    def get_voltage_low_threshold(self):
-      return self.rail.voltage.getLowThreshold()
+      rail = self.rail
+      return rail.voltage.getLowThreshold() if rail else "N/A"
 
    def get_interrupt_file(self):
       return None
