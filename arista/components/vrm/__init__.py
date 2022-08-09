@@ -9,22 +9,46 @@ logging = getLogger(__name__)
 class Vrm(I2cComponent):
    DRIVER = VrmI2cUserDriver
 
-   def __init__(self, vouts=None, identify=None, **kwargs):
+   class Registers(object):
+      VOUT_COMMAND = 0x21
+      UV_WARNING = 0x43
+      UV_FAULT = 0x44
+
+   def __init__(self, vouts=None, uvs=None, identify=None, **kwargs):
       super().__init__(**kwargs)
       self.vouts = vouts
+      self.uvs = uvs
       if identify:
          self.driver.IDENTIFY_SEQUENCE = identify
 
    def identify(self):
       return self.driver.identify()
 
+   def setUnderVoltageWarning(self, value):
+      logging.debug('Configuring %s UV Warning to 0x%04x', self, value)
+      self.driver.write_word_data(self.Registers.UV_WARNING, value)
+
+   def setUnderVoltageFault(self, value):
+      logging.debug('Configuring %s UV Fault to 0x%04x', self, value)
+      self.driver.write_word_data(self.Registers.UV_FAULT, value)
+
+   def updateThresholds(self):
+      if self.uvs is None:
+         return
+
+      warning, fault = self.uvs
+      if warning is not None:
+         self.setUnderVoltageWarning(warning)
+      if fault is not None:
+         self.setUnderVoltageFault(fault)
+
    def voutCommand(self, vout):
       logging.debug('Configuring %s VOUT to 0x%04x', self, vout)
       # TODO: use RegisterMap when variable size registers are supported
-      VOUT_COMMAND_REG = 0x21
-      self.driver.write_word_data(VOUT_COMMAND_REG, vout)
+      self.driver.write_word_data(self.Registers.VOUT_COMMAND, vout)
 
    def setVoutValue(self, value):
+      self.updateThresholds()
       self.voutCommand(self.vouts[value])
 
 class VrmNotFoundError(Exception):

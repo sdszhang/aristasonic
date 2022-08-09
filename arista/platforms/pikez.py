@@ -126,6 +126,21 @@ class PikeZ(FixedSystem):
         )
 
         addr = I2cAddr(0, 0x14)
+        vouts, uvs = ({
+                800: 0x0118, # 0.805V
+                825: 0x0120, # 0.828V
+                850: 0x0128, # 0.851V
+                875: 0x0130, # 0.876V
+            },
+            (0x00FC, 0x00BE),
+        ) if self.getHwApi() >= HwApi(3) else ({
+                800: 0x019a, # 0.800V
+                825: 0x01a6, # 0.825V
+                850: 0x01b3, # 0.850V
+                875: 0x01c0, # 0.875V
+            },
+            (0x0170, 0x0116),
+        )
         vrm = VrmDetector([
             self.newComponent(Tps549D22, addr=addr, vouts={
                 800: 0x0175, # 0.804V
@@ -133,17 +148,7 @@ class PikeZ(FixedSystem):
                 850: 0x018C, # 0.854V
                 875: 0x0196, # 0.875V
             }),
-            self.newComponent(Sic450, addr=addr, vouts={
-                800: 0x0118, # 0.805V
-                825: 0x0120, # 0.828V
-                850: 0x0128, # 0.851V
-                875: 0x0130, # 0.876V
-            } if self.getHwApi() >= HwApi(3) else {
-                800: 0x019a, # 0.800V
-                825: 0x01a6, # 0.825V
-                850: 0x01b3, # 0.850V
-                875: 0x01c0, # 0.875V
-            }),
+            self.newComponent(Sic450, addr=addr, vouts=vouts, uvs=uvs)
         ])
 
         self.newComponent(Trident3X2, PciAddr(bus=1),
