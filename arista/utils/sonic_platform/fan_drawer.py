@@ -51,7 +51,7 @@ class FanDrawer(FanDrawerBase):
          return False
 
    def get_maximum_consumed_power(self):
-      return self._slot.getMaxPowerDraw()
+      return float(self._slot.getMaxPowerDraw())
 
    def get_position_in_parent(self):
       return self._slot.getId()
@@ -77,6 +77,9 @@ class FixedFanDrawer(FanDrawerBase):
    def get_model(self):
       return self._fan.get_model()
 
+   def get_presence(self):
+      return True
+
    def get_serial(self):
       return self._fan.get_serial()
 
@@ -101,7 +104,7 @@ class FixedFanDrawer(FanDrawerBase):
 
    def get_maximum_consumed_power(self):
       # TODO: report fan consumption information
-      return 0
+      return 0.
 
    def get_position_in_parent(self):
       return self._inv.getId()

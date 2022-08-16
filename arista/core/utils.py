@@ -325,6 +325,9 @@ class StoredData():
    def exist(self):
       return os.path.isfile(self.path)
 
+   def writable(self):
+      return os.access(self.path, os.W_OK)
+
    def write(self, data, mode=None):
       mode = mode or self.mode
       assert os.path.isdir(os.path.dirname(self.path)), \

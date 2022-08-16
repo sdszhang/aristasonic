@@ -18,10 +18,11 @@ class WatchdogState(object):
    def __init__(self, lastArmed=0, lastTimeout=0, localStorage=None):
       self.lastArmed = lastArmed
       self.lastTimeout = lastTimeout
-      if localStorage is None:
-         self.localStorage = None
-      else:
-         self.localStorage = JsonStoredData(localStorage, append=False)
+      if localStorage is not None:
+         localStorage = JsonStoredData(localStorage, append=False)
+         if not localStorage.writable():
+            localStorage = None
+      self.localStorage = localStorage
 
    def __call__(self, lastArmed=0, lastTimeout=0):
       self.lastArmed = lastArmed
@@ -30,12 +31,18 @@ class WatchdogState(object):
    def write(self):
       if self.localStorage is None or inSimulation():
          return
-      self.localStorage.writeObj(self)
+      try:
+         self.localStorage.writeObj(self)
+      except Exception:
+         logging.error("failed to write watchdog state to cache")
 
    def read(self):
       if self.localStorage is None or inSimulation():
          return
-      self.localStorage.readObj(self)
+      try:
+         self.localStorage.readObj(self)
+      except Exception:
+         logging.error("failed to read watchdog state from cache")
 
    def arm(self, timeout):
       self.lastTimeout = timeout
@@ -46,7 +53,7 @@ class WatchdogState(object):
       self.read()
 
       if self.lastArmed == 0:
-         return 0
+         return -1
 
       return int(100 * (monotonicRaw() - self.lastArmed))
 
@@ -80,6 +87,9 @@ class ScdWatchdog(Watchdog):
       if timeout > ScdWatchdog.MAX_TIMEOUT:
          logging.error("watchdog timeout %s exceeds max timeout %s",
                        timeout, ScdWatchdog.MAX_TIMEOUT)
+         return False
+      if timeout < 0:
+         logging.error("watchdog timeout %s must be positive", timeout)
          return False
       regValue = self.armReg(timeout)
       self.state.arm(timeout)
@@ -134,7 +144,7 @@ class ScdWatchdog(Watchdog):
             if timeout != self.state.lastTimeout:
                logging.warning('watchdog: hw (%s) and sw (%s) timeout mismatch',
                                timeout, self.state.lastTimeout)
-            remainingTime = 0 if elapsed == 0 else timeout - elapsed
+            remainingTime = 0 if elapsed < 0 else timeout - elapsed
 
          return {
             "enabled": enabled,
