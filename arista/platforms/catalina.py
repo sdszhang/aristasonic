@@ -1,4 +1,3 @@
-from ..core.hwapi import HwApi
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout

@@ -43,7 +43,7 @@ class FanDrawer(FanDrawerBase):
    def set_status_led(self, color):
       led = self._slot.getLed()
       if led is None:
-          return True
+         return True
       try:
          led.setColor(color)
          return True

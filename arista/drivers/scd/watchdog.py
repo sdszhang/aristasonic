@@ -33,7 +33,7 @@ class WatchdogState(object):
          return
       try:
          self.localStorage.writeObj(self)
-      except Exception:
+      except (IOError, OSError):
          logging.error("failed to write watchdog state to cache")
 
    def read(self):
@@ -41,7 +41,7 @@ class WatchdogState(object):
          return
       try:
          self.localStorage.readObj(self)
-      except Exception:
+      except (IOError, OSError):
          logging.error("failed to read watchdog state from cache")
 
    def arm(self, timeout):
