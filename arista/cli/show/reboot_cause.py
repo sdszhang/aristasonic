@@ -5,6 +5,9 @@ from ...core.cause import getReloadCauseManager, getLinecardReloadCauseManager
 
 from . import Renderer
 
+# This is a partially implemented abstract class, which pylint doesn't handle
+# correctly.
+# pylint: disable=abstract-method
 class ShowRebootCause(Renderer):
 
    NAME = 'reboot-cause'
@@ -42,7 +45,7 @@ class ShowPlatformRebootCause(ShowRebootCause):
 class ShowLinecardRebootCause(ShowRebootCause):
    def getData(self, show):
       lcdata = {}
-      for linecard, metadata in show.inventories:
+      for linecard, _ in show.inventories:
          rcm = getLinecardReloadCauseManager(linecard)
          lcdata[str(linecard)] = self._getData(show, rcm)
       return lcdata

@@ -295,8 +295,9 @@ def getReloadCauseManager(platform, read=False):
 
 def getLinecardReloadCauseManager(linecard, read=False):
    slotId = linecard.getSlotId()
-   rcm = ReloadCauseManager(name=linecard.getEeprom().get('SerialNumber'),
-                            path=flashPath(f'reboot-cause/platform/card{slotId}.json'))
+   rcm = ReloadCauseManager(
+      name=linecard.getEeprom().get('SerialNumber'),
+      path=flashPath(f'reboot-cause/platform/card{slotId}.json'))
    if read:
       rcm.readCauses(linecard.getInventory())
       rcm.storeCauses()
