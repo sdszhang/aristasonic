@@ -53,7 +53,7 @@ class Thermal(ThermalBase):
          self._minimum = value
       if self._maximum is None or self._maximum < value:
          self._maximum = value
-      return value
+      return value or 0.
 
    def get_low_threshold(self):
       try:
