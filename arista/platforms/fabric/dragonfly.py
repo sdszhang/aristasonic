@@ -2,6 +2,7 @@ from ...core.platform import registerPlatform
 
 from ...components.asic.dnx.ramon import Ramon
 from ...components.denali.desc import DenaliAsicDesc
+from ...components.plx import PlxPortDesc
 from ...components.tmp464 import Tmp464
 from ...descs.sensor import SensorDesc, Position
 
@@ -15,6 +16,13 @@ class Dragonfly(Eldridge):
    ASICS = [
       DenaliAsicDesc(cls=Ramon, asicId=0),
       DenaliAsicDesc(cls=Ramon, asicId=1),
+   ]
+
+   PLX_PORTS = [
+      PlxPortDesc(port=0, name='sup1', upstream=True),
+      PlxPortDesc(port=1, name='ramon0'),
+      PlxPortDesc(port=2, name='sup2', upstream=True),
+      PlxPortDesc(port=3, name='ramon1'),
    ]
 
    def createStandbySensors(self):

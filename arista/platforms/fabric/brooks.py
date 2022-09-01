@@ -7,10 +7,10 @@ from ...components.tmp464 import Tmp464
 
 from ...descs.sensor import SensorDesc, Position
 
-from .eldridge import Eldridge
+from .dragonfly import Dragonfly
 
 @registerPlatform()
-class Brooks(Eldridge):
+class Brooks(Dragonfly):
    SID = ['Brooks']
    SKU = ['DCS-7804-FM']
 
