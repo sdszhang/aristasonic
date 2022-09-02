@@ -174,16 +174,18 @@ class GenericSysfs(object):
 class GenericSysfsImpl(GenericSysfs):
 
    SCALE_FACTOR = 1000.
+   RATED = False
 
    def __init__(self, driver, desc, prefix=None, **kwargs):
       self.prefix = prefix or '%s%s' % (self.SYSFS_PREFIX, desc.__getoid__())
       self.driver = driver
       self.desc = desc
       scale = self.SCALE_FACTOR
+      tprefix = '%s%s' % (self.prefix,'_rated' if self.RATED else '')
       self.label = SysfsEntry(self, '%s_label' % self.prefix)
       self.input = SysfsEntryFloat(self, '%s_input' % self.prefix, scale=scale)
-      self.max = SysfsEntryFloat(self, '%s_max' % self.prefix, scale=scale)
-      self.min = SysfsEntryFloat(self, '%s_min' % self.prefix, scale=scale)
+      self.max = SysfsEntryFloat(self, '%s_max' % tprefix, scale=scale)
+      self.min = SysfsEntryFloat(self, '%s_min' % tprefix, scale=scale)
       self.crit = SysfsEntryFloat(self, '%s_crit' % self.prefix, scale=scale)
       self.lcrit = SysfsEntryFloat(self, '%s_lcrit' % self.prefix, scale=scale)
       self.__dict__.update(**kwargs)
@@ -538,6 +540,7 @@ class VoltageSysfsImpl(GenericSysfsImpl):
    DESC_CLS = VoltageDesc
    DESC_NAME = 'voltages'
    SYSFS_PREFIX = 'in'
+   RATED = True
 
    def getVoltage(self):
       return self.getInput()
@@ -547,6 +550,7 @@ class CurrentSysfsImpl(GenericSysfsImpl):
    DESC_CLS = CurrentDesc
    DESC_NAME = 'currents'
    SYSFS_PREFIX = 'curr'
+   RATED = True
 
    def getCurrent(self):
       return self.getInput()
@@ -557,6 +561,7 @@ class PowerSysfsImpl(GenericSysfsImpl):
    DESC_NAME = 'powers'
    SYSFS_PREFIX = 'power'
    SCALE_FACTOR = 1000000. # uW
+   RATED = True
 
    def getPower(self):
       return self.getInput()
