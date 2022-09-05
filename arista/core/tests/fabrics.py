@@ -6,7 +6,6 @@ from ...tests.logging import getLogger
 
 from ...components.denali.card import DenaliFabricSlot
 from ...components.denali.fabric import DenaliFabric
-from ...components.scd import Scd
 from ...core.fabric import Fabric
 
 from ..card import CardSlot
@@ -25,9 +24,8 @@ class FabricTest(unittest.TestCase):
    def createFabric(self, cls):
       if issubclass(cls, DenaliFabric):
          sup = MockSupervisor()
-         pci = sup.cpu.pciRoot.rootPort(bus=0x01)
-         scd = Scd(addr=sup.cpu.pciRoot.rootPort(bus=0x02).addr)
-         bus = scd.getSmbus(0x03)
+         pci = sup.getPciPort(0x01)
+         bus = sup.getSmbus(0x02)
          slotId = DenaliFabric.ABSOLUTE_CARD_OFFSET
          slot = DenaliFabricSlot(sup, slotId, pci, bus)
       else:

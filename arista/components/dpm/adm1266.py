@@ -11,6 +11,8 @@ from ...core.utils import inSimulation
 
 from ...drivers.dpm.adm1266 import Adm1266UserDriver
 
+from ...inventory.programmable import Programmable
+
 from ...libs.date import datetimeToStr
 from ...libs.retry import retryGet
 
@@ -45,6 +47,19 @@ class AdmReloadCauseProvider(ReloadCauseProviderHelper):
          'powerup': retryGet(self.adm.getPowerupCounter, wait=0.2, before=True),
       }
 
+class AdmProgrammable(Programmable):
+   def __init__(self, adm):
+      self.adm = adm
+
+   def getComponent(self):
+      return self.adm
+
+   def getDescription(self):
+      return 'Power Sequencer and Manager'
+
+   def getVersion(self):
+      return self.adm.getVersion()
+
 class Adm1266(PmbusDpm):
 
    DRIVER = Adm1266UserDriver
@@ -67,6 +82,7 @@ class Adm1266(PmbusDpm):
       super().__init__(addr=addr, **kwargs)
       self.causes = causes
       self.inventory.addReloadCauseProvider(AdmReloadCauseProvider(self))
+      self.inventory.addProgrammable(AdmProgrammable(self))
 
    def getPowerupCounter(self):
       return self.driver.getPowerupCounter()

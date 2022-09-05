@@ -14,6 +14,8 @@ from ...core.log import getLogger
 
 from ...drivers.dpm.ucd import UcdUserDriver
 
+from ...inventory.programmable import Programmable
+
 from ...libs.date import datetimeToStr
 from ...libs.integer import iterBits, listToIntLsb
 
@@ -69,14 +71,27 @@ class UcdFaultDesc():
       return '%s on rail %s' % (self.description, page)
 
 class UcdFaultRegister():
-    def __init__(self, np=1, gpi=1, fan=2, pages=9):
-        self.np = np
-        self.gpi = gpi
-        self.fan = fan
-        self.pages = pages
+   def __init__(self, np=1, gpi=1, fan=2, pages=9):
+      self.np = np
+      self.gpi = gpi
+      self.fan = fan
+      self.pages = pages
 
-    def parse(self, reg):
-        return UcdFaultRegister()
+   def parse(self, reg):
+      return UcdFaultRegister()
+
+class UcdProgrammable(Programmable):
+   def __init__(self, ucd):
+      self.ucd = ucd
+
+   def getComponent(self):
+      return self.ucd
+
+   def getDescription(self):
+      return 'Power Sequencer and Manager'
+
+   def getVersion(self):
+      return self.ucd.getVersion()
 
 class Ucd(PmbusDpm):
 
@@ -123,6 +138,7 @@ class Ucd(PmbusDpm):
       self.causes = self._buildCauses(causes)
       self.oldestTime = datetime.datetime(1970, 1, 1)
       self.inventory.addReloadCauseProvider(UcdReloadCauseProvider(self))
+      self.inventory.addProgrammable(UcdProgrammable(self))
 
    def _buildCauses(self, causes):
       if causes is None:

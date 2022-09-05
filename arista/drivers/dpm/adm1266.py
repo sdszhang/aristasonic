@@ -4,7 +4,7 @@ import struct
 import time
 
 from ...core.log import getLogger
-from ...core.utils import incrange
+from ...core.utils import incrange, inSimulation
 
 from ...libs.date import epochToDatetime
 from ...libs.retry import retryGet
@@ -126,6 +126,8 @@ class Adm1266UserDriver(PmbusUserDriver):
       return self.read_bytes_str([reg, 32], 33).strip()
 
    def getVersion(self):
+      if inSimulation():
+         return "MODEL VERSION DATE SERIAL FW"
       model = self._readMfrStr(self.registers.MFR_MODEL)
       version = self._readMfrStr(self.registers.MFR_REVISION)
       date = self._readMfrStr(self.registers.MFR_DATE)

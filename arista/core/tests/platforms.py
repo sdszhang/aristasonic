@@ -12,6 +12,7 @@ from ...drivers.scd.driver import ScdKernelDriver
 
 from ...inventory.fan import Fan, FanSlot
 from ...inventory.led import Led
+from ...inventory.programmable import Programmable
 from ...inventory.psu import Psu, PsuSlot
 from ...inventory.reset import Reset
 from ...inventory.temp import Temp
@@ -23,6 +24,7 @@ from ...inventory.xcvr import (
    XcvrSlot
 )
 from .. import utils
+from ..component import Component
 from ..config import Config
 from ..driver import Driver
 from ..driver.kernel.sysfs import SysfsEntry, GpioSysfsImpl
@@ -346,6 +348,21 @@ class MockPlatformTest(unittest.TestCase):
          self.logger.info('Testing components priority for platform %s', name)
          for component in platform().iterComponents():
             _testSubcomponentPriority(component)
+
+   def _testProgrammable(self, prog):
+      self.assertIsInstance(prog, Programmable)
+      self.assertIsInstance(prog.getComponent(), Component)
+      self.assertIsInstance(prog.getDescription(), str)
+      self.assertIsNotNone(prog.getVersion())
+
+   def testProgrammables(self):
+      for name, platform in getPlatformSkus().items():
+         if not issubclass(platform, FixedSystem):
+            continue
+         inventory = platform().getInventory()
+         self.logger.info('Testing programmables for platform %s', name)
+         for programmable in inventory.getProgrammables():
+            self._testProgrammable(programmable)
 
 class MockPlatformMetaTest(MockPlatformTest):
    def setUp(self):

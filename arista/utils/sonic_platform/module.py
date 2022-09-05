@@ -6,6 +6,7 @@ try:
    from arista.core.onie import OnieEeprom
    from arista.libs.ping import ping
    from arista.utils.sonic_platform.common import getGlobalRpcClient
+   from arista.utils.sonic_platform.component import Component
    from arista.utils.sonic_platform.fan import Fan
    from arista.utils.sonic_platform.thermal import Thermal
    from sonic_platform_base.module_base import ModuleBase
@@ -31,6 +32,9 @@ class Module(ModuleBase):
       for index, thermal in enumerate(self._inventory.getTemps()):
          self._thermal_list.append(Thermal(index + 1, thermal))
       # TODO: Add Xcvrs? Only linecards have access to them
+
+      for programmable in self._inventory.getProgrammables():
+         self._component_list.append(Component(programmable))
 
    def get_presence(self):
       return self._sku.getPresence()

@@ -81,11 +81,14 @@ class DenaliCard(Card):
                                            driverMode='user')
       self.eeprom = self.pca.newComponent(At24C512, addr=self.pca.i2cAddr(0x50),
                                           label='card_%d' % self.slot.slotId)
-      self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11))
       self.createGpio1()
       if self.gpio1 is not None:
          self.gpio1.addRedGreenGpioLed('status', 'statusRed', 'statusGreen')
-      self.createPlx(parent=self.main)
+
+      if self.isDetected():
+         self.standbyUcd = self.pca.newComponent(Ucd90320,
+                                                 addr=self.pca.i2cAddr(0x11))
+         self.createPlx(parent=self.main)
 
    def standbyDomain(self):
       pass

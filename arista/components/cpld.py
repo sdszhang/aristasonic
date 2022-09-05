@@ -25,19 +25,20 @@ from ..descs.cause import ReloadCauseDesc
 from ..drivers.cpld import SysCpldI2cDriver
 
 from ..inventory.powercycle import PowerCycle
+from ..inventory.programmable import Programmable
 
 from ..libs.date import datetimeToStr
 
 logging = getLogger(__name__)
 
 class SysCpldCommonRegisters(RegisterMap):
+   MINOR = Register(0x00, name='revisionMinor')
    REVISION = Register(0x01, name='revision')
    SCRATCHPAD = Register(0x02, name='scratchpad', ro=False)
    SUICIDE = Register(0x03, name='suicide', ro=False)
    POWER_CYCLE = Register(0x04, name='powerCycle', ro=False)
 
 class SysCpldCommonRegistersV2(SysCpldCommonRegisters):
-   MINOR = Register(0x00, name='revisionMinor')
    PWR_CTRL_STS = Register(0x05,
       RegBitField(7, 'dpPower', ro=False),
       RegBitField(0, 'switchCardPowerGood'),
@@ -77,6 +78,19 @@ class SysCpldPowerCycle(PowerCycle):
       logging.info("Initiating powercycle through CPLD")
       self.parent.driver.regs.powerCycle(0xDE)
       logging.info("Powercycle triggered from CPLD")
+
+class SysCpldProgrammable(Programmable):
+   def __init__(self, cpld):
+      self.cpld = cpld
+
+   def getComponent(self):
+      return self.cpld
+
+   def getDescription(self):
+      return 'System CPLD'
+
+   def getVersion(self):
+      return self.cpld.getVersion()
 
 class SysCpldCause(ReloadCauseDesc):
    pass
@@ -173,6 +187,17 @@ class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
 class SysCpld(I2cComponent):
    DRIVER = SysCpldI2cDriver
    PRIORITY = Priority.DEFAULT
+
+   def __init__(self, *args, **kwargs):
+      super(SysCpld, self).__init__(*args, **kwargs)
+      self.inventory.addProgrammable(SysCpldProgrammable(self))
+
+   def getVersion(self):
+      if inSimulation():
+         return '4.2'
+      major = self.driver.regs.revision()
+      minor = self.driver.regs.revisionMinor()
+      return f'{major:x}.{minor:x}'
 
    def addPowerCycle(self):
       return self.inventory.addPowerCycle(SysCpldPowerCycle(self))

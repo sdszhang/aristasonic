@@ -26,9 +26,8 @@ class LinecardTest(unittest.TestCase):
    def createLinecard(self, cls):
       if issubclass(cls, DenaliLinecard):
          sup = MockSupervisor()
-         pci = sup.cpu.pciRoot.rootPort(bus=0x01)
-         scd = Scd(addr=sup.cpu.pciRoot.rootPort(bus=0x02).addr)
-         bus = scd.getSmbus(0x03)
+         pci = sup.getPciPort(0x01)
+         bus = sup.getSmbus(0x03)
          slotId = DenaliLinecard.ABSOLUTE_CARD_OFFSET
          slot = DenaliLinecardSlot(sup, slotId, pci, bus)
       else:

@@ -79,6 +79,9 @@ class Card(Sku):
       self.main.setup()
       self.main.finish(filters)
 
+   def isDetected(self):
+      return bool(self.SID) or bool(self.SKU)
+
    def __str__(self):
       if self.slot.parent is self:
          return '%s()' % self.__class__.__name__

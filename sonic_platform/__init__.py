@@ -7,6 +7,7 @@ __path__ = [
 # import all modules since some tools expects it
 from . import (
    chassis,
+   component,
    fan,
    fan_drawer,
    module,

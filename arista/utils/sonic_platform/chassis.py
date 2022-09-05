@@ -17,6 +17,7 @@ try:
    from arista.core.platform import getPlatform, readPrefdl
    from arista.core.supervisor import Supervisor
    from arista.core.linecard import Linecard
+   from arista.utils.sonic_platform.component import Component
    from arista.utils.sonic_platform.eeprom import Eeprom
    from arista.utils.sonic_platform.fan_drawer import (
       FanDrawer,
@@ -94,6 +95,8 @@ class Chassis(ChassisBase):
       else:
          for slot in self._inventory.getPsuSlots():
             self._psu_list.append(Psu(slot))
+         for programmable in self._inventory.getProgrammables():
+            self._component_list.append(Component(programmable))
 
       if self._inventory.getFanSlots():
          for slot in self._inventory.getFanSlots():

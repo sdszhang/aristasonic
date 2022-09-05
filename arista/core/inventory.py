@@ -48,6 +48,8 @@ class Inventory():
 
       self.causeProviders = []
 
+      self.programmables = []
+
    def getXcvrs(self):
       xcvrs = {}
       xcvrs.update(self.getEthernets())
@@ -317,6 +319,12 @@ class Inventory():
    def getRails(self):
       return self.rails
 
+   def addProgrammable(self, programmable):
+      self.programmables.append(programmable)
+
+   def getProgrammables(self):
+      return self.programmables
+
    def addReloadCauseProvider(self, provider):
       self.causeProviders.append(provider)
 
@@ -347,4 +355,5 @@ class Inventory():
          "slot" : [s.genDiag(ctx) for s in self.slots],
          "temps" : [t.genDiag(ctx) for t in self.temps],
          "gpios" : [g.genDiag(ctx) for g in self.gpios.values()],
+         "programmables" : [c.genDiag(ctx) for c in self.programmables],
       }

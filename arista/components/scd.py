@@ -41,6 +41,7 @@ from ..descs.reset import ResetDesc
 
 from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
 from ..drivers.scd.watchdog import ScdWatchdog
+from ..drivers.scd.programmable import ScdProgrammable
 
 from ..inventory.interrupt import Interrupt
 from ..inventory.powercycle import PowerCycle
@@ -228,6 +229,7 @@ class ScdSmbus():
    def i2cAddr(self, addr):
       return self.scd.i2cAddr(self.bus, addr)
 
+
 class Scd(PciComponent):
    BusTweak = namedtuple('BusTweak', 'addr, t, datr, datw, ed')
    def __init__(self, addr, registerCls=None, **kwargs):
@@ -256,6 +258,7 @@ class Scd(PciComponent):
       self.uartPorts = {}
       super().__init__(addr=addr, drivers=drivers, **kwargs)
       self.regs = self.drivers['scd-hwmon'].regs
+      self.inventory.addProgrammable(ScdProgrammable(self))
 
    def __str__(self):
       return '%s()' % self.__class__.__name__
@@ -296,6 +299,12 @@ class Scd(PciComponent):
             FileWaiter(path, 5).waitFileReady()
          self.mmapReady = True
       return MmapResource(path)
+
+   def getVersion(self):
+      if inSimulation():
+         return hex(0x420001)
+      with self.getMmap() as mm:
+         return hex(mm.read32(0x100))
 
    def i2cAddr(self, bus, addr, t=1, datr=3, datw=3, ed=0, block=True):
       i2cAddr = ScdI2cAddr(self, bus, addr, block=block)
