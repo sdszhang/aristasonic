@@ -76,11 +76,11 @@ class PlxPexI2cCommand(object):
 
    # 4-byte bsel-masked data => 8/16/32-bit read val
    def rdval(self, data):
-      r32 = sum([
+      r32 = sum((
          data[3 - i] << (i * 8)
          for i in range(0, 4)
          if (self.bsel & (1 << i))
-      ])
+      ))
       return r32 >> (first_bit(self.bsel) * 8)
 
    @property
