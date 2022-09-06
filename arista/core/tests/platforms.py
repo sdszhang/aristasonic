@@ -29,7 +29,9 @@ from ..config import Config
 from ..driver import Driver
 from ..driver.kernel.sysfs import SysfsEntry, GpioSysfsImpl
 from ..fixed import FixedSystem
+from ..hwapi import HwApi
 from ..platform import getPlatformSkus
+from ..sku import Sku
 from ..types import I2cAddr
 
 from ... import platforms as _
@@ -95,11 +97,18 @@ def mock_maybeCreatePath(self, dirPath):
 def mock_setRawValue(self, value):
    assert value is not None
 
+def mock_getHwApi(self):
+   return HwApi(1)
+
+def _assertIo(*args, **kwargs):
+   assert False, "Forbidden IO operation in constructor"
+
 @patch('arista.drivers.scd.driver.i2cBusFromName', mock_i2cBusFromName)
 @patch('arista.core.utils.inSimulation', mock_inSimulation)
 @patch('arista.core.utils.locateHwmonFolder', mock_locateHwmonFolder)
 @patch('arista.core.utils.locateHwmonPath', mock_locateHwmonPath)
 @patch('arista.core.utils.writeConfig', mock_writeConfig)
+@patch.object(Sku, 'getHwApi', mock_getHwApi)
 @patch.object(ScdInterruptRegister, 'readReg', mock_readReg)
 @patch.object(ScdInterruptRegister, 'setup', mock_return)
 @patch.object(ScdKernelDriver, 'finish', mock_return)
@@ -126,6 +135,15 @@ class MockPlatformTest(unittest.TestCase):
       self.assertIsInstance(led.getName(), str)
       self.assertIsInstance(led.getColor(), str) # TODO: match supported colors
       self.assertIsInstance(led.isStatusLed(), bool)
+
+   @patch.object(SysfsEntry, '_read', _assertIo)
+   @patch.object(SysfsEntry, '_write', _assertIo)
+   def testConstructorIo(self):
+      for name, platform in getPlatformSkus().items():
+         if not issubclass(platform, FixedSystem):
+            continue
+         self.logger.info('Testing constructor for platform %s', name)
+         platform()
 
    def testSetup(self):
       for name, platform in getPlatformSkus().items():
