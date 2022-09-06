@@ -87,6 +87,7 @@ class DPS1600AB(DeltaPsu):
    ]
 
 class DPS1600CB(DeltaPsu):
+   DRIVER = 'dps800'
    CAPACITY = 1600
    DESCRIPTION = psuDescHelper(
       sensors=[
