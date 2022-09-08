@@ -42,7 +42,7 @@ class Psu(PsuBase):
       if self.psu is None:
           return None
       rails = self.psu.psu.getInventory().getRails()
-      return rails[0] if rails else None
+      return rails[1] if rails else None
 
    def get_id(self):
       return self._slot.getId()

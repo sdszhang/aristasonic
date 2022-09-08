@@ -1,4 +1,3 @@
-from __future__ import division, print_function, with_statement
 
 from collections import defaultdict
 import os
@@ -11,7 +10,13 @@ from ...log import getLogger
 
 from ....descs.fan import FanDesc
 from ....descs.led import LedColor
-from ....descs.rail import CurrentDesc, PowerDesc, RailDesc, VoltageDesc
+from ....descs.rail import (
+   CurrentDesc,
+   PowerDesc,
+   RailDesc,
+   RailDirection,
+   VoltageDesc,
+)
 from ....descs.sensor import SensorDesc
 
 from ....inventory.fan import Fan
@@ -24,15 +29,31 @@ from ....inventory.temp import Temp
 logging = getLogger(__name__)
 
 class SysfsEntry(object):
-   def __init__(self, parent, name, pathCallback=None):
+   def __init__(self, parent, name, prefix=None, pathCallback=None):
       self.parent = parent
       self.driver = parent.driver
-      self.name = name
+      self.baseName_ = name
+      self.name_ = None
+      self.prefix_ = prefix
       self.pathCallback = pathCallback or self.driver.getHwmonEntry
       self.entryPath_ = None
 
    def __str__(self):
       return '%s(path=%s)' % (self.__class__.__name__, self.entryPath)
+
+   @property
+   def prefix(self):
+      if self.prefix_ is None:
+         return ''
+      if isinstance(self.prefix_, str):
+         return self.prefix_
+      return self.prefix_()
+
+   @property
+   def name(self):
+      if self.name_ is None:
+         self.name_ = '%s%s' % (self.prefix, self.baseName_)
+      return self.name_
 
    @property
    def entryPath(self):
@@ -180,14 +201,15 @@ class GenericSysfsImpl(GenericSysfs):
       self.prefix = prefix or '%s%s' % (self.SYSFS_PREFIX, desc.__getoid__())
       self.driver = driver
       self.desc = desc
-      scale = self.SCALE_FACTOR
-      tprefix = '%s%s' % (self.prefix,'_rated' if self.RATED else '')
-      self.label = SysfsEntry(self, '%s_label' % self.prefix)
-      self.input = SysfsEntryFloat(self, '%s_input' % self.prefix, scale=scale)
-      self.max = SysfsEntryFloat(self, '%s_max' % tprefix, scale=scale)
-      self.min = SysfsEntryFloat(self, '%s_min' % tprefix, scale=scale)
-      self.crit = SysfsEntryFloat(self, '%s_crit' % self.prefix, scale=scale)
-      self.lcrit = SysfsEntryFloat(self, '%s_lcrit' % self.prefix, scale=scale)
+      s = self.SCALE_FACTOR
+      r = 'rated_' if self.RATED else ''
+      p = self.prefix
+      self.label = SysfsEntry(self, 'label', prefix=p)
+      self.input = SysfsEntryFloat(self, 'input', prefix=p, scale=s)
+      self.max = SysfsEntryFloat(self, '%smax' % r, prefix=p, scale=s)
+      self.min = SysfsEntryFloat(self, '%smin' % r, prefix=p, scale=s)
+      self.crit = SysfsEntryFloat(self, 'crit', prefix=p, scale=s)
+      self.lcrit = SysfsEntryFloat(self, 'lcrit', prefix=p, scale=s)
       self.__dict__.update(**kwargs)
 
    def _getOr(self, entry, *defaults):
@@ -535,32 +557,52 @@ class GpioSysfsImpl(Gpio):
    def setActive(self, value):
       self.setRawValue(not value if self.isActiveLow() else value)
 
-class VoltageSysfsImpl(GenericSysfsImpl):
+class LabelSysfsImpl(GenericSysfsImpl):
+   def getExpectedLabel(self):
+      if self.desc.direction == RailDirection.INPUT:
+         return '%s%s' % (self.LABEL_PREFIX, 'in')
+      return '%s%s%s' % (self.LABEL_PREFIX, 'out', self.desc.__getoid__())
+
+   def getPrefixFromLabel(self):
+      label = self.getExpectedLabel()
+      for entry in os.listdir(self.driver.getHwmonPath()):
+         if entry.startswith(self.SYSFS_PREFIX) and entry.endswith('_label'):
+            if SysfsEntry(self, entry).read() == label:
+               return entry[:entry.find('_') + 1]
+      raise FileNotFoundError('Could not find label for %s' % label)
+
+   def __init__(self, driver, desc, prefix=None, **kwargs):
+      super().__init__(driver, desc, prefix=self.getPrefixFromLabel, **kwargs)
+
+class VoltageSysfsImpl(LabelSysfsImpl):
 
    DESC_CLS = VoltageDesc
    DESC_NAME = 'voltages'
    SYSFS_PREFIX = 'in'
+   LABEL_PREFIX = 'v'
    RATED = True
 
    def getVoltage(self):
       return self.getInput()
 
-class CurrentSysfsImpl(GenericSysfsImpl):
+class CurrentSysfsImpl(LabelSysfsImpl):
 
    DESC_CLS = CurrentDesc
    DESC_NAME = 'currents'
    SYSFS_PREFIX = 'curr'
+   LABEL_PREFIX = 'i'
    RATED = True
 
    def getCurrent(self):
       return self.getInput()
 
-class PowerSysfsImpl(GenericSysfsImpl):
+class PowerSysfsImpl(LabelSysfsImpl):
 
    DESC_CLS = PowerDesc
    DESC_NAME = 'powers'
    SYSFS_PREFIX = 'power'
    SCALE_FACTOR = 1000000. # uW
+   LABEL_PREFIX = 'p'
    RATED = True
 
    def getPower(self):

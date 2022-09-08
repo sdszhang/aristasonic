@@ -6,6 +6,7 @@ from ...descs.sensor import Position, SensorDesc
 
 def psuDescHelper(hasFans=True, maxRpm=None, minRpm=None,
                   inputRailId=1, inputMaxVoltage=None, inputMinVoltage=None,
+                  outputRailId=1, outputMaxVoltage=None, outputMinVoltage=None,
                   sensors=None):
    fans = [
       FanDesc(
@@ -17,14 +18,21 @@ def psuDescHelper(hasFans=True, maxRpm=None, minRpm=None,
       )
    ] if hasFans else []
 
-   rails=[
-      RailDesc(
+   rails = []
+   if inputRailId is not None:
+      rails.append(RailDesc(
          railId=inputRailId,
          direction=RailDirection.INPUT,
          maxVoltage=inputMaxVoltage,
          minVoltage=inputMinVoltage,
-      )
-   ] if inputRailId is not None else []
+      ))
+   if outputRailId is not None:
+      rails.append(RailDesc(
+         railId=outputRailId,
+         direction=RailDirection.OUTPUT,
+         maxVoltage=outputMaxVoltage,
+         minVoltage=outputMinVoltage,
+      ))
 
    sensors = sensors or []
    sensors=[
