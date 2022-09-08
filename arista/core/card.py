@@ -18,6 +18,7 @@ class Card(Sku):
    def __init__(self, slot=None, standbyOnly=False, noStandby=False, **kwargs):
       self.slot = slot
       self.standby = None
+      self.control = None
       self.main = None
       self.cpu = None
       super(Card, self).__init__(inventory=Inventory(), **kwargs)
@@ -71,6 +72,10 @@ class Card(Sku):
    def setupStandby(self, filters=Priority.defaultFilter):
       self.standby.setup()
       self.standby.finish(filters)
+
+   def setupControlPlane(self, filters=Priority.defaultFilter):
+      self.control.setup()
+      self.control.finish(filters)
 
    def setupMain(self, filters=Priority.defaultFilter):
       self.main.setup()

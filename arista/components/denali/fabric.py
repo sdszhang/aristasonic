@@ -46,10 +46,12 @@ class DenaliFabric(DenaliFabricBase):
          self.asics.append(asic)
 
    def powerStandbyDomainIs(self, on):
+      assert self.gpio1, "gpio1 is not created yet."
+
+   def powerControlDomainIs(self, on):
       '''Turn on card Ecbs and fan Ecbs. On Denali fabric, we expect
          Dpms will then be turned on as well as Pols by hardware. So no need to
          do anything with Dpm. When all is done, power good is asserted.'''
-      assert self.gpio1, "gpio1 is not created yet."
       if on:
          self.gpio1.ecbOn(True)
          waitFor(self.gpio1.powerGood, "card to turn on",
@@ -58,3 +60,9 @@ class DenaliFabric(DenaliFabricBase):
          self.gpio1.ecbOn(False)
          # NOTE: Disabling power good check for Dragonfly
          # waitFor(lambda: (not self.gpio1.powerGood()), "cart to turn off" )
+
+   def controlPlaneOn(self):
+      return self.dataPlaneOn()
+
+   def dataPlaneOn(self):
+      return self.gpio1.powerGood()

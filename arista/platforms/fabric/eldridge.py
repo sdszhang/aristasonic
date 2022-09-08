@@ -148,5 +148,4 @@ class Eldridge(DenaliFabric):
          self.gpio2.polSmbusEnable(True)
 
    def createStandbyDpm(self):
-      self.standbyUcd = self.pca.newComponent(Ucd90320,
-                                              addr=self.pca.i2cAddr(0x11))
+      self.control.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11))

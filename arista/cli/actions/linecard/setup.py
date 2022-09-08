@@ -35,6 +35,12 @@ def setupLinecard(linecard, args, lcpu):
       if linecard.poweredOn() and args.powerCycleIfOn:
          linecard.powerOnIs(False, lcpuCtx=lcpuCtx)
       linecard.powerOnIs(True, lcpuCtx=lcpuCtx)
+
+      if args.early or not args.late:
+         linecard.setupControlPlane(Priority.defaultFilter)
+      if args.late or not args.early:
+         linecard.setupControlPlane(Priority.backgroundFilter)
+
       if not lcpu:
          if args.early or not args.late:
             linecard.setupMain(Priority.defaultFilter)

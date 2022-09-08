@@ -75,12 +75,22 @@ class DenaliLinecard(DenaliLinecardBase):
          pass
       return False
 
+   def controlPlaneOn(self):
+      return self.gpio1.cpEcbOn()
+
+   def dataPlaneOn(self):
+      return self.gpio1.dpEcbOn()
+
    def powerStandbyDomainOn(self, cycle=False):
       if not self.gpio1.standbyPowerGood() or cycle:
          logging.debug('%s: power cycling standby', self)
          self.gpio1.powerCycle(True)
          waitFor(self.waitForStandbyPowerOn, "standby power good")
 
+   def powerStandbyDomainOff(self):
+      pass
+
+   def powerControlDomainOn(self):
       self.gpio1.cpEcbOn(True)
       time.sleep(0.2)
       self.gpio1.dpEcbOn(True)
@@ -90,7 +100,7 @@ class DenaliLinecard(DenaliLinecardBase):
       waitFor(self.poweredOn, "card to turn on",
               wait=2000, interval=100)
 
-   def powerStandbyDomainOff(self):
+   def powerControlDomainOff(self):
       self.gpio1.dpEcbOn(False)
       self.gpio1.cpEcbOn(False)
       self.gpio1.scdReset(True)
@@ -98,9 +108,6 @@ class DenaliLinecard(DenaliLinecardBase):
       waitFor(lambda: (not self.poweredOn()), "card to turn off")
 
    def powerStandbyDomainIs(self, on):
-      '''Turn on card Ecbs. On Denali linecard, we expect
-         Dpms will then be turned on as well as Pols by hardware. So no need to
-         do anything with Dpm. When all is done, power good is asserted.'''
       assert self.gpio1, "gpio1 is not created yet."
       if on:
          for i in range(3):
@@ -108,13 +115,28 @@ class DenaliLinecard(DenaliLinecardBase):
                self.powerStandbyDomainOn(cycle=i > 0)
                return
             except Exception: # pylint: broad-except
-               logging.exception('%s: issue when trying to power on', self)
+               logging.exception('%s: failed to power standby on', self)
       else:
          try:
             self.powerStandbyDomainOff()
             return
          except Exception: # pylint: broad-except
-            logging.exception('%s: issue when trying to power off', self)
+            logging.exception('%s: failed to power standby off', self)
+
+   def powerControlDomainIs(self, on):
+      '''Turn on card Ecbs. On Denali linecard, we expect
+         Dpms will then be turned on as well as Pols by hardware. So no need to
+         do anything with Dpm. When all is done, power good is asserted.'''
+      if on:
+         try:
+            self.powerControlDomainOn()
+         except Exception:
+            logging.exception('%s: failed to power control plane on', self)
+      else:
+         try:
+            self.powerControlDomainOff()
+         except Exception:
+            logging.exception('%s: failed to power control plane off', self)
 
    def populateSramFromPrefdl(self):
       sramContent = SramContent()

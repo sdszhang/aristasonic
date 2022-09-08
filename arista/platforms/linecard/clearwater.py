@@ -121,8 +121,7 @@ class ClearwaterBase(DenaliLinecard):
                                           registerCls=GpioRegisterMap)
 
    def createStandbyDpm(self):
-      self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11),
-                                              causes=[
+      self.control.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11), causes=[
          UcdGpi(4, 'hotswap', 'lc eject'),
          UcdGpi(5, 'asic-overtemp'),
          UcdGpi(6, 'overtemp', 'system'),

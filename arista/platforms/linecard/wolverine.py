@@ -86,8 +86,7 @@ class Wolverine(DenaliLinecard):
                                          registerCls=GpioRegisterMap)
 
    def createStandbyDpm(self):
-      self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11),
-                                              causes=[
+      self.control.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11), causes=[
          UcdGpi(1, 'powerloss'),
          UcdGpi(5, 'asic-overtemp', 'asic'),
          UcdGpi(6, 'reboot'),

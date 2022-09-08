@@ -5,6 +5,7 @@ import copy
 import time
 
 from ...core.card import Card, CardSlot
+from ...core.domain import PowerDomain
 from ...core.fabric import Fabric
 from ...core.linecard import Linecard
 from ...core.log import getLogger
@@ -16,7 +17,6 @@ from ...libs.wait import waitFor
 from ..eeprom import At24C512
 from ..pca9541 import Pca9541
 from ..plx import PlxPex8700
-from ..power import PowerDomain
 
 logging = getLogger(__name__)
 
@@ -29,7 +29,6 @@ class DenaliCard(Card):
       self.scd = None
       self.pca = None
       self.eeprom = None
-      self.standbyUcd = None
       self.plx = None
       self.asics = []
       self.gpio1 = None
@@ -69,16 +68,21 @@ class DenaliCard(Card):
    def createScd(self):
       self.scd = None
 
+   def controlPlaneOn(self):
+      return False
+
+   def dataPlaneOn(self):
+      return False
+
    def createStandbyDpm(self):
       '''Override in child classes if a linecard has a standby DPM.'''
-      self.standbyUcd = None
+      pass
 
    def standbyCommon(self):
       '''Define Mux, Prefdl eeprom, Gpio1, Dpm, Pols, Temp sensors,
          and Fans...
       '''
       self.standby = self.newComponent(PowerDomain)
-      self.main = self.newComponent(PowerDomain)
 
       self.pca = self.standby.newComponent(Pca9541, addr=self.slot.bus.i2cAddr(0x77),
                                            driverMode='user')
@@ -88,19 +92,25 @@ class DenaliCard(Card):
       if self.gpio1 is not None:
          self.gpio1.addRedGreenGpioLed('status', 'statusRed', 'statusGreen')
 
-      if self.isDetected():
-         self.createStandbyDpm()
-         self.createPlx(parent=self.main)
-
    def standbyDomain(self):
       pass
 
    def mainDomain(self):
       pass
 
+   def controlDomain(self):
+      assert self.control is None
+      assert self.main is None
+      self.control = self.newComponent(PowerDomain, enabled=self.controlPlaneOn)
+      self.main = self.newComponent(PowerDomain, enabled=self.dataPlaneOn)
+      self.createStandbyDpm()
+      self.createPlx(parent=self.main)
+
    def loadStandbyDomain(self):
       self.standbyCommon()
       self.standbyDomain()
+      if self.isDetected():
+         self.controlDomain()
 
    def loadMainDomain(self):
       self.createScd()
@@ -117,10 +127,13 @@ class DenaliCard(Card):
          self.loadMainDomain()
 
    def powerStandbyDomainIs(self, on):
-      raise NotImplementedError()
+      raise NotImplementedError
+
+   def powerControlDomainIs(self, on):
+      raise NotImplementedError
 
    def powerLcpuIs(self, on, lcpuCtx):
-      raise NotImplementedError()
+      raise NotImplementedError
 
    def powerPremainPowerDomainIs(self, on):
       '''Enable Microsemi downstream port and Plx.'''
@@ -165,6 +178,7 @@ class DenaliCard(Card):
          # triggering bogus PCI state that will result in kernel lockups later.
          self.slot.disablePciPort()
          self.powerStandbyDomainIs(True)
+         self.powerControlDomainIs(True)
          self.powerPremainPowerDomainIs(True)
          if lcpuCtx:
             self.powerLcpuIs(True, lcpuCtx)
@@ -182,6 +196,7 @@ class DenaliCard(Card):
          else:
             self.powerMainPowerDomainIs(False)
          self.powerPremainPowerDomainIs(False)
+         self.powerControlDomainIs(False)
          self.powerStandbyDomainIs(False)
 
    def poweredOn(self):

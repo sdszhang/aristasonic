@@ -42,6 +42,9 @@ class Component(object):
                 if k in attrs and v is not None]
       return '%s(%s)' % (self.__class__.__name__, ', '.join(kwargs))
 
+   def isEnabled(self):
+      return True
+
    def addComponents(self, components):
       assert all(isinstance(c, Component) for c in components)
       for component in components:
@@ -69,6 +72,9 @@ class Component(object):
       allFilters = lambda x: all(f(x) for f in filters)
 
       for component in filter(allFilters, self.components):
+         if not component.isEnabled():
+            continue
+
          yield component
          if recursive:
             for sub in component.iterComponents(filters):
