@@ -48,6 +48,11 @@ class ClearwaterCpuBase(ClearwaterBase):
       self.syscpld = self.pca.newComponent(I2cScd, addr=self.pca.i2cAddr(0x23),
                                            registerCls=ClearwaterScdRegMap)
 
+   def controlDomain(self):
+      super(ClearwaterCpuBase, self).controlDomain()
+      assert self.control, "Control plane power domain not initialized"
+      self.CPU_CLS.addCpuDpm(bus=self.control, addr=self.pca.i2cAddr(0x4f))
+
 @registerPlatform()
 class Clearwater2(ClearwaterCpuBase):
    SID = ['Clearwater2']

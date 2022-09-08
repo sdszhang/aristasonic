@@ -7,6 +7,7 @@ from ...core.utils import getCmdlineDict
 
 from ...components.cpu.amd.k10temp import K10Temp
 from ...components.cpu.amd.sbtsi import SbTsi
+from ...components.dpm.adm1266 import Adm1266, AdmPin
 from ...components.rpc import LinecardRpcClient
 from ...components.scd import Scd
 from ...components.watchdog import FakeWatchdog
@@ -66,3 +67,11 @@ class HedgehogCpu(Cpu):
       bus = FakeI2cBus()
       self.slot = cls(self, slotId, pci, bus, card=card)
       return self.slot
+
+   @classmethod
+   def addCpuDpm(cls, bus, addr=None, causes=None):
+      return bus.newComponent(Adm1266, addr=addr, causes=causes or {
+            'reboot': AdmPin(2, AdmPin.GPIO),
+            'overtemp': AdmPin(8, AdmPin.GPIO),
+            'cpu-overtemp': AdmPin(9, AdmPin.GPIO),
+      })

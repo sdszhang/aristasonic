@@ -81,6 +81,11 @@ class Wolverine(DenaliLinecard):
          self.createPorts()
          self.cpu.addSmbusComponents(self.scd)
 
+   def controlDomain(self):
+      super(Wolverine, self).controlDomain()
+      assert self.control, "Control plane power domain not initialized"
+      self.CPU_CLS.addCpuDpm(bus=self.control, addr=self.pca.i2cAddr(0x4f))
+
    def createGpio1(self):
       self.gpio1 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x74),
                                          registerCls=GpioRegisterMap)
