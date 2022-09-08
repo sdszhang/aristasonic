@@ -10,6 +10,7 @@ from ...components.denali.linecard import (
    GpioRegisterMap,
    StandbyScdRegisterMap,
 )
+from ...components.dpm.ucd import Ucd90320, UcdGpi
 from ...components.eeprom import At24C512
 from ...components.pca9555 import Pca9555
 from ...components.plx import PlxPortDesc
@@ -83,6 +84,19 @@ class Wolverine(DenaliLinecard):
    def createGpio1(self):
       self.gpio1 = self.pca.newComponent(Pca9555, addr=self.pca.i2cAddr(0x74),
                                          registerCls=GpioRegisterMap)
+
+   def createStandbyDpm(self):
+      self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11),
+                                              causes=[
+         UcdGpi(1, 'powerloss'),
+         UcdGpi(5, 'asic-overtemp', 'asic'),
+         UcdGpi(6, 'reboot'),
+         UcdGpi(7, 'hotswap', 'lc eject'),
+         UcdGpi(11, 'powerloss'),
+         UcdGpi(12, 'powerloss'),
+         UcdGpi(13, 'overtemp', 'asic memory'),
+         UcdGpi(14, 'overtemp', 'asic memory'),
+      ])
 
    def standbyDomain(self):
       self.syscpld = self.pca.newComponent(I2cScd, addr=self.pca.i2cAddr(0x23),

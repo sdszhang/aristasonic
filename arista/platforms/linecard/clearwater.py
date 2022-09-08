@@ -84,17 +84,6 @@ class ClearwaterBase(DenaliLinecard):
          self.createPorts()
          self.cpu.addSmbusComponents(self.scd)
 
-      self.pca.newComponent(Ucd90320, self.pca.i2cAddr(0x11), causes=[
-         UcdGpi(4, 'hotswap', 'lc eject'),
-         UcdGpi(5, 'asic-overtemp'),
-         UcdGpi(6, 'overtemp', 'system'),
-         UcdGpi(7, 'watchdog', 'lcpu'),
-         UcdGpi(8, 'mem-overtemp', 'asic memory'),
-         UcdGpi(10, 'reboot'),
-         UcdGpi(12, 'over-current', 'asic'),
-         UcdMon(14, 'powerloss'),
-      ])
-
    def mainDomain(self):
       self.cwMainDomainCommon()
 
@@ -130,6 +119,20 @@ class ClearwaterBase(DenaliLinecard):
       addr = self.pca.i2cAddr(self.gpio1Addr())
       self.gpio1 = self.pca.newComponent(self.GPIO1_CLS, addr=addr,
                                           registerCls=GpioRegisterMap)
+
+   def createStandbyDpm(self):
+      self.standbyUcd = self.pca.newComponent(Ucd90320, addr=self.pca.i2cAddr(0x11),
+                                              causes=[
+         UcdGpi(4, 'hotswap', 'lc eject'),
+         UcdGpi(5, 'asic-overtemp'),
+         UcdGpi(6, 'overtemp', 'system'),
+         UcdGpi(7, 'watchdog', 'lcpu'),
+         UcdGpi(8, 'mem-overtemp', 'asic memory'),
+         UcdGpi(10, 'reboot'),
+         UcdGpi(12, 'over-current', 'asic'),
+         UcdMon(14, 'powerloss'),
+      ])
+
 
 @registerPlatform()
 class Clearwater(ClearwaterBase):

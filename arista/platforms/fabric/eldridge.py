@@ -67,7 +67,6 @@ class Eldridge(DenaliFabric):
 
    def standbyDomain(self):
       self.createGpio2()
-      self.pca.newComponent(Ucd90320, self.pca.i2cAddr(0x11))
       self.createStandbyFans()
       self.createStandbySensors()
 
@@ -148,3 +147,6 @@ class Eldridge(DenaliFabric):
          self.gpio2.ramonSmbusEnable(True)
          self.gpio2.polSmbusEnable(True)
 
+   def createStandbyDpm(self):
+      self.standbyUcd = self.pca.newComponent(Ucd90320,
+                                              addr=self.pca.i2cAddr(0x11))

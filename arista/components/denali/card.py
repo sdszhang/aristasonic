@@ -13,7 +13,6 @@ from ...descs.led import LedColor
 from ...libs.pci import readSecondaryBus
 from ...libs.wait import waitFor
 
-from ..dpm.ucd import Ucd90320
 from ..eeprom import At24C512
 from ..pca9541 import Pca9541
 from ..plx import PlxPex8700
@@ -70,6 +69,10 @@ class DenaliCard(Card):
    def createScd(self):
       self.scd = None
 
+   def createStandbyDpm(self):
+      '''Override in child classes if a linecard has a standby DPM.'''
+      self.standbyUcd = None
+
    def standbyCommon(self):
       '''Define Mux, Prefdl eeprom, Gpio1, Dpm, Pols, Temp sensors,
          and Fans...
@@ -86,8 +89,7 @@ class DenaliCard(Card):
          self.gpio1.addRedGreenGpioLed('status', 'statusRed', 'statusGreen')
 
       if self.isDetected():
-         self.standbyUcd = self.pca.newComponent(Ucd90320,
-                                                 addr=self.pca.i2cAddr(0x11))
+         self.createStandbyDpm()
          self.createPlx(parent=self.main)
 
    def standbyDomain(self):
