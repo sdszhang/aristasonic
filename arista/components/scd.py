@@ -261,7 +261,7 @@ class Scd(PciComponent):
       self.inventory.addProgrammable(ScdProgrammable(self))
 
    def __str__(self):
-      return '%s()' % self.__class__.__name__
+      return f'{self.__class__.__name__}(addr={self.addr})'
 
    def setMsiRearmOffset(self, offset):
       self.msiRearmOffset = offset
