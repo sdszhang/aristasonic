@@ -40,9 +40,16 @@ class Psu(PsuBase):
    @property
    def rail(self):
       if self.psu is None:
-          return None
+         return None
       rails = self.psu.psu.getInventory().getRails()
       return rails[1] if rails else None
+
+   @property
+   def input_rail(self):
+      if self.psu is None:
+         return None
+      rails = self.psu.psu.getInventory().getRails()
+      return rails[0] if rails else None
 
    def get_id(self):
       return self._slot.getId()
@@ -86,6 +93,14 @@ class Psu(PsuBase):
    def get_power(self):
       rail = self.rail
       return round(rail.getPower(), 3) if rail else "N/A"
+
+   def get_input_voltage(self):
+      rail = self.input_rail
+      return round(rail.getVoltage(), 3) if rail else "N/A"
+
+   def get_input_current(self):
+      rail = self.input_rail
+      return round(rail.getCurrent(), 3) if rail else "N/A"
 
    # TODO: thresholds
 
