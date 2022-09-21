@@ -1,7 +1,6 @@
 
 from ..core.config import Config
 from ..core.driver.user import UserDriver
-from ..descs.led import LedColor
 from ..inventory.led import Led
 from ..inventory.powercycle import PowerCycle
 from ..utils.rpc.client import RpcClient
@@ -41,3 +40,6 @@ class LinecardRpcClientDriver(UserDriver):
 
    def getPowerCycle(self, desc, **kwargs):
       return RpcPowerCycleImpl(self, desc, **kwargs)
+
+   def getReloadCauseData(self):
+      return self.client.getLinecardRebootCause()

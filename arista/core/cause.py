@@ -153,7 +153,12 @@ class ReloadCauseReport(object):
    def processProviders(self, providers):
       for provider in providers:
          provider.process()
-         self.providers.append(provider)
+         remotes = provider.getRemoteProviders()
+         if remotes:
+            self.providers.extend(remotes)
+         else:
+            self.providers.append(provider)
+
 
    def analyzeCauses(self):
       causes = defaultdict(list)

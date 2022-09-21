@@ -28,3 +28,7 @@ class ReloadCauseProvider(InventoryInterface):
    @diagmethod('extra')
    def getExtra(self):
       raise NotImplementedError
+
+   @diagmethod('providers', diag=True)
+   def getRemoteProviders(self):
+      return []

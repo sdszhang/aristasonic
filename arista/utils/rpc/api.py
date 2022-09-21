@@ -6,6 +6,7 @@ except ImportError:
    print('This feature only works in python3')
    raise
 
+from ...core.cause import getLinecardReloadCauseManager
 from ...core.log import getLogger
 from ...core.supervisor import Supervisor
 
@@ -133,6 +134,10 @@ class RpcApi():
    async def linecardPowerCycle(self, lc):
       cmd = ('setup', '--on', '--lcpu', '--powerCycleIfOn')
       return await self._runAristaLinecard(lc.getSlotId(), *cmd)
+
+   @registerLinecardMethod
+   async def getLinecardRebootCause(self, lc):
+      return getLinecardReloadCauseManager(lc).toDict()
 
    @classmethod
    def methods(cls):

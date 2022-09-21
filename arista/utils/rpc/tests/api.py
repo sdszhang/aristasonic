@@ -8,17 +8,83 @@ from ....tests.testing import mock, unittest
 
 from ..api import RpcApi
 from ..context import ClientContext
+from ....components.denali.card import DenaliLinecardBase, DenaliLinecardSlot
+from ....components.denali.linecard import DenaliLinecard
+from ....core.card import CardSlot
+from ....core.component import Priority
+from ....core.linecard import Linecard
+from ....core.platform import getPlatformSkus
+from ....core.tests.mockchassis import MockSupervisor
+
+from .... import platforms as _
 
 class FakeProcess():
    async def communicate(self):
       self.returncode = 0
       return b'This is stdout', b'This is stderr'
 
+class FakeReloadCauseManager():
+   def __init__(self, ignore):
+      pass
+
+   def loadCauses(self):
+      pass
+
+   def toDict(self):
+      return {
+         'name': 'foo',
+         'version': 3,
+         'reports': [
+            {
+               'date': '2022-10-11 13:00:00',
+               'cause': 'unknown cause',
+               'providers': [
+                  {
+                     'name': 'foo',
+                     'causes': [
+                        {
+                           'cause': 'unknown cause',
+                           'time': 'unknown',
+                           'description': 'bar',
+                           'score': 50,
+                        },
+                     ],
+                  },
+               ],
+            }
+         ],
+      }
+
 class ClientTest(unittest.IsolatedAsyncioTestCase):
-   def _newApi(self):
-      api = RpcApi()
-      ctx = ClientContext(('127.0.0.1', '43000'))
+   def _newApi(self, platform=None, senderSlotId=None):
+      api = RpcApi(platform)
+      ipaddr = ('127.0.0.1' if senderSlotId is None else
+                f'127.100.{senderSlotId}.1')
+      ctx = ClientContext((ipaddr, '43000'))
       return api, ctx
+
+   def _doCreateLinecard(self, sup, cls):
+      if issubclass(cls, DenaliLinecard):
+         pci = sup.getPciPort(0x01)
+         bus = sup.getSmbus(0x03)
+         slotId = DenaliLinecard.ABSOLUTE_CARD_OFFSET
+         slot = DenaliLinecardSlot(sup, slotId, pci, bus)
+         sup.linecardSlots.append(slot)
+      else:
+         slot = CardSlot(None, 0)
+      return cls(slot=slot)
+
+   def _createMockChassis(self):
+      sup = MockSupervisor()
+      for _, linecardCls in getPlatformSkus().items():
+         if not issubclass(linecardCls, Linecard):
+            continue
+         linecard = self._doCreateLinecard(sup, linecardCls)
+         assert linecard
+         for f in [None, Priority.defaultFilter, Priority.backgroundFilter]:
+            linecard.setup(filters=f)
+         return sup
+      assert False, 'No linecard definitions available'
 
    async def testLinecardSetup(self):
       api, ctx = self._newApi()
@@ -75,6 +141,18 @@ class ClientTest(unittest.IsolatedAsyncioTestCase):
             'status': True,
             'detail': 'This is stdout\nThis is stderr'
          })
+
+   async def testReloadCause(self):
+      sup = self._createMockChassis()
+      api, ctx = self._newApi(platform=sup,
+                              senderSlotId=DenaliLinecardBase.ABSOLUTE_CARD_OFFSET)
+      with mock.patch('arista.utils.rpc.api.getLinecardReloadCauseManager') as mockObj:
+         mockObj.side_effect = lambda *args, **kwargs: FakeReloadCauseManager(None)
+         result = await api.getLinecardRebootCause(ctx)
+         mockObj.assert_called_once()
+         self.assertIn('reports', result)
+         self.assertIn('providers', result['reports'][0])
+         self.assertIn('causes', result['reports'][0]['providers'][0])
 
 if __name__ == '__main__':
    unittest.main()
