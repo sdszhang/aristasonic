@@ -5,6 +5,8 @@ from ...components.scd import Scd
 from ...components.eeprom import At24C512
 from ...components.max6658 import Max6658
 
+from ...descs.xcvr import Sfp
+
 class SprucefishCpu(Cpu):
 
    PLATFORM = 'sprucefish'
@@ -21,10 +23,11 @@ class SprucefishCpu(Cpu):
       cpld.createPowerCycle()
       cpld.addSmbusMasterRange(0x8000, 0, 0x80, 9)
       # TODO: add led and interrupt logic for SFP port
-      cpld.addSfpSlot(
+      cpld.addXcvrSlots(
+         ports=[1],
+         cls=Sfp,
          addr=0x5010,
          bus=3,
-         xcvrId=1,
          ledAddr=None,
          ledAddrOffsetFn=None,
          ledLanes=0

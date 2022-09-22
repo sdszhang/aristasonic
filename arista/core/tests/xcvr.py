@@ -1,3 +1,5 @@
+from ...core.port import PortLayout
+from ...descs.xcvr import Osfp, Qsfp28, Rj45, Sfp
 from ...tests.testing import unittest
 
 from ..fixed import FixedSystem
@@ -29,32 +31,29 @@ class MockEthernetSlot(EthernetSlot):
    pass
 
 class MockFixedSystem(FixedSystem):
-   def __init__(self, ethernetRange, sfpRange, qsfpRange, osfpRange):
+   def __init__(self, portLayout):
       super().__init__()
-      self.ethernetRange = ethernetRange
-      self.sfpRange = sfpRange
-      self.qsfpRange = qsfpRange
-      self.osfpRange = osfpRange
+      self.portLayout = portLayout
       self.ethernetSlots = []
       self.sfpSlots = []
       self.qsfpSlots = []
       self.osfpSlots = []
       self.addrFunc = lambda addr : addr
 
-      for i in ethernetRange:
+      for p in portLayout.getEthernets():
          self.ethernetSlots.append(
             self.newComponent(
                MockEthernetSlot,
-               slotId=i,
+               slotId=p.index,
                leds=[MockLed()],
             )
          )
 
-      for i in sfpRange:
+      for p in portLayout.getSfps():
          self.sfpSlots.append(
             self.newComponent(
                MockSfpSlot,
-               slotId=i,
+               slotId=p.index,
                addrFunc=self.addrFunc,
                interrupt=MockInterrupt(),
                presentGpio=MockGpio(),
@@ -65,11 +64,11 @@ class MockFixedSystem(FixedSystem):
             )
          )
 
-      for i in qsfpRange:
+      for p in portLayout.getQsfps():
          self.qsfpSlots.append(
             self.newComponent(
                MockQsfpSlot,
-               slotId=i,
+               slotId=p.index,
                addrFunc=self.addrFunc,
                presentGpio=MockGpio(),
                leds=[MockLed()],
@@ -79,11 +78,11 @@ class MockFixedSystem(FixedSystem):
             )
          )
 
-      for i in osfpRange:
+      for p in portLayout.getOsfps():
          self.osfpSlots.append(
             self.newComponent(
                MockOsfpSlot,
-               slotId=i,
+               slotId=p.index,
                addrFunc=self.addrFunc,
                presentGpio=MockGpio(),
                leds=[MockLed()],
@@ -96,28 +95,27 @@ class MockFixedSystem(FixedSystem):
 class MockXcvrTest(unittest.TestCase):
    def _checkSystem(self, system):
       self.assertEqual(len(system.getInventory().getEthernetSlots()),
-                       len(system.ethernetRange))
+                       len(system.portLayout.getEthernets()))
       self.assertEqual(len(system.getInventory().getSfpSlots()),
-                       len(system.sfpRange))
+                       len(system.portLayout.getSfps()))
       self.assertEqual(len(system.getInventory().getQsfpSlots()),
-                       len(system.qsfpRange))
+                       len(system.portLayout.getQsfps()))
       self.assertEqual(len(system.getInventory().getOsfpSlots()),
-                       len(system.osfpRange))
-      totalNumXcvrs = len(system.ethernetRange + system.sfpRange + system.qsfpRange +
-                          system.osfpRange)
-      self.assertEqual(len(system.getInventory().getXcvrSlots()), totalNumXcvrs)
+                       len(system.portLayout.getOsfps()))
+      self.assertEqual(len(system.getInventory().getXcvrSlots()),
+                       len(system.portLayout.getAllPorts()))
 
-      for i, slot in zip(system.ethernetRange, system.ethernetSlots):
-         self.assertEqual(slot.getId(), i)
+      for p, slot in zip(system.portLayout.getEthernets(), system.ethernetSlots):
+         self.assertEqual(slot.getId(), p.index)
          self._checkEthernet(slot)
-      for i, slot in zip(system.sfpRange, system.sfpSlots):
-         self.assertEqual(slot.getId(), i)
+      for p, slot in zip(system.portLayout.getSfps(), system.sfpSlots):
+         self.assertEqual(slot.getId(), p.index)
          self._checkSfp(slot)
-      for i, slot in zip(system.qsfpRange, system.qsfpSlots):
-         self.assertEqual(slot.getId(), i)
+      for p, slot in zip(system.portLayout.getQsfps(), system.qsfpSlots):
+         self.assertEqual(slot.getId(), p.index)
          self._checkQsfp(slot)
-      for i, slot in zip(system.osfpRange, system.osfpSlots):
-         self.assertEqual(slot.getId(), i)
+      for p, slot in zip(system.portLayout.getOsfps(), system.osfpSlots):
+         self.assertEqual(slot.getId(), p.index)
          self._checkOsfp(slot)
 
    def _checkEthernet(self, ethernetSlot):
@@ -133,10 +131,14 @@ class MockXcvrTest(unittest.TestCase):
       self.assertIsNotNone(osfpSlot.getXcvr())
 
    def testXcvr(self):
-      system = MockFixedSystem(ethernetRange=incrange(1, 10),
-                               sfpRange=incrange(11, 20),
-                               qsfpRange=incrange(21, 30),
-                               osfpRange=incrange(31, 40))
+      system = MockFixedSystem(
+         PortLayout(
+            (Rj45(i) for i in incrange(1, 8)),
+            (Sfp(i) for i in incrange(9, 16)),
+            (Qsfp28(i) for i in incrange(17, 24)),
+            (Osfp(i) for i in incrange(25, 32)),
+         )
+      )
       self._checkSystem(system)
 
 if __name__ == '__main__':
