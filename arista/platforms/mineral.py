@@ -6,6 +6,7 @@ from ..components.psu.delta import DPS495CB, DPS750AB
 from ..components.lm73 import Lm73
 
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Qsfp28, Sfp
 
 from .alhambra import Alhambra
 
@@ -16,8 +17,8 @@ class Mineral(Alhambra):
    SKU = ['DCS-7170-32C', 'DCS-7170-32C-M']
 
    PORTS = PortLayout(
-      qsfps=incrange(1, 32),
-      sfps=incrange(33, 34),
+      (Qsfp28(i, leds=4) for i in incrange(1, 32)),
+      (Sfp(i) for i in incrange(33, 34)),
    )
 
    def __init__(self):

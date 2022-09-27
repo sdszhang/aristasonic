@@ -15,6 +15,7 @@ from ..components.scd import Scd
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Osfp, QsfpDD, Sfp
 
 from .chassis.tuba import Tuba
 
@@ -31,8 +32,8 @@ class CatalinaP(FixedSystem):
    PHY = BabbageLP
 
    PORTS = PortLayout(
-      osfps=incrange(1, 64),
-      sfps=incrange(65, 66),
+      (Osfp(i) for i in incrange(1, 64)),
+      (Sfp(i) for i in incrange(65, 66)),
    )
 
    def __init__(self):
@@ -107,23 +108,23 @@ class CatalinaP(FixedSystem):
          scd.createInterrupt(addr=0x3090, num=3),
       ]
 
-      scd.addOsfpSlotBlock(
-         osfpRange=self.PORTS.osfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getOsfps(),
          addr=0xA000,
          bus=24,
          ledAddr=0x6100,
          ledAddrOffsetFn=lambda x: 0x10,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: xcvrId // 33 + 1,
-         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32
+         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
       )
 
-      scd.addSfpSlotBlock(
-         sfpRange=self.PORTS.sfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
          addr=0xA900,
          bus=88,
          ledAddr=0x6900,
-         ledAddrOffsetFn=lambda x: 0x40
+         ledAddrOffsetFn=lambda x: 0x40,
       )
 
       # PSU
@@ -167,3 +168,8 @@ class CatalinaP(FixedSystem):
 class CatalinaDD(CatalinaP):
    SID = ['CatalinaDD']
    SKU = ['DCS-7060DX5-64S']
+
+   PORTS = PortLayout(
+      (QsfpDD(i) for i in incrange(1, 64)),
+      (Sfp(i) for i in incrange(65, 66)),
+   )

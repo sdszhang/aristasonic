@@ -15,6 +15,7 @@ from ..components.ds125br import Ds125Br
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Qsfp28, Sfp
 
 from .cpu.crow import CrowCpu
 
@@ -25,8 +26,9 @@ class Clearlake(FixedSystem):
    SKU = ['DCS-7050QX-32S', 'DCS-7050QX-32S-SSD']
 
    PORTS = PortLayout(
-      sfps=incrange(1, 4),
-      qsfps=incrange(5, 36),
+      (Sfp(i) for i in incrange(1, 4)),
+      (Qsfp28(i, leds=4) for i in incrange(5, 28)),
+      (Qsfp28(i) for i in incrange(29, 36)),
    )
 
    def __init__(self):
@@ -109,20 +111,20 @@ class Clearlake(FixedSystem):
          scd.createInterrupt(addr=0x3030, num=1),
       ]
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfp40gAutoRange,
+
+      scd.addXcvrSlots(
+         ports=[self.PORTS.getPort(index) for index in self.qsfp40gAutoRange],
          addr=0x5010,
          bus=8,
          ledAddr=0x6100,
-         ledLanes=4,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - 5,
-         isHwLpModeAvail=False
+         isHwLpModeAvail=False,
       )
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfp40gOnlyRange,
+      scd.addXcvrSlots(
+         ports=[self.PORTS.getPort(index) for index in self.qsfp40gOnlyRange],
          addr=0x5190,
          bus=32,
          ledAddr=0x6720,
@@ -130,14 +132,14 @@ class Clearlake(FixedSystem):
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - 5,
-         isHwLpModeAvail=False
+         isHwLpModeAvail=False,
       )
 
-      scd.addSfpSlotBlock(
-         sfpRange=self.PORTS.sfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
          addr=0x5210,
          bus=40,
-         ledAddr=0x6900
+         ledAddr=0x6900,
       )
 
       port = cpu.getPciPort(0)

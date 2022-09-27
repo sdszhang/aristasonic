@@ -379,9 +379,8 @@ class Scd(PciComponent):
       return self.inventory.addReset(self.driver.getReset(desc, **kwargs))
 
    def _addXcvrSlot(self, cls, name, port, bus=None, addr=None, ledAddr=None,
-                    ledAddrOffsetFn=lambda x: 0x10, ledLanes=None, intrRegs=None,
+                    ledAddrOffsetFn=lambda x: 0x10, intrRegs=None,
                     intrRegIdxFn=None, intrBitFn=None, **kwargs):
-      ledLanes = port.leds or ledLanes or 0
       intr = None
       if intrRegs:
          intrReg = intrRegs[intrRegIdxFn(port.index)]
@@ -395,9 +394,9 @@ class Scd(PciComponent):
                                 activeLow=True)
          presentGpio = self.addXcvrGpio(presentDesc)
       leds = []
-      for laneId in incrange(1, ledLanes):
+      for laneId in incrange(1, port.leds):
          laneName = name
-         if ledLanes > 1:
+         if port.leds > 1:
             laneName = "%s_%d" % (laneName, laneId)
          leds.append((ledAddr, laneName))
          ledAddr += ledAddrOffsetFn(port.index)
@@ -478,12 +477,10 @@ class Scd(PciComponent):
          **kwargs
       )
 
-   def addXcvrSlots(self, ports, cls=None, addr=None, bus=None, ledAddr=None,
+   def addXcvrSlots(self, ports, addr=None, bus=None, ledAddr=None,
                     addrOffset=0x10, busOffset=1, ledAddrOffsetFn=lambda x: 0x10,
-                    ledLanes=1, **kwargs):
+                    **kwargs):
       for p in ports:
-         if isinstance(p, int):
-            p = cls(index=p, leds=ledLanes)
          func = None
          if isinstance(p, Rj45):
             func = self._addEthernetSlot
@@ -502,21 +499,9 @@ class Scd(PciComponent):
          if addr is not None:
             addr += addrOffset
          if ledAddr is not None:
-            ledAddr += (p.leds or ledLanes) * ledAddrOffsetFn(p.index)
+            ledAddr += p.leds * ledAddrOffsetFn(p.index)
          if bus is not None:
             bus += busOffset
-
-   def addEthernetSlotBlock(self, ethernetRange, **kwargs):
-      self.addXcvrSlots(ports=ethernetRange, cls=Rj45, **kwargs)
-
-   def addSfpSlotBlock(self, sfpRange, **kwargs):
-      self.addXcvrSlots(ports=sfpRange, cls=Sfp, **kwargs)
-
-   def addQsfpSlotBlock(self, qsfpRange, **kwargs):
-      self.addXcvrSlots(ports=qsfpRange, cls=Qsfp, **kwargs)
-
-   def addOsfpSlotBlock(self, osfpRange, **kwargs):
-      self.addXcvrSlots(ports=osfpRange, cls=Osfp, **kwargs)
 
    def addFan(self, desc):
       return self.inventory.addFan(self.driver.getFan(desc))

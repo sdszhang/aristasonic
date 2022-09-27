@@ -14,6 +14,7 @@ from ..components.scd import Scd
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Osfp, QsfpDD, Sfp
 
 from .cpu.rook import RookCpu
 
@@ -24,8 +25,8 @@ class BlackhawkO(FixedSystem):
    SKU = ['DCS-7060PX4-32']
 
    PORTS = PortLayout(
-      osfps=incrange(1, 32),
-      sfps=incrange(33, 34),
+      (Osfp(i) for i in incrange(1, 32)),
+      (Sfp(i) for i in incrange(33, 34)),
    )
 
    def __init__(self):
@@ -94,23 +95,23 @@ class BlackhawkO(FixedSystem):
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      scd.addOsfpSlotBlock(
-         osfpRange=self.PORTS.osfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getOsfps(),
          addr=0xA010,
          bus=16,
          ledAddr=0x6100,
          ledAddrOffsetFn=lambda x: 0x40,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
-         intrBitFn=lambda xcvrId: xcvrId - 1
+         intrBitFn=lambda xcvrId: xcvrId - 1,
       )
 
-      scd.addSfpSlotBlock(
-         sfpRange=self.PORTS.sfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
          addr=0xA210,
          bus=48,
-        ledAddr=0x6900,
-        ledAddrOffsetFn=lambda x: 0x40
+         ledAddr=0x6900,
+         ledAddrOffsetFn=lambda x: 0x40,
       )
 
       for psuId, bus in [(1, 12), (2, 11)]:
@@ -142,3 +143,8 @@ class BlackhawkO(FixedSystem):
 class BlackhawkDD(BlackhawkO):
    SID = ['BlackhawkDD', 'BlackhawkDDM']
    SKU = ['DCS-7060DX4-32', 'DCS-7060DX4-32-D']
+
+   PORTS = PortLayout(
+      (QsfpDD(i) for i in incrange(1, 32)),
+      (Sfp(i) for i in incrange(33, 34)),
+   )

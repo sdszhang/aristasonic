@@ -18,6 +18,7 @@ from ...components.scd import I2cScd
 from ...components.tmp464 import Tmp464
 
 from ...descs.sensor import Position, SensorDesc
+from ...descs.xcvr import Osfp, QsfpDD
 
 from ..cpu.hedgehog import HedgehogCpu
 
@@ -42,15 +43,15 @@ class Wolverine(DenaliLinecard):
    ]
 
    PORTS = PortLayout(
-      osfps=incrange(1, 36),
+      (Osfp(i) for i in incrange(1, 36)),
    )
 
    def createPorts(self):
       intrRegs = [self.scd.getInterrupt(intId) for intId in incrange(0, 6)]
       # IRQ2 -> port 32:1 (bit 31:0)
       # IRQ3 -> port 36:33 (bit 3:0)
-      self.scd.addOsfpSlotBlock(
-         osfpRange=self.PORTS.osfpRange,
+      self.scd.addXcvrSlots(
+         ports=self.PORTS.getOsfps(),
          addr=0xA010,
          bus=self.XCVR_BUS_OFFSET,
          ledAddr=0x6100,
@@ -171,37 +172,41 @@ class WolverineQ(Wolverine):
    SID = ['WolverineQ']
    SKU = ['7800R3A-36D-LC']
 
+   PORTS = PortLayout(
+      (QsfpDD(i) for i in incrange(1, 36)),
+   )
+
 @registerPlatform()
-class WolverineQBk(Wolverine):
+class WolverineQBk(WolverineQ):
    SID = ['WolverineQBk']
    SKU = ['7800R3AK-36D-LC']
 
 @registerPlatform()
-class WolverineQMs(Wolverine):
+class WolverineQMs(WolverineQ):
    SID = ['WolverineQMs']
    SKU = ['7800R3A-36DM-LC']
 
 @registerPlatform()
-class WolverineQBkMs(Wolverine):
+class WolverineQBkMs(WolverineQ):
    SID = ['WolverineQBkMs']
    SKU = ['7800R3AK-36DM-LC']
 
 @registerPlatform()
-class WolverineQCpu(Wolverine):
+class WolverineQCpu(WolverineQ):
    SID = ['WolverineQCpu']
    SKU = ['7800R3A-36D2-LC']
 
 @registerPlatform()
-class WolverineQCpuBk(Wolverine):
+class WolverineQCpuBk(WolverineQ):
    SID = ['WolverineQCpuBk']
    SKU = ['7800R3AK-36D2-LC']
 
 @registerPlatform()
-class WolverineQCpuMs(Wolverine):
+class WolverineQCpuMs(WolverineQ):
    SID = ['WolverineQCpuMs']
    SKU = ['7800R3A-36DM2-LC']
 
 @registerPlatform()
-class WolverineQCpuBkMs(Wolverine):
+class WolverineQCpuBkMs(WolverineQ):
    SID = ['WolverineQCpuBkMs']
    SKU = ['7800R3AK-36DM2-LC']

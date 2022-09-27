@@ -20,6 +20,7 @@ from ...components.tmp464 import Tmp464
 
 from ...descs.sensor import Position, SensorDesc
 from ...descs.reset import ResetDesc
+from ...descs.xcvr import Qsfp28
 
 class ClearwaterBase(DenaliLinecard):
    SCD_PCI_OFFSET = 3
@@ -40,22 +41,22 @@ class ClearwaterBase(DenaliLinecard):
    ]
 
    PORTS = PortLayout(
-      qsfps=incrange(1, 48),
+      (Qsfp28(i) for i in incrange(1, 48)),
    )
 
    def createPorts(self):
       intrRegs = [self.scd.getInterrupt(intId) for intId in incrange(0, 6)]
       # IRQ2 -> port 32:1 (bit 31:0)
       # IRQ3 -> port 48:33 (bit 15:0)
-      self.scd.addQsfpSlotBlock(
-         qsfpRange=self.PORTS.qsfpRange,
+      self.scd.addXcvrSlots(
+         ports=self.PORTS.getQsfps(),
          addr=0xA010,
          bus=self.XCVR_BUS_OFFSET,
          ledAddr=0x6100,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: xcvrId // 32 + 2,
          intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
-         isHwModSelAvail=False
+         isHwModSelAvail=False,
       )
 
       self.scd.addMdioMasterRange(0x9000, 12, speed=MdioSpeed.S10)

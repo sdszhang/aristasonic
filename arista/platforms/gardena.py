@@ -14,6 +14,7 @@ from ..components.scd import Scd
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Qsfp28, Sfp
 
 from .cpu.rook import RookCpu
 
@@ -24,8 +25,8 @@ class Gardena(FixedSystem):
    SKU = ['DCS-7260CX3-64', 'DCS-7260CX3-64E']
 
    PORTS = PortLayout(
-      qsfps=incrange(1, 64),
-      sfps=incrange(65, 66),
+      (Qsfp28(i, leds=4) for i in incrange(1, 64)),
+      (Sfp(i) for i in incrange(65, 66)),
    )
 
    def __init__(self):
@@ -94,20 +95,19 @@ class Gardena(FixedSystem):
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.PORTS.qsfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getQsfps(),
          addr=0xA010,
          bus=8,
          ledAddr=0x6100,
-         ledLanes=4,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: xcvrId // 33 + 1,
          intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
          isHwLpModeAvail=False
       )
 
-      scd.addSfpSlotBlock(
-         sfpRange=self.PORTS.sfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
          addr=0xA410,
          bus=6,
          ledAddr=0x7100

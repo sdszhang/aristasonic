@@ -16,6 +16,7 @@ from ..components.vrm.tps549d22 import Tps549D22
 from ..descs.fan import FanDesc, FanPosition
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
+from ..descs.xcvr import Rj45, Sfp
 
 from .cpu.prairie import PrairieCpu
 
@@ -30,8 +31,8 @@ class PikeZ2PChassis(PikeZ1PChassis):
 class PikeZ(FixedSystem):
 
     PORTS = PortLayout(
-        ethernets=incrange(1, 48),
-        sfps=incrange(49, 52),
+        (Rj45(i) for i in incrange(1, 48)),
+        (Sfp(i) for i in incrange(49, 52)),
     )
 
     def __init__(self):
@@ -111,13 +112,13 @@ class PikeZ(FixedSystem):
             scd.createInterrupt(addr=0x3000, num=0),
         ]
 
-        scd.addEthernetSlotBlock(
-            ethernetRange=self.PORTS.ethernetRange,
+        scd.addXcvrSlots(
+            ports=self.PORTS.getEthernets(),
             ledAddr=0x6190,
         )
 
-        scd.addSfpSlotBlock(
-            sfpRange=self.PORTS.sfpRange,
+        scd.addXcvrSlots(
+            ports=self.PORTS.getSfps(),
             addr=0xA010,
             bus=0,
             ledAddr=0x6100,

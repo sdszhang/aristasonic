@@ -16,6 +16,7 @@ from ..components.tmp468 import Tmp468
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Qsfp28, Sfp
 
 from .chassis.tuba import Tuba
 
@@ -51,8 +52,8 @@ class Woodleaf(FixedSystem):
    PHY = B52
 
    PORTS = PortLayout(
-      qsfps=incrange(1, 64),
-      sfps=incrange(65, 66),
+      (Qsfp28(i) for i in incrange(1, 64)),
+      (Sfp(i) for i in incrange(65, 66)),
    )
 
    def __init__(self):
@@ -127,23 +128,23 @@ class Woodleaf(FixedSystem):
          scd.createInterrupt(addr=0x30C0, num=4),
       ]
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.PORTS.qsfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getQsfps(),
          addr=0xA010,
          bus=8,
          ledAddr=0x6100,
          ledAddrOffsetFn=lambda x: 0x10,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: xcvrId // 33 + 3,
-         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32
+         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
       )
 
-      scd.addSfpSlotBlock(
-         sfpRange=self.PORTS.sfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
          addr=0xA410,
          bus=5,
          ledAddr=0x7100,
-         ledAddrOffsetFn=lambda x: 0x10
+         ledAddrOffsetFn=lambda x: 0x10,
       )
 
       for psuId, bus in [(1, 3), (2, 4)]:

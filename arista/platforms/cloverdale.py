@@ -20,6 +20,7 @@ from ..descs.led import LedDesc, LedColor
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Qsfp28
 
 @registerPlatform()
 class Cloverdale(FixedSystem):
@@ -31,7 +32,8 @@ class Cloverdale(FixedSystem):
    SKU = ['DCS-7050QX-32']
 
    PORTS = PortLayout(
-      qsfps=incrange(1, 32),
+      (Qsfp28(i, leds=4) for i in incrange(1, 24)),
+      (Qsfp28(i) for i in incrange(25, 32)),
    )
 
    def __init__(self):
@@ -135,20 +137,19 @@ class Cloverdale(FixedSystem):
          scd.createInterrupt(addr=0x3030, num=1),
       ]
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfp40gAutoRange,
+      scd.addXcvrSlots(
+         ports=[self.PORTS.getPort(index) for index in self.qsfp40gAutoRange],
          addr=0x5010,
          bus=8,
          ledAddr=0x6100,
-         ledLanes=4,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - 1,
-         isHwLpModeAvail=False
+         isHwLpModeAvail=False,
       )
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.qsfp40gOnlyRange,
+      scd.addXcvrSlots(
+         ports=[self.PORTS.getPort(index) for index in self.qsfp40gOnlyRange],
          addr=0x5190,
          bus=32,
          ledAddr=0x6720,
@@ -156,5 +157,5 @@ class Cloverdale(FixedSystem):
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - 1,
-         isHwLpModeAvail=False
+         isHwLpModeAvail=False,
       )

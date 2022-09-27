@@ -24,13 +24,11 @@ class SprucefishCpu(Cpu):
       cpld.addSmbusMasterRange(0x8000, 0, 0x80, 9)
       # TODO: add led and interrupt logic for SFP port
       cpld.addXcvrSlots(
-         ports=[1],
-         cls=Sfp,
+         ports=[Sfp(index=1, leds=0)],
          addr=0x5010,
          bus=3,
          ledAddr=None,
          ledAddrOffsetFn=None,
-         ledLanes=0
       )
 
       cpld.addLeds([

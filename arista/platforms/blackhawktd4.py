@@ -13,6 +13,7 @@ from ..components.tmp468 import Tmp468
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Osfp, QsfpDD, Sfp
 
 from .chassis.yuba import Yuba
 from .cpu.lorikeet import LorikeetCpu
@@ -26,8 +27,8 @@ class BlackhawkTD4(FixedSystem):
    CHASSIS = Yuba
 
    PORTS = PortLayout(
-      osfps=incrange(1, 32),
-      sfps=incrange(33, 34),
+      (Osfp(i) for i in incrange(1, 32)),
+      (Sfp(i) for i in incrange(33, 34)),
    )
 
    def __init__(self):
@@ -87,23 +88,23 @@ class BlackhawkTD4(FixedSystem):
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      scd.addOsfpSlotBlock(
-         osfpRange=self.PORTS.osfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getOsfps(),
          addr=0xA010,
          bus=16,
          ledAddr=0x6100,
          ledAddrOffsetFn=lambda x: 0x40,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
-         intrBitFn=lambda xcvrId: xcvrId - 1
+         intrBitFn=lambda xcvrId: xcvrId - 1,
       )
 
-      scd.addSfpSlotBlock(
-         sfpRange=self.PORTS.sfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
          addr=0xA210,
          bus=48,
          ledAddr=0x6900,
-         ledAddrOffsetFn=lambda x: 0x40
+         ledAddrOffsetFn=lambda x: 0x40,
       )
 
       # TODO: Lorikeet DPM component
@@ -141,3 +142,8 @@ class BlackhawkTD4(FixedSystem):
 class BlackhawkTD4DD(BlackhawkTD4):
    SID = ['BlackhawkT4DD']
    SKU = ['DCS-7050DX4-32S']
+
+   PORTS = PortLayout(
+      (QsfpDD(i) for i in incrange(1, 32)),
+      (Sfp(i) for i in incrange(33, 34)),
+   )

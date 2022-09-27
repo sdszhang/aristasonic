@@ -16,6 +16,7 @@ from ..components.scd import Scd
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Qsfp28, Sfp
 
 from .cpu.crow import CrowCpu
 
@@ -26,8 +27,8 @@ class Upperlake(FixedSystem):
    SKU = ['DCS-7060CX-32S', 'DCS-7060CX-32S-ES', 'DCS-7060CX-32S-SSD']
 
    PORTS = PortLayout(
-      qsfps=incrange(1, 32),
-      sfps=incrange(33, 34),
+      (Qsfp28(i, leds=4) for i in incrange(1, 32)),
+      (Sfp(i) for i in incrange(33, 34)),
    )
 
    def __init__(self):
@@ -110,18 +111,22 @@ class Upperlake(FixedSystem):
          scd.createInterrupt(addr=0x3030, num=1),
       ]
 
-      scd.addSfpSlotBlock(sfpRange=self.PORTS.sfpRange, addr=0x5010, bus=8, ledAddr=0x6100)
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
+         addr=0x5010,
+         bus=8,
+         ledAddr=0x6100,
+      )
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.PORTS.qsfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getQsfps(),
          addr=0x5050,
          bus=16,
          ledAddr=0x6140,
-         ledLanes=4,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - 1,
-         isHwLpModeAvail=False
+         isHwLpModeAvail=False,
       )
 
       port = cpu.getPciPort(0)

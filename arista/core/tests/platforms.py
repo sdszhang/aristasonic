@@ -381,5 +381,21 @@ class MockPlatformTest(unittest.TestCase):
          for programmable in inventory.getProgrammables():
             self._testProgrammable(programmable)
 
+   def testPortLayout(self):
+      for _, platform in getPlatformSkus().items():
+         if not issubclass(platform, FixedSystem):
+            continue
+         inventory = platform().getInventory()
+         portLayout = platform().PORTS
+
+         self.assertTrue(set(inventory.getEthernetSlots()).issuperset(
+                                 [p.index for p in portLayout.getEthernets()]))
+         self.assertTrue(set(inventory.getSfpSlots()).issuperset(
+                                 [p.index for p in portLayout.getSfps()]))
+         self.assertTrue(set(inventory.getQsfpSlots()).issuperset(
+                                 [p.index for p in portLayout.getQsfps()]))
+         self.assertTrue(set(inventory.getOsfpSlots()).issuperset(
+                                 [p.index for p in portLayout.getOsfps()]))
+
 if __name__ == '__main__':
    unittest.main()

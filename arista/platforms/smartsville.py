@@ -19,6 +19,7 @@ from .cpu.woodpecker import WoodpeckerCpu
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Osfp, Qsfp28, QsfpDD
 
 @registerPlatform()
 class Smartsville(FixedSystem):
@@ -31,8 +32,8 @@ class Smartsville(FixedSystem):
    PHY = Babbage
 
    PORTS = PortLayout(
-      qsfps=incrange(1, 32),
-      osfps=incrange(33, 36),
+      (Qsfp28(i, leds=4) for i in incrange(1, 32)),
+      (Osfp(i) for i in incrange(33, 36)),
    )
 
    def __init__(self):
@@ -123,28 +124,27 @@ class Smartsville(FixedSystem):
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.PORTS.qsfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getQsfps(),
          addr=0xA010,
          bus=8,
          ledAddr=0x6100,
-         ledLanes=4,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
-         intrBitFn=lambda xcvrId: xcvrId - self.PORTS.qsfpRange[0],
-         isHwModSelAvail=False
+         intrBitFn=lambda xcvrId: xcvrId - self.PORTS.getQsfps()[0].index,
+         isHwModSelAvail=False,
       )
 
-      scd.addOsfpSlotBlock(
-         osfpRange=self.PORTS.osfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getOsfps(),
          addr=0xA210,
          bus=40,
          ledAddr=0x6900,
          ledAddrOffsetFn=lambda x: 0x40,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 2,
-         intrBitFn=lambda xcvrId: xcvrId - self.PORTS.osfpRange[0],
-         isHwModSelAvail=False
+         intrBitFn=lambda xcvrId: xcvrId - self.PORTS.getOsfps()[0].index,
+         isHwModSelAvail=False,
       )
 
       scd.addMdioMasterRange(0x9000, 8)
@@ -177,8 +177,13 @@ class SmartsvilleDD(Smartsville):
    SID = ['SmartsvilleDD', 'SmartsvilleDDSsd']
    SKU = ['DCS-7280CR3-32D4', 'DCS-7280CR3-32D4-M']
 
+   PORTS = PortLayout(
+      (Qsfp28(i, leds=4) for i in incrange(1, 32)),
+      (QsfpDD(i) for i in incrange(33, 36)),
+   )
+
 @registerPlatform()
-class SmartsvilleDDBK(Smartsville):
+class SmartsvilleDDBK(SmartsvilleDD):
    SID = ['SmartsvilleDDBK']
    SKU = ['DCS-7280CR3K-32D4']
 
@@ -189,6 +194,7 @@ class SmartsvilleBkMs(Smartsville):
    PHY = B52
 
 @registerPlatform()
-class SmartsvillDDBkMs(SmartsvilleBkMs):
+class SmartsvillDDBkMs(SmartsvilleDD):
    SID = ['SmartsvilleDDBkMs', 'SmartsvilleDDBkMsTpm']
    SKU = ['DCS-7280CR3MK-32D4', 'DCS-7280CR3MK-32D4S']
+   PHY = B52

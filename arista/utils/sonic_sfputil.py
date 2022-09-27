@@ -15,19 +15,19 @@ def getSfpUtil():
     class SfpUtilCommon(SfpUtilBase):
         @property
         def port_start(self):
-            return platform.PORTS.allRange[0]
+            return platform.PORTS.getAllPorts()[0].index
 
         @property
         def port_end(self):
-            return platform.PORTS.allRange[-1]
+            return platform.PORTS.getAllPorts()[-1].index
 
         @property
         def osfp_ports(self):
-            return platform.PORTS.osfpRange
+            return [p.index for p in platform.PORTS.getOsfps()]
 
         @property
         def qsfp_ports(self):
-            return platform.PORTS.qsfpRange
+            return [p.index for p in platform.PORTS.getQsfps()]
 
         # XXX: defining the sfp_ports property currently can't be done as
         #      it affect the code logic of the sfputil tool by preventing

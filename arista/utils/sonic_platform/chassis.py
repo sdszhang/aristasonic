@@ -219,32 +219,30 @@ class Chassis(ChassisBase):
       return thermal_control
 
    def get_port_or_cage_type(self, index):
-      portLayout = self._platform.PORTS
+      # pylint: disable=redefined-outer-name
 
       if not hasattr( SfpBase, 'SFP_PORT_TYPE_BIT_RJ45' ):
          raise NotImplementedError
 
-      if index in portLayout.ethernetRange:
-         return SfpBase.SFP_PORT_TYPE_BIT_RJ45
+      from arista.descs.xcvr import Osfp, Qsfp, Qsfp28, Qsfp56, QsfpDD, QsfpPlus, Rj45, Sfp, Sfp28
+      mapping = {
+         (Rj45, SfpBase.SFP_PORT_TYPE_BIT_RJ45),
+         (Sfp, SfpBase.SFP_PORT_TYPE_BIT_SFP | SfpBase.SFP_PORT_TYPE_BIT_SFP_PLUS),
+         (Sfp28, SfpBase.SFP_PORT_TYPE_BIT_SFP28 ),
+         (Qsfp, SfpBase.SFP_PORT_TYPE_BIT_QSFP | SfpBase.SFP_PORT_TYPE_BIT_QSFP_PLUS),
+         (Qsfp28, SfpBase.SFP_PORT_TYPE_BIT_QSFP28),
+         (Qsfp56, SfpBase.SFP_PORT_TYPE_BIT_QSFP56),
+         (QsfpPlus, SfpBase.SFP_PORT_TYPE_BIT_QSFP_PLUS),
+         (QsfpDD, SfpBase.SFP_PORT_TYPE_BIT_QSFPDD),
+         (Osfp, SfpBase.SFP_PORT_TYPE_BIT_OSFP | SfpBase.SFP_PORT_TYPE_BIT_QSFPDD),
+      }
 
-      if index in portLayout.sfpRange:
-         return ( SfpBase.SFP_PORT_TYPE_BIT_SFP |
-                  SfpBase.SFP_PORT_TYPE_BIT_SFP_PLUS |
-                  SfpBase.SFP_PORT_TYPE_BIT_SFP28 |
-                  SfpBase.SFP_PORT_TYPE_BIT_SFP_DD )
-
-      if index in portLayout.qsfpRange:
-         return ( SfpBase.SFP_PORT_TYPE_BIT_QSFP |
-                  SfpBase.SFP_PORT_TYPE_BIT_QSFP_PLUS |
-                  SfpBase.SFP_PORT_TYPE_BIT_QSFP28 |
-                  SfpBase.SFP_PORT_TYPE_BIT_QSFP56 |
-                  SfpBase.SFP_PORT_TYPE_BIT_QSFPDD )
-
-      if index in portLayout.osfpRange:
-         return ( SfpBase.SFP_PORT_TYPE_BIT_OSFP |
-                  SfpBase.SFP_PORT_TYPE_BIT_QSFPDD )
-
-      return 0x00000000
+      xcvr = self._platform.PORTS.getPort(index)
+      mask = 0x0
+      for cls, flag in mapping:
+         if isinstance(xcvr, cls):
+            mask |= flag
+      return mask
 
    def get_position_in_parent(self):
       return -1

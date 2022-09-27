@@ -14,6 +14,7 @@ from ..components.tmp464 import Tmp464
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
+from ..descs.xcvr import Qsfp28, Sfp, Sfp28
 
 from .chassis.yuba import Yuba
 from .cpu.woodpecker import WoodpeckerCpu
@@ -27,8 +28,8 @@ class Marysville(FixedSystem):
    CHASSIS = Yuba
 
    PORTS = PortLayout(
-      sfps=incrange(1, 48),
-      qsfps=incrange(49, 56),
+      (Sfp28(i) for i in incrange(1, 48)),
+      (Qsfp28(i, leds=4) for i in incrange(49, 56)),
    )
 
    def __init__(self):
@@ -106,26 +107,25 @@ class Marysville(FixedSystem):
          scd.createInterrupt(addr=0x3060, num=2),
       ]
 
-      scd.addSfpSlotBlock(
-         sfpRange=self.PORTS.sfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
          addr=0xA000,
          bus=8,
          ledAddr=0x6100,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: xcvrId // 33 + 1,
-         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32
+         intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
       )
 
-      scd.addQsfpSlotBlock(
-         qsfpRange=self.PORTS.qsfpRange,
+      scd.addXcvrSlots(
+         ports=self.PORTS.getQsfps(),
          addr=0xA300,
          bus=56,
          ledAddr=0x6400,
-         ledLanes=4,
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 2,
          intrBitFn=lambda xcvrId: xcvrId - 33,
-         isHwLpModeAvail=False
+         isHwLpModeAvail=False,
       )
 
       port = self.cpu.getPciPort(1)
@@ -142,3 +142,8 @@ class Marysville(FixedSystem):
 class Marysville10(Marysville):
    SID = ['Marysville10']
    SKU = ['DCS-7050SX3-48C8']
+
+   PORTS = PortLayout(
+      (Sfp(i) for i in incrange(1, 48)),
+      (Qsfp28(i, leds=4) for i in incrange(49, 56)),
+   )
