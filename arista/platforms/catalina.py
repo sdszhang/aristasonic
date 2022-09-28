@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk4 import Tomahawk4
@@ -53,9 +52,11 @@ class CatalinaP(FixedSystem):
       # TODO sys cpld
       #self.syscpld = self.cpu.syscpld
 
-      self.newComponent(Tomahawk4, addr=PciAddr(bus=0x04))
+      port = self.cpu.getAsicPciPort()
+      port.newComponent(Tomahawk4, addr=port.addr)
 
-      scd = self.newComponent(Scd, addr=PciAddr(bus=0x01))
+      port = self.cpu.getScdPciPort()
+      scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
       scd.createWatchdog()
@@ -69,7 +70,7 @@ class CatalinaP(FixedSystem):
                     position=Position.INLET, target=85, overheat=95, critical=105),
       ])
 
-      scd.newComponent(Lm73, self.scd.i2cAddr(13, 0x48), sensors=[
+      scd.newComponent(Lm73, addr=self.scd.i2cAddr(13, 0x48), sensors=[
          SensorDesc(diode=0, name='Front-panel temp sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=85),
       ])

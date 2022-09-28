@@ -4,7 +4,6 @@ from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.quirk import PciConfigQuirk
 from ..core.register import Register, RegBitField, SetClearRegister
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.bfn.tofino2 import Tofino2
@@ -72,7 +71,8 @@ class Woodleaf(FixedSystem):
 
       self.syscpld = self.cpu.syscpld
 
-      scd = self.newComponent(Scd, addr=PciAddr(bus=0x01))
+      port = self.cpu.getScdPciPort()
+      scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
       scd.createWatchdog()
@@ -171,9 +171,9 @@ class Woodleaf(FixedSystem):
          phy = self.PHY(phyId, mdios, reset=reset)
          self.inventory.addPhy(phy)
 
-
-      bridgeAddr = PciAddr(device=0x03, func=1)
-      self.newComponent(Tofino2, addr=PciAddr(bus=0x04),
+      port = self.cpu.getAsicPciPort()
+      bridge = port.parent
+      port.newComponent(Tofino2, addr=port.addr,
          powerGpios=[
             self.syscpld.addGpio('gearboxLeftPower'),
             self.syscpld.addGpio('gearboxRightPower'),
@@ -193,7 +193,8 @@ class Woodleaf(FixedSystem):
          ],
          pciResetDelay=200,
          quirks=[
-            PciConfigQuirk(bridgeAddr, 'BRIDGE_CONTROL=0x1:0x1', 'enable SERR'),
-            PciConfigQuirk(bridgeAddr, 'CAP_EXP+0x10.w=0x20:0x20', 'enable Training'),
+            PciConfigQuirk(bridge.addr, 'BRIDGE_CONTROL=0x1:0x1', 'enable SERR'),
+            PciConfigQuirk(bridge.addr,
+                           'CAP_EXP+0x10.w=0x20:0x20', 'enable Training'),
          ],
       )

@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident4 import Trident4
@@ -44,10 +43,12 @@ class BlackhawkTD4(FixedSystem):
          'reboot': AdmPin(9, AdmPin.GPIO),
       })
 
-      scd = self.newComponent(Scd, addr=PciAddr(bus=0x01))
+      port = self.cpu.getScdPciPort()
+      scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
-      self.newComponent(Trident4, addr=PciAddr(bus=0x04))
+      port = self.cpu.getAsicPciPort()
+      port.newComponent(Trident4, addr=port.addr)
 
       scd.createWatchdog()
 
