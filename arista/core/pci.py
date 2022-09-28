@@ -276,6 +276,7 @@ class RootPciBridge(Component):
 
    ADDR_CLS = RootPciAddr
    PORT_CLS = RootPciPort
+   BRIDGE_CLS = PciBridge
 
    def __init__(self, domain=0, bus=0, **kwargs):
       super(RootPciBridge, self).__init__(**kwargs)
@@ -283,6 +284,7 @@ class RootPciBridge(Component):
       self.bus = bus
       self.addrs = {}
       self.ports = {}
+      self.bridges = {}
 
    @property
    def downstreamBus(self):
@@ -308,6 +310,18 @@ class RootPciBridge(Component):
          self.ports[addr] = port
       addr.parent = port
       return port
+
+   def pciBridge(self, device=0, func=0):
+      port = self.pciPort(device=device, func=func)
+      bridge = self.bridges.get(port)
+      if bridge is None:
+         bridge = self.newComponent(
+            self.BRIDGE_CLS,
+            port=port,
+         )
+         self.bridges[port] = bridge
+         bridge.upstreamPorts[port] = port
+      return bridge
 
    def reachable(self):
       return True
