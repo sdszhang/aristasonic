@@ -1,6 +1,6 @@
 from ...core.cpu import Cpu
 from ...core.fan import FanSlot
-from ...core.types import PciAddr
+from ...core.pci import PciRoot
 from ...core.utils import incrange
 
 from ...components.cpu.amd.k10temp import K10Temp
@@ -20,15 +20,24 @@ class CrowCpu(Cpu):
 
    PLATFORM = 'crow'
 
-   def __init__(self, scd, registerCls=CrowCpldRegisters, hwmonBus=0, **kwargs):
+   def __init__(self, registerCls=CrowCpldRegisters, **kwargs):
       super(CrowCpu, self).__init__(**kwargs)
 
-      self.newComponent(K10Temp, addr=PciAddr(device=0x18, func=3), sensors=[
+      self.pciRoot = self.newComponent(PciRoot)
+
+      port = self.pciRoot.rootPort(device=0x18, func=3)
+      port.newComponent(K10Temp, addr=port.addr, sensors=[
          SensorDesc(diode=0, name='Cpu temp sensor',
                     position=Position.OTHER, target=60, overheat=90, critical=95),
       ])
 
-      scd.newComponent(Max6658, scd.i2cAddr(hwmonBus, 0x4c), sensors=[
+      bus = PiixI2cBus(1, 0x0b20)
+      self.syscpld = self.newComponent(CrowSysCpld, addr=bus.i2cAddr(0x23),
+                                       registerCls=registerCls)
+      self.syscpld.addPowerCycle()
+
+   def addScdComponents(self, scd, hwmonBus=0):
+      scd.newComponent(Max6658, addr=scd.i2cAddr(hwmonBus, 0x4c), sensors=[
          SensorDesc(diode=0, name='Cpu board temp sensor',
                     position=Position.OTHER, target=55, overheat=75, critical=80),
          SensorDesc(diode=1, name='Back-panel temp sensor',
@@ -49,7 +58,10 @@ class CrowCpu(Cpu):
             ]
          )
 
-      bus = PiixI2cBus(1, 0x0b20)
-      self.syscpld = self.newComponent(CrowSysCpld, addr=bus.i2cAddr(0x23),
-                                       registerCls=registerCls)
-      self.syscpld.addPowerCycle()
+   def getPciPort(self, num):
+      device, func = {
+         0: (0x02, 1),
+         1: (0x02, 2),
+      }[num]
+      bridge = self.pciRoot.pciBridge(device=device, func=func)
+      return bridge.downstreamPort(port=0)

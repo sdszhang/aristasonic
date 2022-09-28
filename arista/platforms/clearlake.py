@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident2 import Trident2
@@ -37,27 +36,31 @@ class Clearlake(FixedSystem):
       self.qsfp40gAutoRange = incrange(5, 28)
       self.qsfp40gOnlyRange = incrange(29, 36)
 
-      self.newComponent(Trident2, PciAddr(bus=0x01))
-
-      scd = self.newComponent(Scd, PciAddr(bus=0x02))
-
-      cpu = self.newComponent(CrowCpu, scd, hwmonBus=1)
+      cpu = self.newComponent(CrowCpu)
       self.cpu = cpu
       self.syscpld = cpu.syscpld
+
+      port = cpu.getPciPort(0)
+      port.newComponent(Trident2, addr=port.addr)
+
+      port = cpu.getPciPort(1)
+      scd = port.newComponent(Scd, addr=port.addr)
+
+      self.cpu.addScdComponents(scd, hwmonBus=1)
 
       scd.createWatchdog()
 
       scd.createPowerCycle()
 
-      scd.newComponent(Max6658, scd.i2cAddr(0, 0x4c), sensors=[
+      scd.newComponent(Max6658, addr=scd.i2cAddr(0, 0x4c), sensors=[
          SensorDesc(diode=0, name='Board Sensor',
                     position=Position.OTHER, target=36, overheat=55, critical=70),
          SensorDesc(diode=1, name='Front-panel temp sensor',
                     position=Position.INLET, target=42, overheat=65, critical=75),
       ])
 
-      scd.newComponent(Ucd90120A, scd.i2cAddr(1, 0x4e, t=3))
-      scd.newComponent(Ucd90120A, scd.i2cAddr(5, 0x4e, t=3), causes={
+      scd.newComponent(Ucd90120A, addr=scd.i2cAddr(1, 0x4e, t=3))
+      scd.newComponent(Ucd90120A, addr=scd.i2cAddr(5, 0x4e, t=3), causes={
          'reboot': UcdGpi(2),
          'watchdog': UcdGpi(3),
          'powerloss': UcdGpi(7),

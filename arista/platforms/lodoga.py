@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident3 import Trident3
@@ -32,19 +31,23 @@ class Lodoga(FixedSystem):
    def __init__(self):
       super(Lodoga, self).__init__()
 
-      self.newComponent(Trident3, PciAddr(bus=0x01))
-
-      scd = self.newComponent(Scd, PciAddr(bus=0x02))
-
-      cpu = self.newComponent(CrowCpu, scd)
+      cpu = self.newComponent(CrowCpu)
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
+      port = cpu.getPciPort(0)
+      port.newComponent(Trident3, addr=port.addr)
+
+      port = cpu.getPciPort(1)
+      scd = port.newComponent(Scd, addr=port.addr)
+
+      self.cpu.addScdComponents(scd)
+
       scd.createWatchdog()
 
-      scd.newComponent(Ucd90120A, scd.i2cAddr(0, 0x4e, t=3))
+      scd.newComponent(Ucd90120A, addr=scd.i2cAddr(0, 0x4e, t=3))
 
-      scd.newComponent(Max6658, scd.i2cAddr(9, 0x4c), sensors=[
+      scd.newComponent(Max6658, addr=scd.i2cAddr(9, 0x4c), sensors=[
          SensorDesc(diode=0, name='Board temp sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=85),
          SensorDesc(diode=1, name='Front-panel temp sensor',
@@ -61,7 +64,7 @@ class Lodoga(FixedSystem):
          (0x6090, 'beacon'),
       ])
 
-      scd.newComponent(Ucd90120A, scd.i2cAddr(13, 0x4e, t=3), causes=[
+      scd.newComponent(Ucd90120A, addr=scd.i2cAddr(13, 0x4e, t=3), causes=[
          UcdGpi(1, 'reboot'),
          UcdGpi(2, 'watchdog'),
          UcdGpi(4, 'overtemp'),

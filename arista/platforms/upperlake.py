@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk import Tomahawk
@@ -34,14 +33,18 @@ class Upperlake(FixedSystem):
    def __init__(self):
       super(Upperlake, self).__init__()
 
-      self.newComponent(Tomahawk, PciAddr(bus=0x01))
-
-      scd = self.newComponent(Scd, PciAddr(bus=0x02))
-      self.scd = scd
-
-      cpu = self.newComponent(CrowCpu, scd, hwmonBus=1, registerCls=KoiCpldRegisters)
+      cpu = self.newComponent(CrowCpu, registerCls=KoiCpldRegisters)
       self.cpu = cpu
       self.syscpld = cpu.syscpld
+
+      port = cpu.getPciPort(0)
+      port.newComponent(Tomahawk, addr=port.addr)
+
+      port = cpu.getPciPort(1)
+      scd = port.newComponent(Scd, addr=port.addr)
+      self.scd = scd
+
+      self.cpu.addScdComponents(scd, hwmonBus=1)
 
       scd.createWatchdog()
 
@@ -56,7 +59,7 @@ class Upperlake(FixedSystem):
                     position=Position.INLET, target=55, overheat=65, critical=75),
       ])
 
-      scd.newComponent(Ucd90120A, scd.i2cAddr(1, 0x4e, t=3))
+      scd.newComponent(Ucd90120A, addr=scd.i2cAddr(1, 0x4e, t=3))
       self.configureSwitchDpm()
 
       scd.addSmbusMasterRange(0x8000, 5, 0x80)
@@ -125,7 +128,7 @@ class Upperlake(FixedSystem):
       )
 
    def configureSwitchDpm(self):
-      self.scd.newComponent(Ucd90120A, self.scd.i2cAddr(5, 0x4e, t=3), causes={
+      self.scd.newComponent(Ucd90120A, addr=self.scd.i2cAddr(5, 0x4e, t=3), causes={
          'reboot': UcdGpi(1),
          'watchdog': UcdGpi(2),
          'overtemp': UcdGpi(4),
