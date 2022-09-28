@@ -38,7 +38,8 @@ class PikeZ(FixedSystem):
         super().__init__()
 
         self.cpu = self.newComponent(PrairieCpu)
-        scd = self.newComponent(Scd, PciAddr(device=0x18, func=7))
+        port = self.cpu.getPciPort(0)
+        scd = port.newComponent(Scd, addr=port.addr)
         self.scd = scd
         scd.createWatchdog()
         scd.createPowerCycle()
@@ -151,7 +152,8 @@ class PikeZ(FixedSystem):
             self.newComponent(Sic450, addr=addr, vouts=vouts, uvs=uvs)
         ])
 
-        self.newComponent(Trident3X2, PciAddr(bus=1),
+        port = self.cpu.getPciPort(1)
+        port.newComponent(Trident3X2, addr=port.addr,
             coreResets=[
                 scd.inventory.getReset('switch_chip_reset'),
             ],
