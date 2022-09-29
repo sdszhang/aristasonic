@@ -1,6 +1,6 @@
 from ...core.cpu import Cpu
 from ...core.fan import FanSlot
-from ...core.types import PciAddr
+from ...core.pci import PciRoot
 from ...core.utils import incrange
 
 from ...components.cpu.intel.coretemp import Coretemp
@@ -28,7 +28,10 @@ class RookCpu(Cpu):
                 cpldRegisterCls=RookCpldRegisters, **kwargs):
       super(RookCpu, self).__init__(**kwargs)
 
-      self.newComponent(PchTemp, addr=PciAddr(device=0x1f, func=6), sensors=[
+      self.pciRoot = self.newComponent(PciRoot)
+
+      port = self.pciRoot.rootPort(device=0x1f, func=6)
+      port.newComponent(PchTemp, addr=port.addr, sensors=[
          SensorDesc(diode=0, name='PCH temp sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=85),
       ])
@@ -42,18 +45,19 @@ class RookCpu(Cpu):
                     position=Position.OTHER, target=82, overheat=95, critical=105),
       ])
 
-      cpld = self.newComponent(Scd, PciAddr(bus=0xff, device=0x0b, func=3))
+      port = self.pciRoot.rootPort(bus=0xff, device=0x0b, func=3)
+      cpld = port.newComponent(Scd, addr=port.addr)
       self.cpld = cpld
 
       cpld.addSmbusMasterRange(0x8000, 4, 0x80, 4)
-      cpld.newComponent(Max6658, cpld.i2cAddr(0, 0x4c), sensors=[
+      cpld.newComponent(Max6658, addr=cpld.i2cAddr(0, 0x4c), sensors=[
          SensorDesc(diode=0, name='CPU board temp sensor',
                     position=Position.OTHER, target=70, overheat=80, critical=85),
          SensorDesc(diode=1, name='Back-panel temp sensor',
                     position=Position.OUTLET, target=55, overheat=65, critical=75),
       ])
 
-      fanCpld = cpld.newComponent(fanCpldCls, cpld.i2cAddr(12, 0x60))
+      fanCpld = cpld.newComponent(fanCpldCls, addr=cpld.i2cAddr(12, 0x60))
       for slotId in incrange(1, fanCpld.FAN_COUNT):
          fanDesc = FanDesc(fanId=slotId, position=FanPosition.INLET)
          ledDesc = LedDesc(name='fan%d' % slotId,
@@ -68,12 +72,12 @@ class RookCpu(Cpu):
          )
 
       if hasLmSensor:
-         cpld.newComponent(Lm73, cpld.i2cAddr(mgmtBus, 0x48), sensors=[
+         cpld.newComponent(Lm73, addr=cpld.i2cAddr(mgmtBus, 0x48), sensors=[
             SensorDesc(diode=0, name='Front-panel temp sensor',
                        position=Position.OTHER, target=55, overheat=75, critical=85),
          ])
 
-      self.leds = cpld.newComponent(RookStatusLeds, cpld.i2cAddr(mgmtBus, 0x20),
+      self.leds = cpld.newComponent(RookStatusLeds, addr=cpld.i2cAddr(mgmtBus, 0x20),
                                     leds=[
          LedDesc(name='beacon', colors=['blue']),
          LedDesc(name='fan_status', colors=['green', 'red']),
@@ -84,7 +88,7 @@ class RookCpu(Cpu):
 
       cpld.createPowerCycle()
 
-      self.syscpld = self.newComponent(RookSysCpld, cpld.i2cAddr(8, 0x23),
+      self.syscpld = self.newComponent(RookSysCpld, addr=cpld.i2cAddr(8, 0x23),
                                        registerCls=cpldRegisterCls)
 
    def addCpuDpm(self, addr=None, causes=None):
@@ -100,3 +104,13 @@ class RookCpu(Cpu):
 
    def switchDpmAddr(self, addr=0x4e, t=3, **kwargs):
       return self.cpld.i2cAddr(10, addr, t=t, **kwargs)
+
+   def getScdPciPort(self):
+      bridge = self.pciRoot.pciBridge(device=0x1c, func=0)
+      return bridge.downstreamPort(port=0)
+
+   def getAsicPciPort(self, index=0):
+      if index == 0:
+         bridge = self.pciRoot.pciBridge(device=0x1c, func=4)
+         return bridge.downstreamPort(port=0)
+      return None

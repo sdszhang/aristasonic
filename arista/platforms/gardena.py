@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk2 import Tomahawk2
@@ -32,14 +31,27 @@ class Gardena(FixedSystem):
    def __init__(self):
       super(Gardena, self).__init__()
 
-      self.newComponent(Tomahawk2, PciAddr(bus=0x07))
+      cpu = self.newComponent(RookCpu)
+      cpu.addCpuDpm()
+      cpu.cpld.newComponent(Ucd90120A, addr=cpu.switchDpmAddr(0x34), causes={
+         'powerloss': UcdGpi(1),
+         'reboot': UcdGpi(2),
+         'watchdog': UcdGpi(3),
+         'overtemp': UcdGpi(4),
+      })
+      self.cpu = cpu
+      self.syscpld = cpu.syscpld
 
-      scd = self.newComponent(Scd, PciAddr(bus=0x06))
+      port = self.cpu.getAsicPciPort()
+      port.newComponent(Tomahawk2, addr=port.addr)
+
+      port = self.cpu.getScdPciPort()
+      scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
       scd.createWatchdog()
 
-      scd.newComponent(Max6658, scd.i2cAddr(0, 0x4c), sensors=[
+      scd.newComponent(Max6658, addr=scd.i2cAddr(0, 0x4c), sensors=[
          SensorDesc(diode=0, name='Board sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=85),
       ])
@@ -60,17 +72,6 @@ class Gardena(FixedSystem):
          GpioDesc("psu1_ac_status", 0x5000, 10, ro=True),
          GpioDesc("psu2_ac_status", 0x5000, 11, ro=True),
       ])
-
-      cpu = self.newComponent(RookCpu)
-      cpu.addCpuDpm()
-      cpu.cpld.newComponent(Ucd90120A, cpu.switchDpmAddr(0x34), causes={
-         'powerloss': UcdGpi(1),
-         'reboot': UcdGpi(2),
-         'watchdog': UcdGpi(3),
-         'overtemp': UcdGpi(4),
-      })
-      self.cpu = cpu
-      self.syscpld = cpu.syscpld
 
       for psuId in incrange(1, 2):
          addrFunc=lambda addr, i=psuId: scd.i2cAddr(1 + i, addr, t=3, datr=2, datw=3)

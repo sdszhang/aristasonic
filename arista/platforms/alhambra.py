@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.bfn.tofino import Tofino
@@ -32,14 +31,27 @@ class Alhambra(FixedSystem):
    def __init__(self, hasLmSensor=True, psus=None):
       super(Alhambra, self).__init__()
 
-      self.newComponent(Tofino, PciAddr(bus=0x07))
+      cpu = self.newComponent(RookCpu, hasLmSensor=hasLmSensor)
+      cpu.addCpuDpm()
+      cpu.cpld.newComponent(Ucd90120A, addr=cpu.switchDpmAddr(), causes={
+         'powerloss': UcdGpi(1),
+         'overtemp': UcdGpi(2),
+         'reboot': UcdGpi(4),
+         'watchdog': UcdGpi(5),
+      })
+      self.cpu = cpu
+      self.syscpld = cpu.syscpld
 
-      scd = self.newComponent(Scd, PciAddr(bus=0x06))
+      port = self.cpu.getAsicPciPort()
+      port.newComponent(Tofino, addr=port.addr)
+
+      port = self.cpu.getScdPciPort()
+      scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
       scd.createWatchdog()
 
-      scd.newComponent(Max6658, scd.i2cAddr(7, 0x4c), sensors=[
+      scd.newComponent(Max6658, addr=scd.i2cAddr(7, 0x4c), sensors=[
          SensorDesc(diode=0, name='Board sensor',
                     position=Position.OTHER, target=60, overheat=70, critical=80),
          SensorDesc(diode=1, name='Switch Chip sensor',
@@ -89,17 +101,6 @@ class Alhambra(FixedSystem):
          bus=72,
          ledAddr=0x7200
       )
-
-      cpu = self.newComponent(RookCpu, hasLmSensor=hasLmSensor)
-      cpu.addCpuDpm()
-      cpu.cpld.newComponent(Ucd90120A, cpu.switchDpmAddr(), causes={
-         'powerloss': UcdGpi(1),
-         'overtemp': UcdGpi(2),
-         'reboot': UcdGpi(4),
-         'watchdog': UcdGpi(5),
-      })
-      self.cpu = cpu
-      self.syscpld = cpu.syscpld
 
       for psuId in incrange(1, 2):
          addrFunc=lambda addr, i=psuId: \

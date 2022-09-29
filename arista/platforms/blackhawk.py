@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.cpu.rook import TehamaFanCpld
@@ -32,9 +31,21 @@ class BlackhawkO(FixedSystem):
    def __init__(self):
       super(BlackhawkO, self).__init__()
 
-      self.newComponent(Tomahawk3, PciAddr(bus=0x06))
+      cpu = self.newComponent(RookCpu, fanCpldCls=TehamaFanCpld, mgmtBus=14)
+      cpu.cpld.newComponent(Ucd90320, addr=cpu.switchDpmAddr(0x11), causes={
+         'overtemp': UcdGpi(1),
+         'powerloss': UcdGpi(3),
+         'watchdog': UcdGpi(5),
+         'reboot': UcdGpi(6),
+      })
+      self.cpu = cpu
+      self.syscpld = cpu.syscpld
 
-      scd = self.newComponent(Scd, PciAddr(bus=0x07))
+      port = self.cpu.getAsicPciPort()
+      port.newComponent(Tomahawk3, addr=port.addr)
+
+      port = self.cpu.getScdPciPort()
+      scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
       scd.createWatchdog()
@@ -104,16 +115,6 @@ class BlackhawkO(FixedSystem):
         ledAddr=0x6900,
         ledAddrOffsetFn=lambda x: 0x40
       )
-
-      cpu = self.newComponent(RookCpu, fanCpldCls=TehamaFanCpld, mgmtBus=14)
-      cpu.cpld.newComponent(Ucd90320, cpu.switchDpmAddr(0x11), causes={
-         'overtemp': UcdGpi(1),
-         'powerloss': UcdGpi(3),
-         'watchdog': UcdGpi(5),
-         'reboot': UcdGpi(6),
-      })
-      self.cpu = cpu
-      self.syscpld = cpu.syscpld
 
       for psuId, bus in [(1, 12), (2, 11)]:
          addrFunc=lambda addr, bus=bus: \
