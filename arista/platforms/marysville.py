@@ -2,7 +2,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.asic.xgs.trident3 import Trident3
@@ -35,10 +34,6 @@ class Marysville(FixedSystem):
    def __init__(self):
       super(Marysville, self).__init__()
 
-      self.newComponent(Trident3, addr=PciAddr(bus=0x01))
-
-      scd = self.newComponent(Scd, addr=PciAddr(bus=0x02))
-
       self.cpu = self.newComponent(WoodpeckerCpu)
       self.cpu.addCpuDpm()
       self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(), causes={
@@ -48,6 +43,12 @@ class Marysville(FixedSystem):
          'overtemp': UcdGpi(6),
          'cpu': UcdGpi(7),
       })
+
+      port = self.cpu.getPciPort(1)
+      port.newComponent(Trident3, addr=port.addr)
+
+      port = self.cpu.getPciPort(0)
+      scd = port.newComponent(Scd, addr=port.addr)
 
       scd.createWatchdog()
 

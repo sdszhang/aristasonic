@@ -3,7 +3,6 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
-from ..core.types import PciAddr
 from ..core.utils import incrange
 
 from ..components.dpm.ucd import Ucd90320, UcdGpi
@@ -41,20 +40,22 @@ class Smartsville(FixedSystem):
 
       self.cpu = self.newComponent(WoodpeckerCpu)
       self.cpu.addCpuDpm()
-      self.cpu.cpld.newComponent(Ucd90320, self.cpu.switchDpmAddr(), causes={
+      self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(), causes={
          'powerloss': UcdGpi(1),
          'reboot': UcdGpi(2),
          'watchdog': UcdGpi(3),
          'overtemp': UcdGpi(4),
       })
 
-      self.newComponent(SwitchChip, PciAddr(bus=0x05))
+      port = self.cpu.getPciPort(2)
+      port.newComponent(SwitchChip, addr=port.addr)
 
-      scd = self.newComponent(Scd, PciAddr(bus=0x02))
+      port = self.cpu.getPciPort(0)
+      scd = port.newComponent(Scd, addr=port.addr)
 
       scd.createWatchdog()
 
-      scd.newComponent(Tmp468, scd.i2cAddr(0, 0x48), sensors=[
+      scd.newComponent(Tmp468, addr=scd.i2cAddr(0, 0x48), sensors=[
          SensorDesc(diode=0, name='Board Sensor',
                     position=Position.OTHER, target=65, overheat=75, critical=80),
          SensorDesc(diode=1, name='Front Air',
