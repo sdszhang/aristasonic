@@ -52,9 +52,6 @@ class CatalinaP(FixedSystem):
       # TODO sys cpld
       #self.syscpld = self.cpu.syscpld
 
-      port = self.cpu.getPciPort(1)
-      port.newComponent(Tomahawk4, addr=port.addr)
-
       port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
@@ -90,8 +87,8 @@ class CatalinaP(FixedSystem):
          ResetDesc('phy2_reset', addr=0x4000, bit=6),
          ResetDesc('phy1_reset', addr=0x4000, bit=5),
          ResetDesc('phy0_reset', addr=0x4000, bit=4),
-         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=3),
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=2),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=3, auto=False),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=2, auto=False),
       ])
 
       scd.addGpios([
@@ -155,6 +152,16 @@ class CatalinaP(FixedSystem):
          mdios = [scd.addMdio(i, 0), scd.addMdio(i, 1)]
          phy = self.PHY(phyId, mdios, reset=reset)
          self.inventory.addPhy(phy)
+
+      port = self.cpu.getPciPort(1)
+      port.newComponent(Tomahawk4, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+         pcieResets=[
+            scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
+      )
 
 @registerPlatform()
 class CatalinaDD(CatalinaP):

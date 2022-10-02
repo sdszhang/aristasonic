@@ -47,9 +47,6 @@ class BlackhawkTD4(FixedSystem):
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
-      port = self.cpu.getPciPort(1)
-      port.newComponent(Trident4, addr=port.addr)
-
       scd.createWatchdog()
 
       scd.newComponent(Tmp468, addr=scd.i2cAddr(8, 0x48), sensors=[
@@ -70,8 +67,8 @@ class BlackhawkTD4(FixedSystem):
       scd.addSmbusMasterRange(0x8000, 7, 0x80)
 
       scd.addResets([
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=2),
-         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=1),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=2, auto=False),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=1, auto=False),
          ResetDesc('security_asic_reset', addr=0x4000, bit=0),
       ])
 
@@ -129,6 +126,16 @@ class BlackhawkTD4(FixedSystem):
                DPS1600CB,
             ],
          )
+
+      port = self.cpu.getPciPort(1)
+      port.newComponent(Trident4, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+         pcieResets=[
+            scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
+      )
 
 @registerPlatform()
 class BlackhawkTD4DD(BlackhawkTD4):
