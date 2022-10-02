@@ -35,9 +35,6 @@ class Lodoga(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      port = cpu.getPciPort(0)
-      port.newComponent(Trident3, addr=port.addr)
-
       port = cpu.getPciPort(1)
       scd = port.newComponent(Scd, addr=port.addr)
 
@@ -73,8 +70,8 @@ class Lodoga(FixedSystem):
       ])
 
       scd.addResets([
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=1),
-         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=2)
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=1, auto=False),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=2, auto=False)
       ])
 
       scd.addGpios([
@@ -129,4 +126,14 @@ class Lodoga(FixedSystem):
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - 1,
          isHwLpModeAvail=False
+      )
+
+      port = cpu.getPciPort(0)
+      port.newComponent(Trident3, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+         pcieResets=[
+            scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
       )

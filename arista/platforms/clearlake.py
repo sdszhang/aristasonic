@@ -40,9 +40,6 @@ class Clearlake(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      port = cpu.getPciPort(0)
-      port.newComponent(Trident2, addr=port.addr)
-
       port = cpu.getPciPort(1)
       scd = port.newComponent(Scd, addr=port.addr)
 
@@ -83,7 +80,7 @@ class Clearlake(FixedSystem):
          (0x6090, 'beacon'),
       ])
 
-      scd.addReset(ResetDesc('switch_chip_reset', addr=0x4000, bit=0))
+      scd.addReset(ResetDesc('switch_chip_reset', addr=0x4000, bit=0, auto=False))
 
       scd.addGpios([
          GpioDesc("psu1_present", 0x5000, 0, ro=True),
@@ -141,6 +138,13 @@ class Clearlake(FixedSystem):
          addr=0x5210,
          bus=40,
          ledAddr=0x6900
+      )
+
+      port = cpu.getPciPort(0)
+      port.newComponent(Trident2, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
       )
 
 

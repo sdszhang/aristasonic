@@ -37,9 +37,6 @@ class Upperlake(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      port = cpu.getPciPort(0)
-      port.newComponent(Tomahawk, addr=port.addr)
-
       port = cpu.getPciPort(1)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
@@ -73,8 +70,8 @@ class Upperlake(FixedSystem):
       ])
 
       scd.addResets([
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=1),
-         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=2)
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=1, auto=False),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=2, auto=False)
       ])
 
       scd.addGpios([
@@ -125,6 +122,16 @@ class Upperlake(FixedSystem):
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - 1,
          isHwLpModeAvail=False
+      )
+
+      port = cpu.getPciPort(0)
+      port.newComponent(Tomahawk, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+         pcieResets=[
+            scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
       )
 
    def configureSwitchDpm(self):
