@@ -41,9 +41,6 @@ class BlackhawkO(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      port = self.cpu.getPciPort(0)
-      port.newComponent(Tomahawk3, addr=port.addr)
-
       port = self.cpu.getPciPort(1)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
@@ -78,7 +75,7 @@ class BlackhawkO(FixedSystem):
       scd.addResets([
          ResetDesc('sat_cpld1_reset', addr=0x4000, bit=4),
          ResetDesc('sat_cpld0_reset', addr=0x4000, bit=3),
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=2),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=2, auto=False),
          ResetDesc('security_asic_reset', addr=0x4000, bit=0),
       ])
 
@@ -133,6 +130,13 @@ class BlackhawkO(FixedSystem):
                DPS1600AB,
             ],
          )
+
+      port = self.cpu.getPciPort(0)
+      port.newComponent(Tomahawk3, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+      )
 
 @registerPlatform()
 class BlackhawkDD(BlackhawkO):

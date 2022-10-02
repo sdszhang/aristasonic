@@ -42,9 +42,6 @@ class Gardena(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      port = self.cpu.getPciPort(1)
-      port.newComponent(Tomahawk2, addr=port.addr)
-
       port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
@@ -59,8 +56,8 @@ class Gardena(FixedSystem):
       scd.addSmbusMasterRange(0x8000, 8, 0x80)
 
       scd.addResets([
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=0),
-         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=1),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=0, auto=False),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=1, auto=False),
          ResetDesc('security_asic_reset', addr=0x4000, bit=2),
       ])
 
@@ -114,4 +111,14 @@ class Gardena(FixedSystem):
          addr=0xA410,
          bus=6,
          ledAddr=0x7100
+      )
+
+      port = self.cpu.getPciPort(1)
+      port.newComponent(Tomahawk2, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+         pcieResets=[
+            scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
       )

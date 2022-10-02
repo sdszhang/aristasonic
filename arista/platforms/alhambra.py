@@ -42,9 +42,6 @@ class Alhambra(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      port = self.cpu.getPciPort(1)
-      port.newComponent(Tofino, addr=port.addr)
-
       port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
@@ -61,7 +58,7 @@ class Alhambra(FixedSystem):
       scd.addSmbusMasterRange(0x8000, 9, 0x80)
 
       scd.addResets([
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=8),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=8, auto=False),
          ResetDesc('security_chip_reset', addr=0x4000, bit=1),
          ResetDesc('repeater_sfp_reset', addr=0x4000, bit=0),
       ])
@@ -120,3 +117,10 @@ class Alhambra(FixedSystem):
                DS750PED,
             ],
          )
+
+      port = self.cpu.getPciPort(1)
+      port.newComponent(Tofino, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+      )
