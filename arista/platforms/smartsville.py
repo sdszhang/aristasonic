@@ -47,9 +47,6 @@ class Smartsville(FixedSystem):
          'overtemp': UcdGpi(4),
       })
 
-      port = self.cpu.getPciPort(2)
-      port.newComponent(SwitchChip, addr=port.addr)
-
       port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
 
@@ -79,8 +76,8 @@ class Smartsville(FixedSystem):
       ])
 
       scd.addResets([
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=0),
-         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=1),
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=0, auto=False),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=1, auto=False),
          ResetDesc('security_asic_reset', addr=0x4000, bit=2)
       ])
 
@@ -158,6 +155,16 @@ class Smartsville(FixedSystem):
          mdios = [scd.addMdio(i, 0), scd.addMdio(i, 1)]
          phy = self.PHY(phyId, mdios, reset=reset)
          self.inventory.addPhy(phy)
+
+      port = self.cpu.getPciPort(2)
+      port.newComponent(SwitchChip, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+         pcieResets=[
+            scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
+      )
 
 @registerPlatform()
 class SmartsvilleBK(Smartsville):

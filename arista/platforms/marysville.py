@@ -44,9 +44,6 @@ class Marysville(FixedSystem):
          'cpu': UcdGpi(7),
       })
 
-      port = self.cpu.getPciPort(1)
-      port.newComponent(Trident3, addr=port.addr)
-
       port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
 
@@ -72,8 +69,8 @@ class Marysville(FixedSystem):
       ])
 
       scd.addResets([
-         ResetDesc('switch_chip_reset', addr=0x4000, bit=1),
-         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=2)
+         ResetDesc('switch_chip_reset', addr=0x4000, bit=1, auto=False),
+         ResetDesc('switch_chip_pcie_reset', addr=0x4000, bit=2, auto=False)
       ])
 
       scd.addGpios([
@@ -129,6 +126,16 @@ class Marysville(FixedSystem):
          intrRegIdxFn=lambda xcvrId: 2,
          intrBitFn=lambda xcvrId: xcvrId - 33,
          isHwLpModeAvail=False
+      )
+
+      port = self.cpu.getPciPort(1)
+      port.newComponent(Trident3, addr=port.addr,
+         coreResets=[
+            scd.inventory.getReset('switch_chip_reset'),
+         ],
+         pcieResets=[
+            scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
       )
 
 @registerPlatform()
