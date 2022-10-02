@@ -1,5 +1,5 @@
 from ...core.cpu import Cpu
-from ...core.types import PciAddr
+from ...core.pci import PciRoot
 
 from ...components.cpu.amd.k10temp import K10Temp
 from ...components.cpld import SysCpld, SysCpldCommonRegistersV2
@@ -16,12 +16,16 @@ class Puffin(Cpu):
    def __init__(self, cpldRegisterCls=SysCpldCommonRegistersV2, **kwargs):
       super().__init__(**kwargs)
 
-      self.newComponent(K10Temp, addr=PciAddr(device=0x18, func=3), sensors=[
+      self.pciRoot = self.newComponent(PciRoot)
+
+      port = self.pciRoot.rootPort(device=0x18, func=3)
+      port.newComponent(K10Temp, addr=port.addr, sensors=[
          SensorDesc(diode=0, name='Cpu temp sensor',
                     position=Position.OTHER, target=70, overheat=95, critical=115),
       ])
 
-      cpld = self.newComponent(Scd, addr=PciAddr(device=0x18, func=7))
+      port = self.pciRoot.rootPort(device=0x18, func=7)
+      cpld = port.newComponent(Scd, addr=port.addr)
       self.cpld = cpld
 
       cpld.createInterrupt(addr=0x3000, num=0)
@@ -66,6 +70,16 @@ class Puffin(Cpu):
 
    def switchGpAddr(self, addr, **kwargs):
       return self.cpld.i2cAddr(4, addr, **kwargs)
+
+   def getScdPciPort(self):
+      bridge = self.pciRoot.pciBridge(device=0x01, func=2)
+      return bridge.downstreamPort(port=0)
+
+   def getAsicPciPort(self, index=0):
+      if index == 0:
+         bridge = self.pciRoot.pciBridge(device=0x01, func=1)
+         return bridge.downstreamPort(port=0)
+      return None
 
    def addFanGroup(self, slots=3, count=2):
       self.cpld.addFanGroup(0x9000, 3, slots, count)
