@@ -62,7 +62,10 @@ class SysfsEntry(object):
       return self.entryPath_
 
    def exists(self):
-      return os.path.exists(self.entryPath)
+      try:
+         return os.path.exists(self.entryPath)
+      except FileNotFoundError:
+         return False
 
    def _readConversion(self, value):
       return str(value)
