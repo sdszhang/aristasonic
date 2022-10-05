@@ -133,8 +133,8 @@ class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
 
    def getReloadCauseTime(self):
       time = self.regs.faultTime()
-      secs = time[0] << 24 | time[1] << 16 | time[2] << 8 | time[3]
-      msecs = (time[4] << 8 | time[5]) / 2**16
+      secs = time[5] << 24 | time[4] << 16 | time[3] << 8 | time[2]
+      msecs = (time[1] << 8 | time[0]) / 2**16
       date = self.FAULT_TIME_BASE + datetime.timedelta(seconds=secs + msecs)
       return datetimeToStr(date)
 
@@ -144,12 +144,12 @@ class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
       secs = int(now)
       ticks = int(2**16 * (now - secs))
       self.regs.rtc([
-         (secs >> 24) & 0xff,
-         (secs >> 16) & 0xff,
-         (secs >> 8) & 0xff,
-         secs & 0xff,
+         ticks & 0xff,
          (ticks >> 8) & 0xff,
-         ticks & 0xff
+         secs & 0xff,
+         (secs >> 8) & 0xff,
+         (secs >> 16) & 0xff,
+         (secs >> 24) & 0xff,
       ])
 
    def getReloadCause(self):
