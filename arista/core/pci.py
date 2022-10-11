@@ -11,7 +11,10 @@ from ..libs.wait import waitForPath
 class PciNotReady(Exception):
    pass
 
-class RootPciAddr(SysfsPath):
+class PciSysfsPath(SysfsPath): # pylint: disable=abstract-method
+   pass
+
+class RootPciAddr(PciSysfsPath):
    def __init__(self, parent=None, device=0, func=0):
       self.parent = parent
       self.device = device
@@ -35,7 +38,7 @@ class RootPciAddr(SysfsPath):
    def getSysfsPath(self):
       return os.path.join(self.upstream.parent.getSysfsPath(), str(self))
 
-class DownstreamPciAddr(SysfsPath):
+class DownstreamPciAddr(PciSysfsPath):
    def __init__(self, port=None, device=0, func=0):
       self.port = port
       self.device = device
