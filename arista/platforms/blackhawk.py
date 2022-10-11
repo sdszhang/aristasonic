@@ -41,10 +41,10 @@ class BlackhawkO(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      port = self.cpu.getAsicPciPort()
+      port = self.cpu.getPciPort(0)
       port.newComponent(Tomahawk3, addr=port.addr)
 
-      port = self.cpu.getScdPciPort()
+      port = self.cpu.getPciPort(1)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 

@@ -42,10 +42,10 @@ class Gardena(FixedSystem):
       self.cpu = cpu
       self.syscpld = cpu.syscpld
 
-      port = self.cpu.getAsicPciPort()
+      port = self.cpu.getPciPort(1)
       port.newComponent(Tomahawk2, addr=port.addr)
 
-      port = self.cpu.getScdPciPort()
+      port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 

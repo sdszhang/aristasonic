@@ -80,12 +80,10 @@ class LorikeetCpu(Cpu):
    def addFanGroup(self, slots=3, count=2):
       self.cpld.addFanGroup(0x9000, 3, slots, count)
 
-   def getScdPciPort(self):
-      bridge = self.pciRoot.pciBridge(device=0x01, func=1)
+   def getPciPort(self, num):
+      device, func = {
+         0: (0x01, 1),
+         1: (0x03, 1),
+      }[num]
+      bridge = self.pciRoot.pciBridge(device=device, func=func)
       return bridge.downstreamPort(port=0)
-
-   def getAsicPciPort(self, index=0):
-      if index == 0:
-         bridge = self.pciRoot.pciBridge(device=0x03, func=1)
-         return bridge.downstreamPort(port=0)
-      return None

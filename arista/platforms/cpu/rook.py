@@ -105,12 +105,10 @@ class RookCpu(Cpu):
    def switchDpmAddr(self, addr=0x4e, t=3, **kwargs):
       return self.cpld.i2cAddr(10, addr, t=t, **kwargs)
 
-   def getScdPciPort(self):
-      bridge = self.pciRoot.pciBridge(device=0x1c, func=0)
+   def getPciPort(self, num):
+      device, func = {
+         0: (0x1c, 0),
+         1: (0x1c, 4),
+      }[num]
+      bridge = self.pciRoot.pciBridge(device=device, func=func)
       return bridge.downstreamPort(port=0)
-
-   def getAsicPciPort(self, index=0):
-      if index == 0:
-         bridge = self.pciRoot.pciBridge(device=0x1c, func=4)
-         return bridge.downstreamPort(port=0)
-      return None

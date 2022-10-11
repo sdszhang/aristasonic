@@ -43,11 +43,11 @@ class BlackhawkTD4(FixedSystem):
          'reboot': AdmPin(9, AdmPin.GPIO),
       })
 
-      port = self.cpu.getScdPciPort()
+      port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
-      port = self.cpu.getAsicPciPort()
+      port = self.cpu.getPciPort(1)
       port.newComponent(Trident4, addr=port.addr)
 
       scd.createWatchdog()

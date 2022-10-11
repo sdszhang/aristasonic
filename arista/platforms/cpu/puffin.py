@@ -71,15 +71,13 @@ class Puffin(Cpu):
    def switchGpAddr(self, addr, **kwargs):
       return self.cpld.i2cAddr(4, addr, **kwargs)
 
-   def getScdPciPort(self):
-      bridge = self.pciRoot.pciBridge(device=0x01, func=2)
+   def getPciPort(self, num):
+      device, func = {
+         0: (0x01, 1),
+         1: (0x01, 2),
+      }[num]
+      bridge = self.pciRoot.pciBridge(device=device, func=func)
       return bridge.downstreamPort(port=0)
-
-   def getAsicPciPort(self, index=0):
-      if index == 0:
-         bridge = self.pciRoot.pciBridge(device=0x01, func=1)
-         return bridge.downstreamPort(port=0)
-      return None
 
    def addFanGroup(self, slots=3, count=2):
       self.cpld.addFanGroup(0x9000, 3, slots, count)

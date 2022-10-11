@@ -71,7 +71,7 @@ class Woodleaf(FixedSystem):
 
       self.syscpld = self.cpu.syscpld
 
-      port = self.cpu.getScdPciPort()
+      port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
       self.scd = scd
 
@@ -171,7 +171,7 @@ class Woodleaf(FixedSystem):
          phy = self.PHY(phyId, mdios, reset=reset)
          self.inventory.addPhy(phy)
 
-      port = self.cpu.getAsicPciPort()
+      port = self.cpu.getPciPort(1)
       bridge = port.parent
       port.newComponent(Tofino2, addr=port.addr,
          powerGpios=[
