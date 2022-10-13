@@ -1,5 +1,4 @@
 from .component import Priority
-from .config import Config
 from .inventory import Inventory
 from .metainventory import MetaInventory
 from .platform import getSysEepromData
@@ -17,9 +16,7 @@ class FixedSystem(Sku):
       return getSysEepromData()
 
    def getInventory(self):
-      if Config().use_metainventory:
-         return MetaInventory(self.iterInventory())
-      return self.inventory
+      return MetaInventory(self.iterInventory())
 
    def setup(self, filters=Priority.defaultFilter):
       super(FixedSystem, self).setup()

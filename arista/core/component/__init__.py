@@ -56,7 +56,7 @@ class Component(object):
       return self
 
    def newComponent(self, cls, *args, **kwargs):
-      inventory = Inventory() if Config().use_metainventory else self.inventory
+      inventory = Inventory()
       component = cls(inventory=inventory, *args, parent=self, **kwargs)
       self.addComponent(component)
       return component

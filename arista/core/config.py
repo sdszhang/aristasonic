@@ -28,7 +28,6 @@ class Config():
          cls.instance_.linecard_cpu_enable = False
          cls.instance_.power_off_linecard_on_reboot = True
          cls.instance_.power_off_fabric_on_reboot = False
-         cls.instance_.use_metainventory = True
          cls.instance_.write_hw_thresholds = True
          cls.instance_.report_hw_thresholds = False
          cls.instance_.watchdog_state_file = 'watchdog.json'

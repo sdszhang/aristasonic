@@ -1,7 +1,6 @@
 
 from .component import Priority
 from .component.slot import SlotComponent
-from .config import Config
 from .exception import UnknownPlatformError
 from .inventory import Inventory
 from .log import getLogger
@@ -34,9 +33,7 @@ class Card(Sku):
       return self.cpu is not None
 
    def getInventory(self):
-      if Config().use_metainventory:
-         return MetaInventory(self.iterInventory())
-      return self.inventory
+      return MetaInventory(self.iterInventory())
 
    def getSlotId(self):
       return self.slot.slotId
