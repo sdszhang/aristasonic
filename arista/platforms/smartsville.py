@@ -1,10 +1,10 @@
-from ..core.asic import SwitchChip
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
 from ..core.utils import incrange
 
+from ..components.asic.dnx.jericho2 import Jericho2
 from ..components.dpm.ucd import Ucd90320, UcdGpi
 from ..components.phy.babbage import Babbage
 from ..components.phy.b52 import B52
@@ -157,7 +157,7 @@ class Smartsville(FixedSystem):
          self.inventory.addPhy(phy)
 
       port = self.cpu.getPciPort(2)
-      port.newComponent(SwitchChip, addr=port.addr,
+      port.newComponent(Jericho2, addr=port.addr,
          coreResets=[
             scd.inventory.getReset('switch_chip_reset'),
          ],
