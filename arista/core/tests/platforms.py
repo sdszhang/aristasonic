@@ -25,7 +25,6 @@ from ...inventory.xcvr import (
 )
 from .. import utils
 from ..component import Component
-from ..config import Config
 from ..driver import Driver
 from ..driver.kernel.sysfs import SysfsEntry, GpioSysfsImpl
 from ..fixed import FixedSystem
@@ -381,13 +380,6 @@ class MockPlatformTest(unittest.TestCase):
          self.logger.info('Testing programmables for platform %s', name)
          for programmable in inventory.getProgrammables():
             self._testProgrammable(programmable)
-
-class MockPlatformMetaTest(MockPlatformTest):
-   def setUp(self):
-      Config().use_metainventory = True
-
-   def tearDown(self):
-      Config().use_metainventory = False
 
 if __name__ == '__main__':
    unittest.main()

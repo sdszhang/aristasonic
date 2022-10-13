@@ -95,14 +95,17 @@ class MockFixedSystem(FixedSystem):
 
 class MockXcvrTest(unittest.TestCase):
    def _checkSystem(self, system):
-      self.assertEqual(len(system.inventory.getEthernetSlots()),
+      self.assertEqual(len(system.getInventory().getEthernetSlots()),
                        len(system.ethernetRange))
-      self.assertEqual(len(system.inventory.getSfpSlots()), len(system.sfpRange))
-      self.assertEqual(len(system.inventory.getQsfpSlots()), len(system.qsfpRange))
-      self.assertEqual(len(system.inventory.getOsfpSlots()), len(system.osfpRange))
+      self.assertEqual(len(system.getInventory().getSfpSlots()),
+                       len(system.sfpRange))
+      self.assertEqual(len(system.getInventory().getQsfpSlots()),
+                       len(system.qsfpRange))
+      self.assertEqual(len(system.getInventory().getOsfpSlots()),
+                       len(system.osfpRange))
       totalNumXcvrs = len(system.ethernetRange + system.sfpRange + system.qsfpRange +
                           system.osfpRange)
-      self.assertEqual(len(system.inventory.getXcvrSlots()), totalNumXcvrs)
+      self.assertEqual(len(system.getInventory().getXcvrSlots()), totalNumXcvrs)
 
       for i, slot in zip(system.ethernetRange, system.ethernetSlots):
          self.assertEqual(slot.getId(), i)
