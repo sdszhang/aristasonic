@@ -49,6 +49,7 @@ class Smartsville(FixedSystem):
 
       port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
+      self.scd = scd
 
       scd.createWatchdog()
 
