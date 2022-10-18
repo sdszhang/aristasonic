@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import os
-import multiprocessing
 import socket
 import subprocess
+import sys
 import threading
 import time
 
@@ -23,7 +23,7 @@ class WaitForSonicThread(threading.Thread):
 
    def log(self, fmt, *args):
       prefix = 'WaitForSlot(%d): ' % self.slotId
-      print(prefix + fmt % args)
+      print(prefix + fmt % args, file=sys.stderr)
 
    def ping(self):
       cmd = ["ping", "-c1", "-w5", self.ip]
@@ -35,6 +35,7 @@ class WaitForSonicThread(threading.Thread):
       try:
          c = socket.create_connection((self.ip, 22))
          version = c.recv(1024).decode('ascii').rstrip()
+         c.close()
          self.log('ssh is up with version: %s' % version)
       except socket.error:
          return False
@@ -73,13 +74,15 @@ class WaitForSonicThread(threading.Thread):
       try:
          self.log('waiting for Aboot phase to complete')
          self._waitForAbootExited(until=end)
-      except TimeoutError:
+      except TimeoutError as e:
+         self.log('timeout %s', str(e))
          return
 
       try:
          self.log('waiting for Sonic to be ready')
          self._waitForSonicReady(until=end)
-      except TimeoutError:
+      except TimeoutError as e:
+         self.log('timeout %s', str(e))
          return
 
       self.log('disabling provisioning')
@@ -97,7 +100,7 @@ class ProvisionMonitor(object):
 
    def log(self, fmt, *args):
       prefix = 'ProvisionMonitor(): '
-      print(prefix + fmt % args)
+      print(prefix + fmt % args, file=sys.stderr)
 
    def _startMonitoringTask(self, slotId):
       thread = WaitForSonicThread(slotId)
@@ -105,7 +108,7 @@ class ProvisionMonitor(object):
       thread.start()
 
    def checkPendingTasks(self):
-      for slotId, task in self.tasks_.items():
+      for slotId, task in list(self.tasks_.items()):
          if not task.is_alive():
             self.log('removing completed task %s', task)
             task.join(0)
