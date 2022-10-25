@@ -30,8 +30,8 @@ class Pcie(PcieUtil):
       if isinstance(platform, Supervisor):
          chassis = platform.getChassis()
          chassis.loadAll()
-         skus.extend(lc for lc in chassis.iterLinecards())
-         skus.extend(fc for fc in chassis.iterFabrics())
+         skus.extend(lc for lc in chassis.iterLinecards() if lc.poweredOn())
+         skus.extend(fc for fc in chassis.iterFabrics() if fc.poweredOn())
 
       for sku in skus:
          for component in sku.iterComponents(filters=None, recursive=True):
