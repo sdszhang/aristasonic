@@ -22,4 +22,4 @@ class JsonRpcDaemonFeature(OneShotFeature):
          self.server = RpcServer(hosts, port, self.daemon.platform)
          self.daemon.loop.create_task(self.server.start())
       else:
-         logging.info('%s: not supervisor, nothing to do')
+         logging.info('%s: not supervisor, nothing to do', self)
