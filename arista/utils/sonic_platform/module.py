@@ -95,8 +95,7 @@ class Module(ModuleBase):
       return False
 
    def get_maximum_consumed_power(self):
-      # TODO: add power consumption to various skus
-      return 0
+      return float(self._sku.MAX_POWER_DRAW)
 
    def is_midplane_reachable(self):
       return True

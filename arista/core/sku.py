@@ -13,6 +13,8 @@ class Sku(Component):
 
    PORTS = PortLayout()
 
+   MAX_POWER_DRAW = 0
+
    def __init__(self, *args, **kwargs):
       self.hwApi = kwargs.pop('hwApi', None)
       super(Sku, self).__init__(*args, **kwargs)
