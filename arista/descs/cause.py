@@ -27,6 +27,8 @@ class ReloadCauseDesc(object):
    RAIL = 'rail'
    REBOOT = 'reboot'
    WATCHDOG = 'watchdog'
+   CPU = 'cpu'
+   SEU = 'seu'
 
    DEFAULT_DESCRIPTIONS = {
       KILLSWITCH: 'Kill switch',
@@ -35,6 +37,8 @@ class ReloadCauseDesc(object):
       RAIL: 'Rail fault',
       REBOOT: 'Rebooted by user',
       WATCHDOG: 'Watchdog fired',
+      CPU: 'CPU fault',
+      SEU: 'SEU fault',
    }
 
    def __init__(self, code, typ, description=None):

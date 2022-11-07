@@ -67,6 +67,16 @@ class SysCpldReloadCauseRegisters(RegisterMap):
    )
    RTC = RegisterArray(0x30, 0x35, name='rtc', ro=False)
 
+class SysCpldReloadCauseRegistersV2(RegisterMap):
+   FAULT_REGISTER = Register(0x60,
+      RegBitRange(0, 5, 'cause', ro=False),
+   )
+   FAULT_TIME = RegisterArray(0x61, 0x66, name='faultTime')
+   FAULT_CONTROL = Register(0x58,
+      RegBitField(0, 'clearFault', ro=False),
+   )
+   RTC = RegisterArray(0x40, 0x45, name='rtc', ro=False)
+
 class SysCpldPowerCycle(PowerCycle):
    def __init__(self, parent):
       self.parent = parent
