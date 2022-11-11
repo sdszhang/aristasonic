@@ -84,23 +84,23 @@ class Psu(PsuBase):
 
    def get_voltage(self):
       rail = self.rail
-      return round(rail.getVoltage(), 3) if rail else "N/A"
+      return round(rail.getVoltage(), 3) if rail else None
 
    def get_current(self):
       rail = self.rail
-      return round(rail.getCurrent(), 3) if rail else "N/A"
+      return round(rail.getCurrent(), 3) if rail else None
 
    def get_power(self):
       rail = self.rail
-      return round(rail.getPower(), 3) if rail else "N/A"
+      return round(rail.getPower(), 3) if rail else None
 
    def get_input_voltage(self):
       rail = self.input_rail
-      return round(rail.getVoltage(), 3) if rail else "N/A"
+      return round(rail.getVoltage(), 3) if rail else None
 
    def get_input_current(self):
       rail = self.input_rail
-      return round(rail.getCurrent(), 3) if rail else "N/A"
+      return round(rail.getCurrent(), 3) if rail else None
 
    # TODO: thresholds
 
@@ -142,11 +142,11 @@ class Psu(PsuBase):
 
    def get_voltage_high_threshold(self):
       rail = self.rail
-      return rail.voltage.getHighThreshold() if rail else "N/A"
+      return rail.voltage.getHighThreshold() if rail else None
 
    def get_voltage_low_threshold(self):
       rail = self.rail
-      return rail.voltage.getLowThreshold() if rail else "N/A"
+      return rail.voltage.getLowThreshold() if rail else None
 
    def get_interrupt_file(self):
       return None
