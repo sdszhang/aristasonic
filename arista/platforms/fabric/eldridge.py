@@ -47,6 +47,9 @@ class Eldridge(DenaliFabric):
    SID = ['Eldridge']
    SKU = ['DCS-7808-FM', '7808R3-FM']
 
+   MAX_POWER_DRAW = 778
+   TYP_POWER_DRAW = 510
+
    ASICS = [
       DenaliAsicDesc(cls=Ramon, asicId=0),
       DenaliAsicDesc(cls=Ramon, asicId=1),

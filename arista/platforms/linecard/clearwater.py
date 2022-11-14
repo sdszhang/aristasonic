@@ -139,6 +139,9 @@ class Clearwater(ClearwaterBase):
    SID = ['Clearwater']
    SKU = ['7800R-48QC-LC', '7800R3-48CQ-LC']
 
+   MAX_POWER_DRAW = 462
+   TYP_POWER_DRAW = 398
+
    SCD_PCI_OFFSET = 3
    ASIC_PCI_OFFSET = {0 : 2}
 
@@ -193,6 +196,9 @@ class Clearwater(ClearwaterBase):
 class ClearwaterMs(Clearwater):
    SID = ['ClearwaterMs']
    SKU = ['7800R3-48CQM-LC', '7800R-48QCM-LC']
+
+   MAX_POWER_DRAW = 684
+   TYP_POWER_DRAW = 620
 
    # ClearwaterMs doesn't have the temps sensors on the standby domain
    STANDBY_TEMP_SENSORS_CLS = None

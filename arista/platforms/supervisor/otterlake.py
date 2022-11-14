@@ -1,6 +1,4 @@
 
-from __future__ import absolute_import, division
-
 from ...components.denali.psu import DenaliPsuSlotDesc
 from ...components.denali.supervisor import DenaliSupervisor
 from ...components.dpm.ucd import Ucd90120A, Ucd90160, UcdMon, UcdGpi
@@ -17,7 +15,10 @@ class OtterLake(DenaliSupervisor):
 
    PLATFORM = 'sprucefish'
    SID = ['Otterlake']
-   SKU = ['DCS-7800-SUP']
+   SKU = ['DCS-7800-SUP', 'DCS-7800-SUP1A', 'DCS-7800-SUP1S']
+
+   MAX_POWER_DRAW = 72
+   TYP_POWER_DRAW = 61
 
    LINECARD_PORTS = [
       MicrosemiPortDesc(32, 8, 0),

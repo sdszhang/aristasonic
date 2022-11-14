@@ -152,61 +152,65 @@ class WolverineO(Wolverine):
    SID = ['WolverineO']
    SKU = ['7800R3A-36P-LC']
 
-@registerPlatform()
-class WolverineOBk(Wolverine):
-   SID = ['WolverineOBk']
-   SKU = ['7800R3AK-36P-LC']
+   MAX_POWER_DRAW = 749
+   TYP_POWER_DRAW = 533
 
 @registerPlatform()
 class WolverineOMs(Wolverine):
    SID = ['WolverineOMs']
    SKU = ['7800R3A-36PM-LC']
 
+   MAX_POWER_DRAW = 764
+   TYP_POWER_DRAW = 548
+
 @registerPlatform()
 class WolverineOBkMs(Wolverine):
    SID = ['WolverineOBkMs']
    SKU = ['7800R3AK-36PM-LC']
+
+   MAX_POWER_DRAW = 794
+   TYP_POWER_DRAW = 578
 
 @registerPlatform()
 class WolverineQ(Wolverine):
    SID = ['WolverineQ']
    SKU = ['7800R3A-36D-LC']
 
+   MAX_POWER_DRAW = 749
+   TYP_POWER_DRAW = 533
+
    PORTS = PortLayout(
       (QsfpDD(i) for i in incrange(1, 36)),
    )
-
-@registerPlatform()
-class WolverineQBk(WolverineQ):
-   SID = ['WolverineQBk']
-   SKU = ['7800R3AK-36D-LC']
 
 @registerPlatform()
 class WolverineQMs(WolverineQ):
    SID = ['WolverineQMs']
    SKU = ['7800R3A-36DM-LC']
 
+   MAX_POWER_DRAW = 764
+   TYP_POWER_DRAW = 548
+
 @registerPlatform()
 class WolverineQBkMs(WolverineQ):
    SID = ['WolverineQBkMs']
    SKU = ['7800R3AK-36DM-LC']
+
+   MAX_POWER_DRAW = 794
+   TYP_POWER_DRAW = 578
 
 @registerPlatform()
 class WolverineQCpu(WolverineQ):
    SID = ['WolverineQCpu']
    SKU = ['7800R3A-36D2-LC']
 
-@registerPlatform()
-class WolverineQCpuBk(WolverineQ):
-   SID = ['WolverineQCpuBk']
-   SKU = ['7800R3AK-36D2-LC']
-
-@registerPlatform()
-class WolverineQCpuMs(WolverineQ):
-   SID = ['WolverineQCpuMs']
-   SKU = ['7800R3A-36DM2-LC']
+   MAX_POWER_DRAW = 779
+   TYP_POWER_DRAW = 563
 
 @registerPlatform()
 class WolverineQCpuBkMs(WolverineQ):
    SID = ['WolverineQCpuBkMs']
    SKU = ['7800R3AK-36DM2-LC']
+
+   MAX_POWER_DRAW = 824
+   TYP_POWER_DRAW = 608

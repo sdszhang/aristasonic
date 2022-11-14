@@ -14,6 +14,9 @@ class Brooks(Dragonfly):
    SID = ['Brooks']
    SKU = ['DCS-7804-FM']
 
+   MAX_POWER_DRAW = 248
+   TYP_POWER_DRAW = 180
+
    ASICS = [
       DenaliAsicDesc(cls=Ramon, asicId=0),
       DenaliAsicDesc(cls=Ramon, asicId=1),

@@ -58,6 +58,9 @@ class Clearwater2(ClearwaterCpuBase):
    SID = ['Clearwater2']
    SKU = ['7800R3-48CQ2-LC', '7800R-48QC2-LC']
 
+   MAX_POWER_DRAW = 622
+   TYP_POWER_DRAW = 474
+
    PLX_PORTS = [
       PlxPortDesc(port=0, name='sup1', upstream=True),
       PlxPortDesc(port=1, name='lcpu', vs=PlxPortDesc.VS1, upstream=True),
@@ -73,5 +76,8 @@ class Clearwater2(ClearwaterCpuBase):
 class Clearwater2Ms(Clearwater2):
    SID = ['Clearwater2Ms']
    SKU = ['7800R3-48CQM2-LC', '7800R-48QCM2-LC']
+
+   MAX_POWER_DRAW = 696
+   TYP_POWER_DRAW = 511
 
    PHY_CLS = B52

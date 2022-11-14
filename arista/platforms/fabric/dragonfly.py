@@ -13,6 +13,9 @@ class Dragonfly(Eldridge):
    SID = ['Dragonfly']
    SKU = ['7808R3A-FM']
 
+   MAX_POWER_DRAW = 518
+   TYP_POWER_DRAW = 370
+
    ASICS = [
       DenaliAsicDesc(cls=Ramon, asicId=0),
       DenaliAsicDesc(cls=Ramon, asicId=1),
