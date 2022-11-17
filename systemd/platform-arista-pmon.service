@@ -2,7 +2,7 @@
 Description=Arista late platform initialization
 After=platform-arista-swss.service
 Requires=platform-arista-swss.service
-Before=pmon.service system-health.service
+Before=pmon.service system-health.service watchdog-control.service
 PartOf=platform-arista.target
 ConditionKernelCommandLine=Aboot
 
