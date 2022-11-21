@@ -59,6 +59,7 @@ class RpcApi():
 
    def __init__(self, platform=None):
       self.platform = platform
+      self.tasks = []
 
    async def _runCommand(self, cmd, *args):
       proc = await asyncio.create_subprocess_exec(
@@ -68,7 +69,7 @@ class RpcApi():
 
       stdout, stderr = await proc.communicate()
 
-      logging.info(f'Command [{cmd} {" ".join(args)}] exited with {proc.returncode}')
+      logging.info(f'{self} Command [{cmd} {" ".join(args)}] exited with {proc.returncode}')
 
       return {'status': proc.returncode == 0,
               'detail': '\n'.join([stdout.decode('utf-8'),
@@ -86,14 +87,27 @@ class RpcApi():
       allArgs.extend(args)
       return await self._runCommand('arista', *allArgs)
 
+   async def _runAsyncAristaLinecard(self, slot, *args):
+      allArgs = ['-l', '/var/log/arista-linecard.log',
+                 'linecard', '-i', str(slot)]
+      allArgs.extend(args)
+      delay = 2
+      logging.info('%s: Delay for %d seconds', self, delay)
+      await asyncio.sleep(delay)
+      logging.info('%s: issue arista command: %s', self, str(allArgs))
+      return await self._runCommand('arista', *allArgs)
+
    @registerMethod
-   async def linecardSetup(self, slot):
+   async def linecardSetup(self, slot, powerCycleIfOn=False):
       """Power on the linecard identified by slot.
 
       This method returns a dictionary with two elements:
         - status: True if the command succeeded, false otherwise.
         - detail: Any output produced by the power on command."""
-      return await self._runAristaLinecard(slot, 'setup', '--lcpu', '--on')
+      args = [slot, 'setup', '--lcpu', '--on']
+      if powerCycleIfOn:
+         args.append('--powerCycleIfOn')
+      return await self._runAristaLinecard(*args)
 
    @registerMethod
    async def linecardClean(self, slot):
@@ -105,13 +119,16 @@ class RpcApi():
       return await self._runAristaLinecard(slot, 'clean', '--lcpu', '--off')
 
    @registerMethod
-   async def fabricSetup(self, slot):
+   async def fabricSetup(self, slot, powerCycleIfOn=False):
       """Power on the fabric card identified by slot.
 
       This method returns a dictionary with two elements:
         - status: True if the command succeeded, false otherwise.
         - detail: Any output produced by the power on command."""
-      return await self._runAristaFabric(slot, 'setup', '--on')
+      args = [slot, 'setup', '--on']
+      if powerCycleIfOn:
+         args.append('--powerCycleIfOn')
+      return await self._runAristaFabric(*args)
 
    @registerMethod
    async def fabricClean(self, slot):
@@ -122,6 +139,19 @@ class RpcApi():
         - detail: Any output produced by the power off command."""
       return await self._runAristaFabric(slot, 'clean')
 
+   async def _doSelfReboot(self):
+      # We don't want the reboot to start until we have sent back the response.
+      logging.debug('%s: waiting 2s to self reboot', self)
+      await asyncio.sleep(2)
+      logging.debug('%s: issuing reboot command', self)
+      return await self._runCommand('reboot')
+
+   @registerMethod
+   async def supervisorSelfReboot(self):
+      """Reboot the supervisor."""
+      self.tasks.append(asyncio.create_task(self._doSelfReboot()))
+      return {'status': True, 'detail': 'Reboot started'}
+
    @registerLinecardMethod
    async def linecardStatusLedColorGet(self, lc):
       return lc.getInventory().getLed('status').getColor()
@@ -131,9 +161,12 @@ class RpcApi():
       return lc.getInventory().getLed('status').setColor(color)
 
    @registerLinecardMethod
-   async def linecardPowerCycle(self, lc):
+   async def linecardSelfPowerCycle(self, lc):
       cmd = ('setup', '--on', '--lcpu', '--powerCycleIfOn')
-      return await self._runAristaLinecard(lc.getSlotId(), *cmd)
+      self.tasks.append(asyncio.create_task(
+         self._runAsyncAristaLinecard(lc.getSlotId(), *cmd)))
+      logging.info('%s: Return from linecardSelfPowerCycle', self)
+      return {'status': True, 'detail': 'Reboot started'}
 
    @registerLinecardMethod
    async def getLinecardRebootCause(self, lc):

@@ -97,10 +97,6 @@ class Module(ModuleBase):
          return self.MODULE_STATUS_FAULT
       return self.MODULE_STATUS_ONLINE
 
-   def reboot(self, reboot_type):
-      # TODO: implement reboot mechanism
-      return False
-
    def set_admin_state(self, up):
       return False
 
@@ -130,6 +126,10 @@ class SupervisorModule(Module):
    def get_type(self):
       return self.MODULE_TYPE_SUPERVISOR
 
+   def reboot(self, reboot_type):
+      result = self._get_rpc_client().supervisorSelfReboot()
+      return result['status']
+
 class FabricModule(Module):
    RPC_CLIENT_SOURCE = RpcClientSource.FROM_SUPERVISOR
 
@@ -156,6 +156,11 @@ class FabricModule(Module):
       else:
          result = self._get_rpc_client().fabricClean(self._sku.getSlotId())
       return result.get('status', False)
+
+   def reboot(self, reboot_type):
+      setupResult = self._get_rpc_client().fabricSetup(self._sku.getSlotId(),
+                                                       powerCycleIfOn=True)
+      return setupResult['status']
 
 class LinecardModule(Module):
    RPC_CLIENT_SOURCE = RpcClientSource.FROM_SUPERVISOR
@@ -184,11 +189,20 @@ class LinecardModule(Module):
          result = self._get_rpc_client().linecardClean(self._sku.getSlotId())
       return result.get('status', False)
 
+   def reboot(self, reboot_type):
+      setupResult = self._get_rpc_client().linecardSetup(self._sku.getSlotId(),
+                                                         powerCycleIfOn=True)
+      return setupResult['status']
+
 class LinecardSelfModule(LinecardModule):
    RPC_CLIENT_SOURCE = RpcClientSource.FROM_LINECARD
 
    def get_name(self):
       return self.MODULE_TYPE_LINE
+
+   def reboot(self, reboot_type):
+      result = self._get_rpc_client().linecardSelfPowerCycle()
+      return result['status']
 
 class LinecardSupervisorModule(SupervisorModule):
    RPC_CLIENT_SOURCE = RpcClientSource.FROM_LINECARD

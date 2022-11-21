@@ -144,6 +144,9 @@ class RpcServer():
                writer.write(response.encode('utf-8'))
             else:
                logging.debug('%s: No response for %s', self, ctx)
+
+            self.api.tasks = [x for x in self.api.tasks if not x.done()]
+            await asyncio.sleep(0)
       except: # pylint: disable=bare-except
          logging.exception('%s: Failed to handle request for %s', self, ctx)
          response = self.errorResponse(JsonRpcError.INTERNAL_ERROR,
