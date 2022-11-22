@@ -131,7 +131,7 @@ class EmmcStorageDevice(StorageDevice):
          }
 
    def _readEnhancedArea(self):
-      with open(os.path.join(self.path, 'eenhanced_area_size')) as f:
+      with open(os.path.join(self.path, 'enhanced_area_size')) as f:
          size = f.read().rstrip()
          return {
             'mlcsz': size,
