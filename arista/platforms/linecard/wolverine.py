@@ -208,6 +208,16 @@ class WolverineQCpu(WolverineQ):
    TYP_POWER_DRAW = 563
 
 @registerPlatform()
+class WolverineQCpuBk(WolverineQ):
+   SID = ['WolverineQCpuBk']
+   SKU = ['7800R3AK-36D2-LC']
+
+@registerPlatform()
+class WolverineQCpuMs(WolverineQ):
+   SID = ['WolverineQCpuMs']
+   SKU = ['7800R3A-36DM2-LC']
+
+@registerPlatform()
 class WolverineQCpuBkMs(WolverineQ):
    SID = ['WolverineQCpuBkMs']
    SKU = ['7800R3AK-36DM2-LC']
