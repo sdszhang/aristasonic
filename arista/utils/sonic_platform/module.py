@@ -112,7 +112,7 @@ class Module(ModuleBase):
 
 class SupervisorModule(Module):
    def get_name(self):
-      mid = self._sku.getSlotId() - 1
+      mid = self.get_slot() - 1
       return '%s%s' % (self.MODULE_TYPE_SUPERVISOR, mid)
 
    def get_type(self):
@@ -169,6 +169,59 @@ class LinecardModule(Module):
       return result.get('status', False)
 
 class LinecardSelfModule(LinecardModule):
+   pass
+
+class LinecardSupervisorModule(SupervisorModule):
+   # pylint: disable=super-init-not-called
+   def __init__(self, linecard):
+      ModuleBase.__init__(self)
+      self._linecard = linecard
+      self._slotId = 1
+
+   def get_presence(self):
+      return True
+
+   def get_model(self):
+      return None
+
+   def get_serial(self):
+      return None
+
+   def get_revision(self):
+      return None
+
+   def get_status(self):
+      return True
+
+   def is_replaceable(self):
+      return True
+
+   def get_base_mac(self):
+      return None
+
+   def get_system_eeprom_info(self):
+      return None
+
+   def get_description(self):
+      return None
+
+   def get_slot(self):
+      return self._slotId
+
+   def get_oper_status(self):
+      return self.MODULE_STATUS_ONLINE
+
+   def reboot(self, reboot_type):
+      return False
+
+   def set_admin_state(self, up):
+      return False
+
+   def get_maximum_consumed_power(self):
+      return None
+
    def is_midplane_reachable(self):
-      # FIXME: do not hardcode ip
-      return ping('127.100.1.1')
+      return ping(self.get_midplane_ip())
+
+   def get_position_in_parent(self):
+      return self._slotId

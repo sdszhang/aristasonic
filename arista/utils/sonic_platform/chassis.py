@@ -28,6 +28,7 @@ try:
       FabricModule,
       LinecardModule,
       LinecardSelfModule,
+      LinecardSupervisorModule,
    )
    from arista.utils.sonic_platform.psu import Psu
    from arista.utils.sonic_platform.sfp import Sfp
@@ -87,13 +88,14 @@ class Chassis(ChassisBase):
          for fabric in chassis.iterFabrics(presentOnly=False):
             self._module_list.append(FabricModule(fabric))
          chassis.loadLinecards()
-         for fabric in chassis.iterLinecards(presentOnly=False):
-            self._module_list.append(LinecardModule(fabric))
+         for lc in chassis.iterLinecards(presentOnly=False):
+            self._module_list.append(LinecardModule(lc))
          for slot in chassis.iterPsus():
             self._psu_list.append(Psu(slot.psuSlot))
          self._chassis = chassis
       elif isinstance(self._platform, Linecard):
          self._module_list.append(LinecardSelfModule(self._platform))
+         self._module_list.append(LinecardSupervisorModule(self._platform))
       else:
          for slot in self._inventory.getPsuSlots():
             self._psu_list.append(Psu(slot))
