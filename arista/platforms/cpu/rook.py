@@ -25,7 +25,7 @@ class RookCpu(Cpu):
    PLATFORM = 'rook'
 
    def __init__(self, mgmtBus=15, fanCpldCls=LaFanCpld, hasLmSensor=True,
-                cpldRegisterCls=RookCpldRegisters, **kwargs):
+                hasCpuLeds=True, cpldRegisterCls=RookCpldRegisters, **kwargs):
       super(RookCpu, self).__init__(**kwargs)
 
       self.pciRoot = self.newComponent(PciRoot)
@@ -77,14 +77,16 @@ class RookCpu(Cpu):
                        position=Position.OTHER, target=55, overheat=75, critical=85),
          ])
 
-      self.leds = cpld.newComponent(RookStatusLeds, addr=cpld.i2cAddr(mgmtBus, 0x20),
-                                    leds=[
-         LedDesc(name='beacon', colors=['blue']),
-         LedDesc(name='fan_status', colors=['green', 'red']),
-         LedDesc(name='psu1_status', colors=['green', 'red']),
-         LedDesc(name='psu2_status', colors=['green', 'red']),
-         LedDesc(name='status', colors=['green', 'red']),
-      ])
+      self.leds = None
+      if hasCpuLeds:
+         self.leds = cpld.newComponent(RookStatusLeds,
+                                       addr=cpld.i2cAddr(mgmtBus, 0x20), leds=[
+            LedDesc(name='beacon', colors=['blue']),
+            LedDesc(name='fan_status', colors=['green', 'red']),
+            LedDesc(name='psu1_status', colors=['green', 'red']),
+            LedDesc(name='psu2_status', colors=['green', 'red']),
+            LedDesc(name='status', colors=['green', 'red']),
+         ])
 
       cpld.createPowerCycle()
 

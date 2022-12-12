@@ -29,10 +29,11 @@ class Alhambra(FixedSystem):
       (Sfp(i) for i in incrange(65, 66)),
    )
 
-   def __init__(self, hasLmSensor=True, psus=None):
+   def __init__(self, hasLmSensor=True, hasCpuLeds=True, psus=None):
       super(Alhambra, self).__init__()
 
-      cpu = self.newComponent(RookCpu, hasLmSensor=hasLmSensor)
+      cpu = self.newComponent(RookCpu, hasLmSensor=hasLmSensor,
+                              hasCpuLeds=hasCpuLeds)
       cpu.addCpuDpm()
       cpu.cpld.newComponent(Ucd90120A, addr=cpu.switchDpmAddr(), causes={
          'powerloss': UcdGpi(1),
@@ -99,6 +100,17 @@ class Alhambra(FixedSystem):
          ledAddr=0x7200
       )
 
+      leds, ledfmt = cpu.leds, '%s_status'
+      if not hasCpuLeds:
+         leds, ledfmt = scd, '%s'
+         scd.addLeds([
+            (0x7220, 'status'),
+            (0x7230, 'fan_status'),
+            (0x7240, 'psu1'),
+            (0x7250, 'psu2'),
+            (0x7260, 'beacon'),
+         ])
+
       for psuId in incrange(1, 2):
          addrFunc=lambda addr, i=psuId: \
                scd.i2cAddr(4 + i, addr, t=3, datr=2, datw=3, block=False)
@@ -110,7 +122,7 @@ class Alhambra(FixedSystem):
             presentGpio=scd.inventory.getGpio("%s_present" % name),
             inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
             outputOkGpio=scd.inventory.getGpio("%s_status" % name),
-            led=cpu.leds.inventory.getLed('%s_status' % name),
+            led=leds.inventory.getLed(ledfmt % name),
             psus=psus or [
                DPS750AB,
                DPS1900AB,

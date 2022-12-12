@@ -22,7 +22,7 @@ class Mineral(Alhambra):
    )
 
    def __init__(self):
-      super(Mineral, self).__init__(hasLmSensor=False, psus=[
+      super(Mineral, self).__init__(hasLmSensor=False, hasCpuLeds=False, psus=[
          DPS495CB,
          DPS750AB,
       ])
