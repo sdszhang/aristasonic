@@ -5,7 +5,7 @@ from __future__ import print_function
 try:
    from arista.core.onie import OnieEeprom
    from arista.libs.ping import ping
-   from arista.utils.sonic_platform.common import getGlobalRpcClient
+   from arista.utils.sonic_platform.common import RpcClientSource, getGlobalRpcClient
    from arista.utils.sonic_platform.component import Component
    from arista.utils.sonic_platform.fan import Fan
    from arista.utils.sonic_platform.thermal import Thermal
@@ -36,17 +36,23 @@ class Module(ModuleBase):
       for programmable in self._inventory.getProgrammables():
          self._component_list.append(Component(programmable))
 
+   def _get_rpc_client(self):
+      return getGlobalRpcClient(self.RPC_CLIENT_SOURCE)
+
+   def _get_eeprom(self):
+      return self._eeprom
+
    def get_presence(self):
       return self._sku.getPresence()
 
    def get_model(self):
-      return self._sku.getEeprom().get('SKU')
+      return self._get_eeprom().get('SKU')
 
    def get_serial(self):
-      return self._sku.getEeprom().get('SerialNumber')
+      return self._get_eeprom().get('SerialNumber')
 
    def get_revision(self):
-      rev = self._sku.getEeprom().get('HwApi')
+      rev = self._get_eeprom().get('HwApi')
       return '.'.join('%02x' % x for x in rev) if rev is not None else rev
 
    def get_status(self):
@@ -57,19 +63,19 @@ class Module(ModuleBase):
       return True
 
    def get_base_mac(self):
-      mac = self._sku.getEeprom().get('MAC')
+      mac = self._get_eeprom().get('MAC')
       if mac is None:
          raise NotImplementedError
       return mac
 
    def get_system_eeprom_info(self):
-      return OnieEeprom(self._eeprom).data(filterOut=[0x28])
+      return OnieEeprom(self._get_eeprom()).data(filterOut=[0x28])
 
    def get_description(self):
-      name = self._sku.getEeprom().get('SKU')
+      name = self._get_eeprom().get('SKU')
       if name is not None:
          return name
-      return self._sku.getEeprom().get('SID', 'Unknown')
+      return self._get_eeprom().get('SID', 'Unknown')
 
    def get_slot(self):
       return self._sku.getSlotId()
@@ -111,6 +117,8 @@ class Module(ModuleBase):
       return []
 
 class SupervisorModule(Module):
+   RPC_CLIENT_SOURCE = RpcClientSource.FROM_SUPERVISOR
+
    def get_name(self):
       mid = self.get_slot() - 1
       return '%s%s' % (self.MODULE_TYPE_SUPERVISOR, mid)
@@ -119,6 +127,8 @@ class SupervisorModule(Module):
       return self.MODULE_TYPE_SUPERVISOR
 
 class FabricModule(Module):
+   RPC_CLIENT_SOURCE = RpcClientSource.FROM_SUPERVISOR
+
    def get_name(self):
       return '%s%s' % (self.MODULE_TYPE_FABRIC, self._sku.getRelativeSlotId())
 
@@ -138,12 +148,14 @@ class FabricModule(Module):
 
    def set_admin_state(self, up):
       if up:
-         result = getGlobalRpcClient().fabricSetup(self._sku.getSlotId())
+         result = self._get_rpc_client().fabricSetup(self._sku.getSlotId())
       else:
-         result = getGlobalRpcClient().fabricClean(self._sku.getSlotId())
+         result = self._get_rpc_client().fabricClean(self._sku.getSlotId())
       return result.get('status', False)
 
 class LinecardModule(Module):
+   RPC_CLIENT_SOURCE = RpcClientSource.FROM_SUPERVISOR
+
    def get_name(self):
       return '%s%s' % (self.MODULE_TYPE_LINE, self._sku.getRelativeSlotId())
 
@@ -163,29 +175,31 @@ class LinecardModule(Module):
 
    def set_admin_state(self, up):
       if up:
-         result = getGlobalRpcClient().linecardSetup(self._sku.getSlotId())
+         result = self._get_rpc_client().linecardSetup(self._sku.getSlotId())
       else:
-         result = getGlobalRpcClient().linecardClean(self._sku.getSlotId())
+         result = self._get_rpc_client().linecardClean(self._sku.getSlotId())
       return result.get('status', False)
 
 class LinecardSelfModule(LinecardModule):
-   pass
+   RPC_CLIENT_SOURCE = RpcClientSource.FROM_LINECARD
 
 class LinecardSupervisorModule(SupervisorModule):
+   RPC_CLIENT_SOURCE = RpcClientSource.FROM_LINECARD
+
    # pylint: disable=super-init-not-called
    def __init__(self, linecard):
       ModuleBase.__init__(self)
       self._linecard = linecard
       self._slotId = 1
+      self._eeprom = None
+
+   def _get_eeprom(self):
+      if self._eeprom is None:
+         self._eeprom = self._get_rpc_client().getSupervisorEeprom()
+      return self._eeprom
 
    def get_presence(self):
       return True
-
-   def get_model(self):
-      return None
-
-   def get_serial(self):
-      return None
 
    def get_revision(self):
       return None
@@ -195,15 +209,6 @@ class LinecardSupervisorModule(SupervisorModule):
 
    def is_replaceable(self):
       return True
-
-   def get_base_mac(self):
-      return None
-
-   def get_system_eeprom_info(self):
-      return None
-
-   def get_description(self):
-      return None
 
    def get_slot(self):
       return self._slotId
@@ -218,7 +223,7 @@ class LinecardSupervisorModule(SupervisorModule):
       return False
 
    def get_maximum_consumed_power(self):
-      return None
+      return float(self._get_rpc_client().getSupervisorMaxPowerDraw())
 
    def is_midplane_reachable(self):
       return ping(self.get_midplane_ip())

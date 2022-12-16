@@ -139,6 +139,16 @@ class RpcApi():
    async def getLinecardRebootCause(self, lc):
       return getLinecardReloadCauseManager(lc).toDict()
 
+   # pylint: disable=unused-argument
+   @registerLinecardMethod
+   async def getSupervisorEeprom(self, lc):
+      return self.platform.getEeprom()
+
+   # pylint: disable=unused-argument
+   @registerLinecardMethod
+   async def getSupervisorMaxPowerDraw(self, lc):
+      return self.platform.MAX_POWER_DRAW
+
    @classmethod
    def methods(cls):
       if not cls._methods:

@@ -135,7 +135,7 @@ class RpcClient():
 
    def __getattr__(self, name):
       if name not in RpcApi.methods():
-         return None
+         return super().__getattr__(name)
 
       def fn(*args, **kwargs):
          return self.doCommand(name, *args, **kwargs)
