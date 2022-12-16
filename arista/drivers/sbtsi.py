@@ -12,6 +12,9 @@ class SbTsiTemp(Temp):
    def getName(self):
       return self.desc.name
 
+   def getPresence(self):
+      return True
+
    def getDesc(self):
       return self.desc
 
