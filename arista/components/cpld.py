@@ -187,7 +187,7 @@ class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
          )
 
       logging.debug('unhandled cause %02x', code)
-      return ScdReloadCauseEntry(
+      return SysCpldReloadCauseEntry(
          cause='unknown',
          rcTime=self.getReloadCauseTime(),
          rcDesc=f'unknown logged fault {code:#04x}',
