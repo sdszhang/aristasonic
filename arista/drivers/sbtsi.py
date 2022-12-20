@@ -36,6 +36,9 @@ class SbTsiTemp(Temp):
    def getHighCriticalThreshold(self):
       return self.desc.critical
 
+   def getLowCriticalThreshold(self):
+      return self.desc.lcritical
+
    def getLowThreshold(self):
       return self.driver.getLowThreshold()
 
