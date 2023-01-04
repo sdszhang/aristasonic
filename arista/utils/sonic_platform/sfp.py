@@ -5,6 +5,7 @@ from __future__ import print_function
 import time
 
 try:
+   from arista.core.config import Config
    from arista.utils.sonic_platform.thermal import SfpThermal
    from sonic_platform_base.sonic_sfp.qsfp_dd import qsfp_dd_Dom
    from sonic_platform_base.sonic_sfp.sff8436 import sff8436Dom
@@ -64,7 +65,8 @@ class Sfp(SfpBase):
       self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
                                             sfp.getI2cAddr().address)
       self._sfp_type = None
-      self._thermal_list.append(SfpThermal(self))
+      if Config().api_sfp_thermal:
+         self._thermal_list.append(SfpThermal(self))
 
    @property
    def sfp_type(self):

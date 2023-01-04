@@ -1,5 +1,6 @@
 import time
 
+from arista.core.config import Config
 from arista.utils.sonic_platform.thermal import SfpThermal
 from sonic_platform_base.sonic_xcvr.sfp_optoe_base import SfpOptoeBase
 
@@ -24,7 +25,7 @@ class SfpOptoe(SfpOptoeBase):
          self._eepromPath = EEPROM_PATH.format(sfp.getI2cAddr().bus,
                                                sfp.getI2cAddr().address)
       self._sfp_type = None
-      if not slot.getName().startswith('rj45'):
+      if not slot.getName().startswith('rj45') and Config().api_sfp_thermal:
          self._thermal_list.append(SfpThermal(self))
 
    @property

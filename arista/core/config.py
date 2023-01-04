@@ -32,6 +32,7 @@ class Config():
          cls.instance_.report_hw_thresholds = False
          cls.instance_.watchdog_state_file = 'watchdog.json'
          cls.instance_.api_use_sfpoptoe = True
+         cls.instance_.api_sfp_thermal = False
          cls.instance_.api_event_use_interrupts = False
          cls.instance_.flash_path = '/host'
          cls.instance_.tmpfs_path = '/var/run/platform_cache/arista'
