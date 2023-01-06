@@ -4,12 +4,6 @@ import os
 
 from collections import OrderedDict, namedtuple
 
-from ..core.cause import (
-   ReloadCauseEntry,
-   ReloadCausePriority,
-   ReloadCauseProviderHelper,
-   ReloadCauseScore,
-)
 # TODO: use core.component.pci.PciComponent
 from ..core.component import Priority, PciComponent
 from ..core.component.i2c import I2cComponent
@@ -33,7 +27,6 @@ from ..core.xcvr import (
    EthernetSlot,
 )
 
-from ..descs.cause import ReloadCauseDesc
 from ..descs.fan import FanDesc, FanPosition
 from ..descs.led import LedColor, LedDesc
 from ..descs.gpio import GpioDesc
@@ -43,6 +36,11 @@ from ..descs.xcvr import Osfp, Qsfp, QsfpDD, Rj45, Sfp
 from ..drivers.scd.driver import ScdI2cDevDriver, ScdKernelDriver
 from ..drivers.scd.watchdog import ScdWatchdog
 from ..drivers.scd.programmable import ScdProgrammable
+from ..drivers.scd.cause import ( # pylint: disable=unused-import
+   ScdCause,
+   ScdReloadCauseProvider,
+   SimpleScdReloadCauseProvider,
+)
 
 from ..inventory.interrupt import Interrupt
 from ..inventory.powercycle import PowerCycle
@@ -158,58 +156,6 @@ class ScdInterruptRegister():
       if name == 'watchdog':
          self.watchdogMask = 1 << bit
       return self.scd.inventory.addInterrupt(ScdInterrupt(self, name, bit))
-
-class ScdCause(ReloadCauseDesc):
-   pass
-
-class ScdReloadCauseEntry(ReloadCauseEntry):
-   pass
-
-class ScdReloadCauseProvider(ReloadCauseProviderHelper):
-   def __init__(self, scd, addr, causes):
-      super().__init__(name=str(scd))
-      self.scd = scd
-      self.addr = addr
-      self.causes = causes
-
-   def __str__(self):
-      return self.__class__.__name__
-
-   def process(self):
-      self.causes = [self.getReloadCause()]
-
-   def clearFaults(self):
-      with self.scd.getMmap() as mm:
-         mm.write32(self.addr, 0)
-
-   def getReloadCause(self):
-      if inSimulation():
-         return []
-
-      logging.debug('reading reboot causes for %s', self)
-      with self.scd.getMmap() as mm:
-         code = mm.read32(self.addr) & 0xff
-         logging.debug('last cause code %#04x', code)
-
-      for cause in self.causes:
-         if code == cause.code:
-            logging.debug('found cause %s %s', cause.typ, cause.description)
-            return ScdReloadCauseEntry(
-               cause=cause.typ,
-               # NOTE: rcTime is not available
-               rcDesc=cause.description,
-               # NOTE: even though there is no great details it needs to play
-               #       nicely with devices that do report detailed faults.
-               score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
-                     ReloadCauseScore.getPriority(ReloadCausePriority.NORMAL),
-            )
-
-      logging.debug('unhandled cause %#02x', code)
-      return ScdReloadCauseEntry(
-         cause='unknown',
-         rcDesc=f'unknown logged fault {code:#04x}',
-         score=ReloadCauseScore.LOGGED,
-      )
 
 class ScdMdio():
    def __init__(self, scd, master, bus, devIdx, port, device, clause, name):
@@ -562,8 +508,12 @@ class Scd(PciComponent):
       for i, addr in enumerate(addrs, 0):
          self.addUartPort(addr, i)
 
-   def addReloadCauseProvider(self, addr, causes):
-      provider = ScdReloadCauseProvider(self, addr, causes)
+   def addReloadCauseProvider(self, causes=None, regmap=None, addr=None):
+      if isinstance(addr, int):
+         # Initial DPM-less reboot cause support e.g PikeZ
+         provider = SimpleScdReloadCauseProvider(self, addr, causes)
+      else:
+         provider = ScdReloadCauseProvider(self, regmap, causes)
       return self.inventory.addReloadCauseProvider(provider)
 
    def getResets(self, xcvrs=True, autoOnly=False):

@@ -3,7 +3,6 @@ import time
 
 from ..core.cause import (
    ReloadCauseEntry,
-   ReloadCausePriority,
    ReloadCauseProviderHelper,
    ReloadCauseScore,
 )
@@ -135,6 +134,9 @@ class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
       cause = self.getReloadCause()
       self.causes = [cause] if cause is not None else []
 
+   def faultsCleared(self):
+      return not self.regs.clearFault()
+
    def clearFaults(self):
       logging.debug('clearing faults')
       if self.regs.clearFault():
@@ -166,6 +168,10 @@ class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
       if inSimulation():
          return None
 
+      if self.faultsCleared():
+         logging.debug('reboot cause already cleared')
+         return None
+
       # FIXME: implement RTC properly
       self.setRunTimeClock()
 
@@ -183,7 +189,7 @@ class SysCpldReloadCauseProvider(ReloadCauseProviderHelper):
             rcTime=self.getReloadCauseTime(),
             rcDesc=cause.description,
             score=ReloadCauseScore.LOGGED | ReloadCauseScore.DETAILED |
-                  ReloadCauseScore.getPriority(ReloadCausePriority.NORMAL),
+                  ReloadCauseScore.getPriority(cause.priority),
          )
 
       logging.debug('unhandled cause %02x', code)

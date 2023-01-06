@@ -56,6 +56,7 @@ class Chassis(ChassisBase):
       'powerloss2': ChassisBase.REBOOT_CAUSE_POWER_LOSS,
       'overtemp': ChassisBase.REBOOT_CAUSE_THERMAL_OVERLOAD_OTHER,
       'reboot': ChassisBase.REBOOT_CAUSE_NON_HARDWARE,
+      'button': ChassisBase.REBOOT_CAUSE_HARDWARE_BUTTON,
       'watchdog': ChassisBase.REBOOT_CAUSE_WATCHDOG,
       'cpu': ChassisBase.REBOOT_CAUSE_HARDWARE_CPU,
       'rail': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
@@ -65,7 +66,10 @@ class Chassis(ChassisBase):
       'over-voltage': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
       'asic-overtemp': ChassisBase.REBOOT_CAUSE_THERMAL_OVERLOAD_ASIC,
       'cpu-overtemp': ChassisBase.REBOOT_CAUSE_THERMAL_OVERLOAD_CPU,
+      'cpu-s3': ChassisBase.REBOOT_CAUSE_HARDWARE_CPU,
+      'cpu-s5': ChassisBase.REBOOT_CAUSE_HARDWARE_CPU,
       'over-current': ChassisBase.REBOOT_CAUSE_HARDWARE_OTHER,
+      'no-fans': ChassisBase.REBOOT_CAUSE_INSUFFICIENT_FAN_SPEED,
    }
 
    # Intervals in milliseconds

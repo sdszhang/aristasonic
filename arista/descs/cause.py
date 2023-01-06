@@ -21,30 +21,44 @@ class ReloadCauseScore(object):
 
 class ReloadCauseDesc(object):
 
+   UNKNOWN = 'unknown'
    KILLSWITCH = 'killswitch'
    OVERTEMP = 'overtemp'
    POWERLOSS = 'powerloss'
    RAIL = 'rail'
    REBOOT = 'reboot'
+   BUTTON = 'button'
    WATCHDOG = 'watchdog'
    CPU = 'cpu'
+   CPU_S3 = 'cpu-s3'
+   CPU_S5 = 'cpu-s5'
    SEU = 'seu'
+   NOFANS = 'no-fans'
 
    DEFAULT_DESCRIPTIONS = {
+      UNKNOWN: 'Unknown',
       KILLSWITCH: 'Kill switch',
       OVERTEMP: 'Thermal trip fault',
       POWERLOSS: 'System lost power',
       RAIL: 'Rail fault',
       REBOOT: 'Rebooted by user',
+      BUTTON: 'Rebooted by button',
       WATCHDOG: 'Watchdog fired',
       CPU: 'CPU fault',
+      CPU_S3: 'CPU state S3',
+      CPU_S5: 'CPU state S5',
       SEU: 'SEU fault',
+      NOFANS: 'No Fans fault',
    }
 
-   def __init__(self, code, typ, description=None):
+   Priority = ReloadCausePriority
+
+   def __init__(self, code, typ, description=None,
+                priority=ReloadCausePriority.NORMAL):
       self.code = code
       self.typ = typ
       self.description = self.DEFAULT_DESCRIPTIONS.get(typ)
+      self.priority = priority
       if description is not None:
          self.description = f'{self.description} - {description}'
 
