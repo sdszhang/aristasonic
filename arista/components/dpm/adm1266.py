@@ -47,6 +47,9 @@ class AdmReloadCauseProvider(ReloadCauseProviderHelper):
          'powerup': retryGet(self.adm.getPowerupCounter, wait=0.2, before=True),
       }
 
+   def setRealTimeClock(self):
+      self.adm.setRealTimeClock()
+
 class AdmProgrammable(Programmable):
    def __init__(self, adm):
       self.adm = adm
@@ -66,7 +69,7 @@ class Adm1266(PmbusDpm):
    PRIORITY = Priority.DPM
 
    class Registers(PmbusDpm.Registers):
-      RUN_TIME_CLOCK = 0xdf
+      REAL_TIME_CLOCK = 0xdf
 
       IC_DEVICE_ID = 0xad
       IC_DEVICE_REV = 0xae
@@ -90,11 +93,11 @@ class Adm1266(PmbusDpm):
    def getVersion(self):
       return self.driver.getVersion()
 
-   def getRunTimeClock(self):
-      return self.driver.getRunTimeClock()
+   def getRealTimeClock(self):
+      return self.driver.getRealTimeClock()
 
-   def setRunTimeClock(self):
-      self.driver.setRunTimeClock()
+   def setRealTimeClock(self):
+      self.driver.setRealTimeClock()
 
    def _getReloadCauses(self):
       causes = []

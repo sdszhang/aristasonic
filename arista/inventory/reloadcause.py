@@ -29,6 +29,9 @@ class ReloadCauseProvider(InventoryInterface):
    def getExtra(self):
       raise NotImplementedError
 
+   def setRealTimeClock(self):
+      pass
+
    @diagmethod('providers', diag=True)
    def getRemoteProviders(self):
       return []

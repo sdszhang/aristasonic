@@ -27,10 +27,10 @@ class PmbusComponent(I2cComponent):
    def getVersion(self):
       return 'N/A'
 
-   def getRunTimeClock(self):
+   def getRealTimeClock(self):
       return None
 
-   def setRunTimeClock(self):
+   def setRealTimeClock(self):
       pass
 
    def setup(self):
@@ -42,8 +42,8 @@ class PmbusComponent(I2cComponent):
 
       # DPM run time clock needs to be updated
       try:
-         self.setRunTimeClock()
-         logging.info('%s time: %s', self, self.getRunTimeClock())
+         self.setRealTimeClock()
+         logging.info('%s time: %s', self, self.getRealTimeClock())
       except Exception: # pylint: disable=broad-except
          logging.error('%s: failed to set run time clock', self)
 

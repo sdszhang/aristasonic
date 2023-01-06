@@ -57,6 +57,9 @@ class UcdReloadCauseProvider(ReloadCauseProviderHelper):
    def process(self):
       self.causes = self.ucd.getReloadCauses()
 
+   def setRealTimeClock(self):
+      self.ucd.setRealTimeClock()
+
 class UcdFaultDesc():
    def __init__(self, paged, typ, description, unit=None, conv=None):
       self.paged = paged
@@ -112,7 +115,7 @@ class Ucd(PmbusDpm):
    ]}
 
    class Registers(PmbusDpm.Registers):
-      RUN_TIME_CLOCK = 0xd7
+      REAL_TIME_CLOCK = 0xd7
 
       LOGGED_FAULTS = 0xea
       LOGGED_FAULT_DETAIL_INDEX = 0xeb
@@ -152,7 +155,7 @@ class Ucd(PmbusDpm):
          res.append(cause)
       return res
 
-   def setRunTimeClock(self):
+   def setRealTimeClock(self):
       diff = datetime.datetime.now() - self.oldestTime
       msecsInt = int(diff.seconds * 1000 + diff.microseconds / 1000)
       daysInt = diff.days
@@ -167,10 +170,10 @@ class Ucd(PmbusDpm):
       daysByte4 = daysInt & 0xff
       data = [msecsByte1, msecsByte2, msecsByte3, msecsByte4,
               daysByte1, daysByte2, daysByte3, daysByte4]
-      self.driver.setBlock(self.Registers.RUN_TIME_CLOCK, data)
+      self.driver.setBlock(self.Registers.REAL_TIME_CLOCK, data)
 
-   def getRunTimeClock(self):
-      res = self.driver.getBlock(self.Registers.RUN_TIME_CLOCK)
+   def getRealTimeClock(self):
+      res = self.driver.getBlock(self.Registers.REAL_TIME_CLOCK)
       msecs = res[3] | (res[2] << 8) | (res[1] << 16) | (res[0] << 24)
       days = res[7] | (res[6] << 8) | (res[5] << 16) | (res[4] << 24)
       days -= self.daysOffset
@@ -371,7 +374,7 @@ class Ucd90320(Ucd):
 
    # The fault time is from 2000-01-01
    faultTimeBase = datetime.datetime(2000, 1, 1)
-   # RUN_TIME_CLOCK is from 0001-01-01
+   # REAL_TIME_CLOCK is from 0001-01-01
    daysOffset = 719162    # Equals to 2000-01-01 - 0001-01-01
 
    def _parseFaultDetail(self, reg):

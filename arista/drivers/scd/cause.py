@@ -102,7 +102,7 @@ class ScdReloadCauseProvider(ReloadCauseProviderHelper):
       secs = self.regs.lastSeconds()
       return self._getRtcTime(ticks, secs)
 
-   def setRunTimeClock(self):
+   def setRealTimeClock(self):
       delta = datetime.datetime.now() - self.FAULT_TIME_BASE
       now = delta.total_seconds()
       secs = int(now)
@@ -121,8 +121,7 @@ class ScdReloadCauseProvider(ReloadCauseProviderHelper):
       if inSimulation():
          return None
 
-      # FIXME: implement RTC properly
-      self.setRunTimeClock()
+      self.setRealTimeClock()
 
       if self.faultsCleared():
          logging.debug('reboot cause already cleared')

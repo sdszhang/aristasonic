@@ -156,11 +156,11 @@ class Adm1266UserDriver(PmbusUserDriver):
             faults.append(fault)
       return faults
 
-   def getRunTimeClock(self):
-      data = self.read_block_data(self.registers.RUN_TIME_CLOCK)
+   def getRealTimeClock(self):
+      data = self.read_block_data(self.registers.REAL_TIME_CLOCK)
       return admToDatetime(data)
 
-   def setRunTimeClock(self):
+   def setRealTimeClock(self):
       now = time.time()
       secs = int(now)
       usecs = int((now - secs) * 2**16)
@@ -170,10 +170,10 @@ class Adm1266UserDriver(PmbusUserDriver):
       for i in range(2):
          data[i] = (usecs >> (i * 8)) & 0xff
 
-      def writeRunTimeClock():
+      def writeRealTimeClock():
          # Use retry for this function
-         self.write_block_data(self.registers.RUN_TIME_CLOCK, data)
-      retryGet(writeRunTimeClock, retries=5)
+         self.write_block_data(self.registers.REAL_TIME_CLOCK, data)
+      retryGet(writeRealTimeClock, retries=5)
 
    def clearBlackboxFaults(self):
       self.write_block_data(self.registers.READ_BLACKBOX, [0xfe, 0])

@@ -218,14 +218,19 @@ class RegisterArray(Register):
       self.addrEnd = addrEnd
 
    def read(self):
-      return [self.parent.read(addr)
+      value = [self.parent.read(addr)
               for addr in range(self.addrBegin, self.addrEnd + 1)]
+      if self.name:
+         self.log('read(): [%s]', ', '.join(['%#x' % x for x in value]))
+      return value
 
    def write(self, value):
       if not isinstance(value, list):
          raise ValueError('value should be a list')
       if len(value) != self.addrEnd - self.addrBegin + 1:
          raise ValueError('value is not of the correct size')
+      if self.name:
+         self.log('write([%s])', ', '.join(['%#x' % x for x in value]))
       for i, v in enumerate(value):
          self.parent.write(self.addrBegin + i, v)
 
