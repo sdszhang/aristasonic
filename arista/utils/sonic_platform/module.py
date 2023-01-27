@@ -18,11 +18,12 @@ class Module(ModuleBase):
    Platform-specific class for interfacing with a module
    (supervisor module, line card module, etc. applicable for a modular chassis)
    """
-   def __init__(self, sku):
+   def __init__(self, parent, sku):
       ModuleBase.__init__(self)
       self._sku = sku
       self._inventory = sku.getInventory()
       self._eeprom = sku.getEeprom()
+      self._parent = parent
 
       for fan in self._inventory.getFans():
          self._fan_list.append(Fan(None, fan))
@@ -33,8 +34,11 @@ class Module(ModuleBase):
          self._thermal_list.append(Thermal(index + 1, thermal))
       # TODO: Add Xcvrs? Only linecards have access to them
 
-      for programmable in self._inventory.getProgrammables():
-         self._component_list.append(Component(programmable))
+      # NOTE: only declare module components when on the supervisor
+      #       on linecards the components are attached to the chassis
+      if self._parent._platform != sku:
+         for programmable in self._inventory.getProgrammables():
+            self._component_list.append(Component(self, programmable))
 
    def _get_rpc_client(self):
       return getGlobalRpcClient(self.RPC_CLIENT_SOURCE)
@@ -183,15 +187,19 @@ class LinecardModule(Module):
 class LinecardSelfModule(LinecardModule):
    RPC_CLIENT_SOURCE = RpcClientSource.FROM_LINECARD
 
+   def get_name(self):
+      return self.MODULE_TYPE_LINE
+
 class LinecardSupervisorModule(SupervisorModule):
    RPC_CLIENT_SOURCE = RpcClientSource.FROM_LINECARD
 
    # pylint: disable=super-init-not-called
-   def __init__(self, linecard):
+   def __init__(self, parent, linecard):
       ModuleBase.__init__(self)
       self._linecard = linecard
       self._slotId = 1
       self._eeprom = None
+      self._parent = parent
 
    def _get_eeprom(self):
       if self._eeprom is None:

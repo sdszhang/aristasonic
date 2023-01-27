@@ -2,10 +2,6 @@
 
 from __future__ import division, print_function
 
-import copy
-import select
-import time
-
 try:
    from sonic_platform_base.chassis_base import ChassisBase
    from sonic_platform_base.sfp_base import SfpBase
@@ -87,24 +83,26 @@ class Chassis(ChassisBase):
          chassis = self._platform.getChassis()
          for supervisor in chassis.iterSupervisors(presentOnly=False):
             if supervisor is not None:
-               self._module_list.append(SupervisorModule(supervisor))
+               self._module_list.append(SupervisorModule(self, supervisor))
          chassis.loadFabrics()
          for fabric in chassis.iterFabrics(presentOnly=False):
-            self._module_list.append(FabricModule(fabric))
+            self._module_list.append(FabricModule(self, fabric))
          chassis.loadLinecards()
          for lc in chassis.iterLinecards(presentOnly=False):
-            self._module_list.append(LinecardModule(lc))
+            self._module_list.append(LinecardModule(self, lc))
          for slot in chassis.iterPsus():
             self._psu_list.append(Psu(slot.psuSlot))
          self._chassis = chassis
       elif isinstance(self._platform, Linecard):
-         self._module_list.append(LinecardSelfModule(self._platform))
-         self._module_list.append(LinecardSupervisorModule(self._platform))
+         self._module_list.append(LinecardSelfModule(self, self._platform))
+         self._module_list.append(LinecardSupervisorModule(self, self._platform))
+         for programmable in self._inventory.getProgrammables():
+            self._component_list.append(Component(self, programmable))
       else:
          for slot in self._inventory.getPsuSlots():
             self._psu_list.append(Psu(slot))
          for programmable in self._inventory.getProgrammables():
-            self._component_list.append(Component(programmable))
+            self._component_list.append(Component(self, programmable))
 
       if self._inventory.getFanSlots():
          for slot in self._inventory.getFanSlots():
