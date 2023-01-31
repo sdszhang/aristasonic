@@ -2,6 +2,7 @@ from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
+from ..core.quirk import PciConfigQuirk
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk import Tomahawk
@@ -136,6 +137,12 @@ class Upperlake(FixedSystem):
          ],
          pcieResets=[
             scd.inventory.getReset('switch_chip_pcie_reset'),
+         ],
+         quirks=[
+            PciConfigQuirk(port.pciAddr(func=0), 'CAP_EXP+0x28.B=6',
+                           'Set max pcie timeout to 210ms'),
+            PciConfigQuirk(port.pciAddr(func=1), 'CAP_EXP+0x28.B=6',
+                           'Set max pcie timeout to 210ms'),
          ],
       )
 
