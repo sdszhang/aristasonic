@@ -65,6 +65,7 @@ class DPS1500AB(DeltaPsu):
          ('inlet', Position.INLET, 55, 65, 70),
          ('primary hotspot', Position.OTHER, 80, 88, 93),
       ],
+      maxRpm=23000,
    )
    IDENTIFIERS = [
       PsuIdent('DPS-1500AB-7 A',  'PWR-1511-AC-RED', Airflow.EXHAUST),

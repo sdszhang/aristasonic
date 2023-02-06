@@ -15,7 +15,7 @@ class DescTest(unittest.TestCase):
          assert getattr(desc, k) == v
 
    def testFanDesc(self):
-      self._testAttributes(FanDesc, fanId=1, ledId=2, extra='blah')
+      self._testAttributes(FanDesc, fanId=1, extra='blah')
 
    def testLedDesc(self):
       self._testAttributes(LedDesc, name='led', colors=[ 'blue', 'red' ],

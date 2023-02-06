@@ -292,6 +292,9 @@ class FanSysfsImpl(Fan, GenericSysfs):
    def getSpeed(self):
       if self.pwm.exists():
          return self.pwm.read()
+      if self.desc.maxRpm:
+         return (self.getRpm() - self.desc.minRpm) * 100 // \
+                (self.desc.maxRpm - self.desc.minRpm)
       return 0
 
    def getFault(self):
@@ -313,7 +316,9 @@ class FanSysfsImpl(Fan, GenericSysfs):
       elif self.lastSpeed != self.MAX_FAN_SPEED and speed == self.MAX_FAN_SPEED:
          logging.warning("%s fan speed set to max", self.getName())
       self.lastSpeed = speed
-      return self.pwm.write(speed)
+      if self.pwm.exists():
+         return self.pwm.write(speed)
+      return False
 
    def getRpm(self):
       if self.input.exists():

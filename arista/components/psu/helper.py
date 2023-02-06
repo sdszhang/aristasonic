@@ -4,7 +4,7 @@ from ...descs.psu import PsuDesc
 from ...descs.rail import RailDesc, RailDirection
 from ...descs.sensor import Position, SensorDesc
 
-def psuDescHelper(hasFans=True, maxRpm=None, minRpm=None,
+def psuDescHelper(hasFans=True, maxRpm=None, minRpm=0,
                   inputRailId=1, inputMaxVoltage=None, inputMinVoltage=None,
                   outputRailId=1, outputMaxVoltage=None, outputMinVoltage=None,
                   sensors=None):
