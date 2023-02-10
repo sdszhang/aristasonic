@@ -41,6 +41,7 @@ from ..drivers.scd.cause import ( # pylint: disable=unused-import
    ScdReloadCauseProvider,
    SimpleScdReloadCauseProvider,
 )
+from ..drivers.scd.seu import ScdSeuReporter
 
 from ..inventory.interrupt import Interrupt
 from ..inventory.powercycle import PowerCycle
@@ -515,6 +516,9 @@ class Scd(PciComponent):
       else:
          provider = ScdReloadCauseProvider(self, regmap, causes)
       return self.inventory.addReloadCauseProvider(provider)
+
+   def addSeuReporter(self, regmap):
+      return self.inventory.addSeuReporter(ScdSeuReporter(self, regmap))
 
    def getResets(self, xcvrs=True, autoOnly=False):
       resets = [r for r in self.resets if not autoOnly or r.desc.auto == True]

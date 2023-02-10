@@ -1,11 +1,18 @@
 from ...core.cpu import Cpu
 from ...core.pci import PciRoot
+from ...core.register import Register, RegisterMap, RegBitField
 
 from ...components.scd import Scd
 from ...components.eeprom import At24C512
 from ...components.max6658 import Max6658
 
 from ...descs.xcvr import Sfp
+
+class CpldSeuRegisterMap(RegisterMap):
+   SCD_CTRL = Register(0x2300,
+      RegBitField(3, 'powerCycleOnSeu', ro=False),
+      RegBitField(2, 'hasSeuError', ro=False),
+   )
 
 class SprucefishCpu(Cpu):
 
@@ -21,6 +28,7 @@ class SprucefishCpu(Cpu):
       self.cpld = cpld
 
       cpld.createPowerCycle()
+      cpld.addSeuReporter(CpldSeuRegisterMap)
       cpld.addSmbusMasterRange(0x8000, 0, 0x80, 9)
       # TODO: add led and interrupt logic for SFP port
       cpld.addXcvrSlots(
