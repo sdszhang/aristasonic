@@ -25,6 +25,7 @@ from ..drivers.cpld import SysCpldI2cDriver
 
 from ..inventory.powercycle import PowerCycle
 from ..inventory.programmable import Programmable
+from ..inventory.seu import SeuReporter
 
 from ..libs.date import datetimeToStr
 
@@ -100,6 +101,19 @@ class SysCpldProgrammable(Programmable):
 
    def getVersion(self):
       return self.cpld.getVersion()
+
+class SysCpldSeuReporter(SeuReporter):
+   def __init__(self, cpld):
+      self.cpld = cpld
+
+   def getComponent(self):
+      return self.cpld
+
+   def hasSeuError(self):
+      return self.cpld.driver.regs.scdCrcError()
+
+   def powerCycleOnSeu(self, on=None):
+      return self.cpld.driver.regs.powerCycleOnCrc(on)
 
 class SysCpldCause(ReloadCauseDesc):
    pass
@@ -206,6 +220,7 @@ class SysCpld(I2cComponent):
    def __init__(self, *args, **kwargs):
       super(SysCpld, self).__init__(*args, **kwargs)
       self.inventory.addProgrammable(SysCpldProgrammable(self))
+      self.inventory.addSeuReporter(SysCpldSeuReporter(self))
 
    def getVersion(self):
       if inSimulation():
@@ -225,12 +240,6 @@ class SysCpld(I2cComponent):
       if wait:
          time.sleep(sleep) # could be lower
       self.driver.regs.scdReset(0)
-
-   def powerCycleOnSeu(self, value=None):
-      return self.driver.regs.powerCycleOnCrc(value)
-
-   def hasSeuError(self):
-      return self.driver.regs.scdCrcError()
 
    def addGpio(self, attr, name=None):
       name = name or attr

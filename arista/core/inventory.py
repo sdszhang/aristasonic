@@ -50,6 +50,8 @@ class Inventory():
 
       self.programmables = []
 
+      self.seuReporters = []
+
    def getXcvrs(self):
       xcvrs = {}
       xcvrs.update(self.getEthernets())
@@ -324,6 +326,12 @@ class Inventory():
 
    def getProgrammables(self):
       return self.programmables
+
+   def addSeuReporter(self, seuReporter):
+      self.seuReporters.append(seuReporter)
+
+   def getSeuReporters(self):
+      return self.seuReporters
 
    def addReloadCauseProvider(self, provider):
       self.causeProviders.append(provider)
