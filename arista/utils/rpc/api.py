@@ -149,6 +149,10 @@ class RpcApi():
    async def getSupervisorMaxPowerDraw(self, lc):
       return self.platform.MAX_POWER_DRAW
 
+   @registerLinecardMethod
+   async def hasSeuError(self, lc, name):
+      return lc.plx.driver.regs.hasScdSeuError()
+
    @classmethod
    def methods(cls):
       if not cls._methods:

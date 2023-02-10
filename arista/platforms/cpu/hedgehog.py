@@ -1,8 +1,7 @@
 from ...core.component.i2c import Component
 from ...core.cpu import Cpu
 from ...core.pci import PciRoot
-from ...core.register import Register, RegisterMap
-from ...core.types import PciAddr
+from ...core.register import Register, RegisterMap, RegBitField
 from ...core.utils import getCmdlineDict
 
 from ...components.cpu.amd.k10temp import K10Temp
@@ -15,7 +14,7 @@ from ...descs.led import LedDesc, LedColor
 from ...descs.sensor import SensorDesc, Position
 
 class FakeI2cBus(Component):
-  def i2cAddr(self, *args):
+   def i2cAddr(self, *args): # pylint: disable=unused-argument
       return None
 
 class HedgehogCpuCpld(RegisterMap):
@@ -49,6 +48,7 @@ class HedgehogCpu(Cpu):
       self.rpc.addPowerCycle(None)
 
    def addScdComponents(self, scd):
+      self.rpc.addSeuReporter(scd)
       scd.createWatchdog(intr=scd.getInterrupt(0), bit=10)
       scd.newComponent(SbTsi, addr=scd.i2cAddr(9, 0x4c), sensors=[
          SensorDesc(diode=0, name='Cpu SBTSI',

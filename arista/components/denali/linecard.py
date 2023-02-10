@@ -18,11 +18,17 @@ from ...drivers.scd.sram import SramContent
 
 from ...libs.wait import waitFor
 
+from ..plx import Plx8700RegisterMap
 from ..scd import Scd
 
 from .card import DenaliLinecardBase, DenaliLinecardSlot
 
 logging = getLogger(__name__)
+
+class LinecardPlx8700Registers(Plx8700RegisterMap):
+   GpioLow = Register(0x61c,
+      RegBitField(0, 'hasScdSeuError'),
+   )
 
 class DenaliLinecard(DenaliLinecardBase):
    PLATFORM = None
@@ -30,6 +36,7 @@ class DenaliLinecard(DenaliLinecardBase):
    SCD_PCI_OFFSET = 0
    ASICS = []
    PLX_PORTS = []
+   PLX_REGS = LinecardPlx8700Registers
 
    def createScd(self):
       downstream = self.plx.pci.portByName('scd')

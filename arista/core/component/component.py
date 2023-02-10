@@ -19,10 +19,15 @@ class Component(LegacyComponent):
       if args and 'addr' not in kwargs:
          kwargs['addr'] = args[0]
          args = args[1:]
-      kwargs.setdefault('registerCls', self.REGISTER_CLS)
-      kwargs.setdefault('priority', self.PRIORITY)
-      # FIXME: workaround until DriverSelector
-      driverCls = kwargs.get('driverCls', self.DRIVER)
+      attrs = [
+         # FIXME: workaround until DriverSelector
+         ('driverCls', self.DRIVER),
+         ('priority', self.PRIORITY),
+         ('registerCls', self.REGISTER_CLS),
+      ]
+      for key, default in attrs:
+         kwargs[key] = kwargs.get(key) or default
+      driverCls = kwargs.get('driverCls')
       drivers = [
          driverCls(**kwargs), # pylint: disable=not-callable
       ] if driverCls else []

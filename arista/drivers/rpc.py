@@ -3,6 +3,7 @@ from ..core.config import Config
 from ..core.driver.user import UserDriver
 from ..inventory.led import Led
 from ..inventory.powercycle import PowerCycle
+from ..inventory.seu import SeuReporter
 from ..utils.rpc.client import RpcClient
 
 class RpcLedImpl(Led):
@@ -30,6 +31,20 @@ class RpcPowerCycleImpl(PowerCycle):
    def powerCycle(self):
       return self.driver.client.linecardPowerCycle()
 
+class RpcSeuReporter(SeuReporter):
+   def __init__(self, driver, component):
+      self.driver = driver
+      self.component = component
+
+   def getComponent(self):
+      return self.component
+
+   def powerCycleOnSeu(self, on=None):
+      return False
+
+   def hasSeuError(self):
+      return self.driver.client.hasSeuError(str(self.component))
+
 class LinecardRpcClientDriver(UserDriver):
    def __init__(self, slotId=None, **kwargs):
       super().__init__(**kwargs)
@@ -43,3 +58,6 @@ class LinecardRpcClientDriver(UserDriver):
 
    def getReloadCauseData(self):
       return self.client.getLinecardRebootCause()
+
+   def getSeuReporter(self, component):
+      return RpcSeuReporter(self, component)

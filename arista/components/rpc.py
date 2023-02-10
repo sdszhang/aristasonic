@@ -27,3 +27,7 @@ class LinecardRpcClient(Component):
 
    def getReloadCauseData(self):
       return self.driver.getReloadCauseData()
+
+   def addSeuReporter(self, component):
+      reporter = self.driver.getSeuReporter(component)
+      return self.inventory.addSeuReporter(reporter)

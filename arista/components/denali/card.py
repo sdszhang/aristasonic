@@ -1,17 +1,12 @@
 
 from __future__ import absolute_import, division, print_function
 
-import copy
-import time
-
 from ...core.card import Card, CardSlot
 from ...core.domain import PowerDomain
 from ...core.fabric import Fabric
 from ...core.linecard import Linecard
 from ...core.log import getLogger
-from ...core.types import PciAddr
 from ...descs.led import LedColor
-from ...libs.pci import readSecondaryBus
 from ...libs.wait import waitFor
 
 from ..eeprom import At24C512
@@ -24,6 +19,7 @@ class DenaliCard(Card):
 
    ASICS = []
    PLX_PORTS = []
+   PLX_REGS = None
 
    def __init__(self, *args, **kwargs):
       self.scd = None
@@ -54,13 +50,14 @@ class DenaliCard(Card):
       self.plx = self.pca.newComponent(
          PlxPex8700,
          addr=self.pca.i2cAddr(0x38),
+         registerCls=self.PLX_REGS,
       )
       self.plx.addPciSwitch(
          parent,
          ports=self.PLX_PORTS,
       )
       if self.PLX_PORTS:
-          self.slot.pci.attach(self.getUpstreamPort())
+         self.slot.pci.attach(self.getUpstreamPort())
 
    def createAsics(self):
       self.asics = []
