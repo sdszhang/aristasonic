@@ -66,18 +66,15 @@ class RpcClient():
    def _sendCommand(self, command):
       return self.sock.sendall(command)
 
-   def _readResponse(self):
+   def _readResponse(self, timeout=5):
       # Wait for data to become available on the socket
-      events = self.poller.poll(30)
+      events = self.poller.poll(timeout)
+      if not events:
+         raise TimeoutError()
       for _, event in events:
          if event == EPOLLIN:
             break
-
-         # Socket got EPOLLERR or EPOLLHUP, try reconnecting and trying again
-         self.poller.unregister(self.sock.fileno())
-         self.sock.close()
-         self._connectSocket()
-         return None
+         raise ConnectionResetError()
 
       # Read all data from the socket; we need to keep trying to receive until we
       # get EAGAIN from the recv call, or we will potentially only get the first
@@ -93,20 +90,35 @@ class RpcClient():
       return buf.decode('utf-8')
 
    def _processResponse(self, responseStr, uid):
-      try:
-         response = json.loads(responseStr)
+      response = json.loads(responseStr)
 
-         if response.get('jsonrpc') != JSONRPC_VERSION:
-            raise RpcClientException(f'Got unexpected JsonRpc version {response.get("jsonrpc")}')
-         if response.get('id') != uid:
-            raise RpcClientException(f'Got unexpected message id {response.get("id")}, expected {uid}')
-         if 'error' in response:
-            raise RpcServerException(response['error'])
-         if 'result' not in response:
-            raise RpcClientException(f'Neither result nor error in JsonRpc response for message {uid}')
-         return response['result']
-      except JSONDecodeError as e:
-         raise RpcClientException(f'Could not decode JSON-RPC server response for message {uid}') from e
+      if response.get('jsonrpc') != JSONRPC_VERSION:
+         raise RpcClientException(f'Got unexpected JsonRpc version {response.get("jsonrpc")}')
+      if response.get('id') != uid:
+         raise RpcClientException(f'Got unexpected message id {response.get("id")}, expected {uid}')
+      if 'error' in response:
+         raise RpcServerException(response['error'])
+      if 'result' not in response:
+         raise RpcClientException(f'Neither result nor error in JsonRpc response for message {uid}')
+      return response['result']
+
+   def _doGetCommandResponse(self, uid):
+      attempts = 0
+      responseStr = ""
+      while attempts < 10:
+         segment = self._readResponse()
+         if segment is not None:
+            responseStr += segment
+            try:
+               return self._processResponse(responseStr, uid)
+            except JSONDecodeError:
+               # This is likely because we got an incomplete message segment,
+               # so just retry
+               pass
+         attempts += 1
+      if not responseStr:
+         raise RpcClientException('JSON-RPC server did not respond')
+      raise RpcClientException(f'Could not decode JSON-RPC server response for message {uid}: {responseStr}')
 
    def doCommand(self, call, *args, **kwargs):
       if self.sock is None:
@@ -124,14 +136,17 @@ class RpcClient():
          'id': uid}) + '\n'
 
       self._clearSocket()
-      attempts = 0
-      responseStr = None
-      while responseStr is None and attempts < 5:
+      # Allow reconnecting the socket if the connection dies; if we timeout twice then give up.
+      for _ in range(2):
          self._sendCommand(command.encode('utf-8'))
-         responseStr = self._readResponse()
-      if responseStr is None:
-         raise RpcClientException('JSON-RPC server did not respond')
-      return self._processResponse(responseStr, uid)
+         try:
+            return self._doGetCommandResponse(uid)
+         except OSError:
+            # Try disconnecting and reconnecting the socket then try again.
+            self.poller.unregister(self.sock)
+            self.sock.close()
+            self._connectSocket()
+      raise RpcClientException('JSON-RPC server did not respond')
 
    def __getattr__(self, name):
       if name not in RpcApi.methods():
