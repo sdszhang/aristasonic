@@ -4,9 +4,10 @@ from ...core.pci import PciRoot
 from ...core.register import Register, RegisterMap, RegBitField
 from ...core.utils import getCmdlineDict
 
+from ...components.cookie import CookieComponent
 from ...components.cpu.amd.k10temp import K10Temp
 from ...components.cpu.amd.sbtsi import SbTsi
-from ...components.dpm.adm1266 import Adm1266, AdmPin
+from ...components.dpm.adm1266 import Adm1266, AdmPin, AdmPriority
 from ...components.rpc import LinecardRpcClient
 from ...components.scd import Scd
 
@@ -47,6 +48,8 @@ class HedgehogCpu(Cpu):
          LedDesc('status', colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF]))
       self.rpc.addPowerCycle(None)
 
+      self.cookie = self.newComponent(CookieComponent)
+
    def addScdComponents(self, scd):
       self.rpc.addSeuReporter(scd)
       scd.createWatchdog(intr=scd.getInterrupt(0), bit=10)
@@ -70,6 +73,6 @@ class HedgehogCpu(Cpu):
    def addCpuDpm(cls, bus, addr=None, causes=None):
       return bus.newComponent(Adm1266, addr=addr, causes=causes or {
             'reboot': AdmPin(2, AdmPin.GPIO),
-            'overtemp': AdmPin(8, AdmPin.GPIO),
+            'overtemp': AdmPin(8, AdmPin.GPIO, priority=AdmPriority.NONE),
             'cpu-overtemp': AdmPin(9, AdmPin.GPIO),
       })
