@@ -30,7 +30,7 @@ class FakeReloadCauseManager():
    def loadCauses(self):
       pass
 
-   def toDict(self):
+   def toDict(self, latestOnly=False): # pylint: disable=unused-argument
       return {
          'name': 'foo',
          'version': 3,

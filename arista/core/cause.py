@@ -270,10 +270,14 @@ class ReloadCauseManager(object):
    def allReports(self):
       return self.reports
 
-   def toDict(self):
+   def toDict(self, latestOnly=False):
+      if latestOnly:
+         reports = [self.reports[0].toDict()]
+      else:
+         reports = [r.toDict() for r in self.reports]
       return {
          'name': self.name,
-         'reports': [r.toDict() for r in self.reports],
+         'reports': reports,
          'version': self.VERSION,
       }
 
