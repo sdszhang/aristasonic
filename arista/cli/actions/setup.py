@@ -9,7 +9,7 @@ from ...core import utils
 from ...core.config import Config
 from ...core.component import Priority
 from ...core.log import getLogger
-from ...core.platform import PREREQUISITES
+from ...core.platform import loadPrerequisites
 
 logging = getLogger(__name__)
 
@@ -40,10 +40,6 @@ def setupXcvrs(platform):
          xcvrSlot.setLowPowerMode(False)
       except NotImplementedError:
          pass
-
-def loadPrerequisites():
-   for driver in PREREQUISITES:
-      driver.setup()
 
 @registerAction(setupParser)
 def doSetup(ctx, args):

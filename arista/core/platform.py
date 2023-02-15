@@ -3,7 +3,6 @@ from __future__ import print_function
 import os
 
 from .config import etcPath, flashPath
-from .driver import modprobe
 from .driver.kernel import KernelDriver
 from .exception import UnknownPlatformError
 from .log import getLogger
@@ -29,8 +28,12 @@ PREREQUISITES = [
    KernelDriver(module='i2c-dev'),
 ]
 
+def loadPrerequisites():
+   for driver in PREREQUISITES:
+      driver.setup()
+
 def readPrefdlEeprom(*addrs):
-   modprobe('eeprom')
+   loadPrerequisites()
    for addr in addrs:
       eeprompath = os.path.join('/sys/bus/i2c/drivers/eeprom', addr, 'eeprom')
       if not os.path.exists(eeprompath):
@@ -63,7 +66,7 @@ def readPrefdl():
       pfdl.writeToFile(fmted_prefdl_path)
       return pfdl
 
-   return readPrefdlEeprom('1-0052')
+   return readPrefdlEeprom('1-0052', '2-0052')
 
 class SysEeprom(object):
    def prefdlSim(self):
