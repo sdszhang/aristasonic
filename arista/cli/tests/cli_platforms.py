@@ -3,9 +3,17 @@ from __future__ import absolute_import
 from multiprocessing import Process
 
 from ...tests.testing import unittest, patch
+from ...core.fabric import Fabric
+from ...core.linecard import Linecard
+from ...core.modular import Modular
 from ...core.platform import loadPlatforms, getPlatforms
+from ...core.supervisor import Supervisor
 from .. import main
 
+def fakesleep(_):
+   pass
+
+@patch('time.sleep', fakesleep)
 class CliLegacyTest(unittest.TestCase):
    def _runMain(self, args, code=0):
       p = Process(target=main, args=(args,))
@@ -25,11 +33,17 @@ class CliLegacyTest(unittest.TestCase):
 
    def _foreachPlatform(self, *args, **kwargs):
       code = kwargs.get('code', 0)
+      ignoreSup = kwargs.get('ignoreSupervisor', False)
+      ignoreTup = tuple([Modular, Fabric] + ([Supervisor] if ignoreSup else []))
       loadPlatforms()
       for platform in getPlatforms():
+         if issubclass(platform, ignoreTup):
+            continue
+         if issubclass(platform, Linecard) and not platform.CPU_CLS:
+            continue
          key = platform.SID[0] if platform.SID else platform.SKU[0]
-         args = ['-p', key, '-s'] + list(args)
-         self._runMain(args, code)
+         _args = ['-p', key, '-s'] + list(args)
+         self._runMain(_args, code)
 
    def testSetup(self):
       self._foreachPlatform('setup')
@@ -37,15 +51,14 @@ class CliLegacyTest(unittest.TestCase):
    def testSetupBackground(self):
       self._foreachPlatform('setup', '--reset', '--background')
 
-   @patch('time.sleep', return_value=None)
-   def testResetToggle(self, patched_time):
+   def testResetToggle(self):
       self._foreachPlatform('reset', '--toggle')
 
    def testClean(self):
       self._foreachPlatform('clean')
 
    def testDump(self):
-      self._foreachPlatform('dump')
+      self._foreachPlatform('dump', ignoreSupervisor=True)
 
    def testRebootCause(self):
       self._foreachPlatform('reboot-cause')

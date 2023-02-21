@@ -2,6 +2,7 @@
 import subprocess
 
 from .log import getLogger
+from .utils import inSimulation
 
 logging = getLogger(__name__)
 
@@ -21,7 +22,8 @@ class QuirkCmd(Quirk):
       return self.description
 
    def run(self, component):
-      subprocess.check_output(self.cmd)
+      if not inSimulation():
+         subprocess.check_output(self.cmd)
 
 class PciConfigQuirk(QuirkCmd): # TODO: reparent when using PciTopology
    def __init__(self, addr, expr, description):

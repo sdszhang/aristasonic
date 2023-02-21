@@ -1,5 +1,5 @@
 
-from ...tests.testing import unittest
+from ...tests.testing import unittest, patch
 
 from ...descs.fan import FanDesc, FanPosition
 from ...descs.psu import PsuDesc
@@ -11,8 +11,6 @@ from ..cooling import Airflow
 from ..fixed import FixedSystem
 from ..psu import PsuSlot, PsuModel, PsuIdent
 from ..utils import incrange
-
-from .. import psu as psu_module
 
 from .mockinv import (
    MockGpio,
@@ -84,8 +82,6 @@ class MockPmbusDetect(object):
    def getMetadata(self):
       return self.mockData
 
-psu_module.PsuPmbusDetect = MockPmbusDetect
-
 class MockPsuSlot(PsuSlot):
    pass
 
@@ -106,6 +102,7 @@ class MockFixedSystem(FixedSystem):
             psus=psus,
          ))
 
+@patch('arista.core.psu.PsuPmbusDetect', MockPmbusDetect)
 class TestPsu(unittest.TestCase):
    def _checkSystem(self, system):
       self.assertEqual(len(system.getInventory().getPsuSlots()), system.numPsus)

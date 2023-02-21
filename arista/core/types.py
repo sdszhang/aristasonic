@@ -4,6 +4,7 @@ import os
 from collections import namedtuple
 
 from ..libs.i2c import i2cBusFromName
+from .utils import inSimulation
 
 Register = namedtuple("Register", ["addr", "ro"])
 NamedRegister = namedtuple("NamedRegister", Register._fields + ("name", ))
@@ -74,7 +75,10 @@ class I2cBus(object):
    @property
    def bus(self):
       if self.bus_ is None:
-         self.bus_ = i2cBusFromName(self.name_)
+         if inSimulation():
+            self.bus_ = 1
+         else:
+            self.bus_ = i2cBusFromName(self.name_)
       return self.bus_
 
    def i2cAddr(self, address, **kwargs):
