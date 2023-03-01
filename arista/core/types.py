@@ -68,9 +68,10 @@ class I2cBus(object):
 
    ADDR_CLS = I2cBusAddr
 
-   def __init__(self, name):
+   def __init__(self, name, idx=0):
       self.name_ = name
       self.bus_ = None
+      self.idx_ = idx
 
    @property
    def bus(self):
@@ -78,7 +79,7 @@ class I2cBus(object):
          if inSimulation():
             self.bus_ = 1
          else:
-            self.bus_ = i2cBusFromName(self.name_)
+            self.bus_ = i2cBusFromName(self.name_, idx=self.idx_)
       return self.bus_
 
    def i2cAddr(self, address, **kwargs):
