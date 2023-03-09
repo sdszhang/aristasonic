@@ -214,6 +214,7 @@ class LinecardSupervisorModule(SupervisorModule):
       self._slotId = 1
       self._eeprom = None
       self._parent = parent
+      self._supMaxPowerDraw = None
 
    def _get_eeprom(self):
       if self._eeprom is None:
@@ -245,7 +246,10 @@ class LinecardSupervisorModule(SupervisorModule):
       return False
 
    def get_maximum_consumed_power(self):
-      return float(self._get_rpc_client().getSupervisorMaxPowerDraw())
+      if self._supMaxPowerDraw is None:
+         power = float(self._get_rpc_client().getSupervisorMaxPowerDraw())
+         self._supMaxPowerDraw = power
+      return self._supMaxPowerDraw
 
    def is_midplane_reachable(self):
       return ping(self.get_midplane_ip())

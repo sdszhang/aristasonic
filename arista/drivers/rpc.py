@@ -29,7 +29,7 @@ class RpcPowerCycleImpl(PowerCycle):
       self.desc = desc
 
    def powerCycle(self):
-      return self.driver.client.linecardPowerCycle()
+      return self.driver.client.linecardSelfPowerCycle()
 
 class RpcSeuReporter(SeuReporter):
    def __init__(self, driver, component):
