@@ -7,6 +7,7 @@ from .driver.kernel import KernelDriver
 from .exception import UnknownPlatformError
 from .log import getLogger
 from .prefdl import Prefdl
+from .types import I2cBus
 from .utils import simulateWith, getCmdlineDict
 
 from ..libs.benchmark import timeit
@@ -27,27 +28,30 @@ PREREQUISITES = [
    KernelDriver(module='eeprom'),
    KernelDriver(module='i2c-dev'),
 ]
+IDENT_BUS_NAMES = [
+   'SMBus PIIX4 adapter port 1 at 0b20',
+]
 
 def loadPrerequisites():
    for driver in PREREQUISITES:
       driver.setup()
 
-def readPrefdlEeprom(*addrs):
+def readI2cPrefdlEeprom():
+   # pylint: disable=import-outside-toplevel
+   from ..components.eeprom import I2cEeprom
    loadPrerequisites()
-   for addr in addrs:
-      eeprompath = os.path.join('/sys/bus/i2c/drivers/eeprom', addr, 'eeprom')
-      if not os.path.exists(eeprompath):
-         continue
+   for name in IDENT_BUS_NAMES:
       try:
-         logging.debug('reading system eeprom from %s', eeprompath)
-         pfdl = Prefdl.fromBinFile(eeprompath)
+         eeprom = I2cEeprom(addr=I2cBus(name).i2cAddr(0x52))
+         eeprom.setup()
+         logging.debug('reading system eeprom from %s',
+                       eeprom.driver.eepromPath())
+         pfdl = eeprom.readPrefdl()
          pfdl.writeToFile(fmted_prefdl_path)
          return pfdl
-      except Exception as e: # pylint: disable=broad-except
-         logging.warning('could not obtain prefdl from %s', eeprompath)
-         logging.warning('error seen: %s', e)
-
-   raise RuntimeError("Could not find valid system eeprom")
+      except Exception: # pylint: disable=broad-except
+         logging.exception('Could not read prefdl from %s', name)
+   raise UnknownPlatformError('Could not identify current platform')
 
 def readPrefdl():
    if os.path.isfile(fmted_prefdl_path) and os.path.getsize(fmted_prefdl_path) > 0:
@@ -66,7 +70,7 @@ def readPrefdl():
       pfdl.writeToFile(fmted_prefdl_path)
       return pfdl
 
-   return readPrefdlEeprom('1-0052', '2-0052')
+   return readI2cPrefdlEeprom()
 
 class SysEeprom(object):
    def prefdlSim(self):
