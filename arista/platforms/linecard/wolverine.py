@@ -17,6 +17,7 @@ from ...components.plx import PlxPortDesc
 from ...components.scd import I2cScd
 from ...components.tmp464 import Tmp464
 
+from ...descs.cause import ReloadCauseDesc
 from ...descs.sensor import Position, SensorDesc
 from ...descs.xcvr import Osfp, QsfpDD
 
@@ -104,6 +105,7 @@ class Wolverine(DenaliLinecard):
       ])
 
    def standbyDomain(self):
+      super(Wolverine, self).standbyDomain()
       self.syscpld = self.pca.newComponent(I2cScd, addr=self.pca.i2cAddr(0x23),
                                            registerCls=WolverineStandbyRegMap)
 
@@ -146,6 +148,9 @@ class Wolverine(DenaliLinecard):
          SensorDesc(diode=4, name='Fap1 NIF', position=Position.OTHER,
                     target=75, overheat=100, critical=105),
       ])
+
+      self.cookies.register(ReloadCauseDesc.WATCHDOG,
+                            self.syscpld.lcScdWatchdogInterrupt)
 
 @registerPlatform()
 class WolverineO(Wolverine):

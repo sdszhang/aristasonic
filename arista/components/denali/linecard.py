@@ -82,6 +82,9 @@ class DenaliLinecard(DenaliLinecardBase):
          pass
       return False
 
+   def standbyDomain(self):
+      self.slot.parent.getCookies().addLinecard(self)
+
    def controlPlaneOn(self):
       return self.gpio1.cpEcbOn()
 
@@ -260,6 +263,10 @@ class StandbyScdRegisterMap(RegisterMap):
       RegBitField(0, name='lcpuThermTrip'),
       RegBitField(1, name='lcpuHot'),
       RegBitField(2, name='lcpuAlert'),
+   )
+   STATUS6 = ScdResetRegister(0x10,
+      RegBitField(7, name='lcScdWatchdogStopAllTraffic'),
+      RegBitField(6, name='lcScdWatchdogInterrupt'),
    )
    STATUS7 = ScdStatusChangedRegister(0x12,
       RegBitField(3, name='lcpuPresent'),

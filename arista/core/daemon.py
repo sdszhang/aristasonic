@@ -43,7 +43,10 @@ class PollDaemonFeature(DaemonFeature):
       last = self.daemon.loop.time()
       while True:
          now = self.daemon.loop.time()
-         self.callback(now - last)
+         try:
+            self.callback(now - last)
+         except Exception:
+            logging.debug('%s raised exception', self.NAME, exc_info=True)
          last = now
          await asyncio.sleep(self.INTERVAL)
 

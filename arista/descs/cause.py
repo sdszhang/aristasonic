@@ -57,7 +57,7 @@ class ReloadCauseDesc(object):
                 priority=ReloadCausePriority.NORMAL):
       self.code = code
       self.typ = typ
-      self.description = self.DEFAULT_DESCRIPTIONS.get(typ)
+      self.description = self.DEFAULT_DESCRIPTIONS.get(typ, str(typ))
       self.priority = priority
       if description is not None:
          self.description = f'{self.description} - {description}'

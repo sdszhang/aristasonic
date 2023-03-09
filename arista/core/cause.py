@@ -81,6 +81,9 @@ class ReloadCauseProviderHelper(ReloadCauseProvider):
    def process(self):
       raise NotImplementedError
 
+   def poll(self):
+      return []
+
    def toDict(self):
       return {
          'name': self.getSourceName(),

@@ -25,6 +25,9 @@ class FixedSystem(Sku):
    def __str__(self):
       return '%s()' % self.__class__.__name__
 
+   def getCookies(self):
+      return self.cpu.cookies
+
 class FixedChassis(object):
    FAN_SLOTS = None
    FAN_COUNT = None

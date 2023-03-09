@@ -4,6 +4,9 @@ except ImportError:
    print('This feature only works in python3')
    raise
 
+import os
+from tempfile import TemporaryDirectory
+
 from ....tests.testing import mock, unittest
 
 from ..api import RpcApi
@@ -146,10 +149,14 @@ class ClientTest(unittest.IsolatedAsyncioTestCase):
       sup = self._createMockChassis()
       api, ctx = self._newApi(platform=sup,
                               senderSlotId=DenaliLinecardBase.ABSOLUTE_CARD_OFFSET)
-      with mock.patch('arista.utils.rpc.api.getLinecardReloadCauseManager') as mockObj:
-         mockObj.side_effect = lambda *args, **kwargs: FakeReloadCauseManager(None)
+      with mock.patch('arista.utils.rpc.api.getLinecardReloadCauseManager') as mockRCM, \
+           mock.patch('arista.components.cookie.flashPath') as flashPathMock, \
+           TemporaryDirectory(prefix='cookies') as tempdir:
+         mockRCM.side_effect = lambda *args, **kwargs: FakeReloadCauseManager(None)
+         flashPathMock.side_effect = lambda *args: os.path.join(tempdir, *args)
+         os.makedirs(os.path.join(tempdir, 'reboot-cause', 'platform'))
          result = await api.getLinecardRebootCause(ctx)
-         mockObj.assert_called_once()
+         mockRCM.assert_called_once()
          self.assertIn('reports', result)
          self.assertIn('providers', result['reports'][0])
          self.assertIn('causes', result['reports'][0]['providers'][0])

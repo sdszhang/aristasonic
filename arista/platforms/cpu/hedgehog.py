@@ -4,7 +4,7 @@ from ...core.pci import PciRoot
 from ...core.register import Register, RegisterMap, RegBitField
 from ...core.utils import getCmdlineDict
 
-from ...components.cookie import CookieComponent
+from ...components.cookie import SonicReloadCauseCookieComponent
 from ...components.cpu.amd.k10temp import K10Temp
 from ...components.cpu.amd.sbtsi import SbTsi
 from ...components.dpm.adm1266 import Adm1266, AdmPin, AdmPriority
@@ -48,7 +48,7 @@ class HedgehogCpu(Cpu):
          LedDesc('status', colors=[LedColor.RED, LedColor.GREEN, LedColor.OFF]))
       self.rpc.addPowerCycle(None)
 
-      self.cookie = self.newComponent(CookieComponent)
+      self.sonicCookie = self.newComponent(SonicReloadCauseCookieComponent)
 
    def addScdComponents(self, scd):
       self.rpc.addSeuReporter(scd)

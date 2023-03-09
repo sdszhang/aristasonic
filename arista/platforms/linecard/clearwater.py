@@ -111,6 +111,7 @@ class ClearwaterBase(DenaliLinecard):
          ])
 
    def standbyDomain(self):
+      super(ClearwaterBase, self).standbyDomain()
       self.cwStandbyDomainCommon()
 
    def gpio1Addr(self):
