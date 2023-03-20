@@ -101,7 +101,6 @@ class PikeZ(FixedSystem):
                 presentGpio=True,
                 inputOkGpio=statusGpio,
                 outputOkGpio=statusGpio,
-                led=scd.inventory.getLed("psu_status"),
                 forcePsuLoad=True,
                 psus=[
                     Fixed100AC,
