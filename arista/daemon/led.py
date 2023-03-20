@@ -22,14 +22,16 @@ class StatusLedFeature(PollDaemonFeature):
       return LedColor.GREEN
 
    def getAllFansStatus(self, platform, led):
-      for fan in platform.getInventory().getFans():
+      inv = platform.getInventory()
+      fans = inv.getFanSlots() or inv.getFans()
+      for fan in fans:
          if not fan.getStatus():
             return LedColor.RED
       return LedColor.GREEN
 
    def getAllPsusStatus(self, platform, led):
-      for psu in platform.getInventory().getPsus():
-         if psu.getPresence() and not psu.getStatus():
+      for psuSlot in platform.getInventory().getPsuSlots():
+         if psuSlot.getPresence() and not psuSlot.getStatus():
             return LedColor.RED
       return LedColor.GREEN
 
