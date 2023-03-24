@@ -170,7 +170,7 @@ class RpcApi():
 
    @registerLinecardMethod
    async def getLinecardRebootCause(self, lc):
-      return getLinecardReloadCauseManager(lc).toDict(latestOnly=True)
+      return getLinecardReloadCauseManager(lc, read=True).toDict(latestOnly=True)
 
    # pylint: disable=unused-argument
    @registerLinecardMethod

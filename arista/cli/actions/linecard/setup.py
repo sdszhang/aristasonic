@@ -47,9 +47,9 @@ def setupLinecard(linecard, args, lcpu):
          if args.late or not args.early:
             linecard.setupMain(Priority.backgroundFilter)
 
-      # Pull down the linecard reload causes from hardware DPM
-      logging.info('%s: Process reload cause info', linecard)
-      getLinecardReloadCauseManager(linecard, read=True)
+         # Pull down the linecard reload causes from hardware DPM
+         logging.info('%s: Process reload cause info', linecard)
+         getLinecardReloadCauseManager(linecard, read=True)
 
 @registerAction(setupParser)
 def doSetup(ctx, args):
