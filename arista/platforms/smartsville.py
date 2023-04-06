@@ -194,7 +194,7 @@ class SmartsvilleBkMs(Smartsville):
    PHY = B52
 
 @registerPlatform()
-class SmartsvillDDBkMs(SmartsvilleDD):
+class SmartsvilleDDBkMs(SmartsvilleDD):
    SID = ['SmartsvilleDDBkMs', 'SmartsvilleDDBkMsTpm']
    SKU = ['DCS-7280CR3MK-32D4', 'DCS-7280CR3MK-32D4S']
    PHY = B52
