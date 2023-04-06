@@ -24,7 +24,8 @@ class PS2102(LiteonPsu):
          ('inlet', Position.OTHER, 60, 75, 85),
          ('secondary hotspot', Position.OTHER, 70, 105, 110),
          ('primary hotspot', Position.OTHER, 70, 95, 100),
-      ]
+      ],
+      maxRpm=25500,
    )
 
 class PS2242(LiteonPsu):
@@ -41,5 +42,6 @@ class PS2242(LiteonPsu):
          ('inlet', Position.OTHER, 60, 75, 85),
          ('secondary hotspot', Position.OTHER, 70, 120, 125),
          ('primary hotspot', Position.OTHER, 70, 110, 115),
-      ]
+      ],
+      maxRpm=25500,
    )
