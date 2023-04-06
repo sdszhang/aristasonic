@@ -16,6 +16,7 @@ class DPS495CB(DeltaPsu):
          ('hotspot', Position.OTHER, 80, 95, 100),
          ('inlet', Position.INLET, 55, 70, 75),
       ],
+      maxRpm=23000, # has a slow fan revision at 18000 (S0-S3)
    )
    IDENTIFIERS = [
       PsuIdent('DPS-495CB A',   'PWR-500AC-F', Airflow.EXHAUST),
@@ -32,6 +33,7 @@ class DPS500AB(DeltaPsu):
          ('primary hotspot', Position.OTHER, 80, 88, 93),
          ('secondary hotspot', Position.OTHER, 80, 108, 113),
       ],
+      maxRpm=20500,
    )
    IDENTIFIERS = [
       PsuIdent('DPS-500AB-40 A', 'PWR-511-AC-RED', Airflow.EXHAUST),
@@ -47,6 +49,7 @@ class DPS750AB(DeltaPsu):
          ('hotspot', Position.OTHER, 80, 95, 100),
          ('inlet', Position.INLET, 55, 70, 75),
       ],
+      maxRpm=23000, # A model has slower fans, others have 25500
    )
    IDENTIFIERS = [
       PsuIdent('DPS-750AB-24 A', 'PWR-745AC-F', Airflow.EXHAUST),
@@ -82,6 +85,7 @@ class DPS1600AB(DeltaPsu):
          ('secondary hotspot', Position.OTHER, 92, 98, 105),
          ('primary hotspot', Position.OTHER, 88, 95, 100),
       ],
+      maxRpm=25500,
    )
    IDENTIFIERS = [
       PsuIdent('DPS-1600AB-14 A', 'PWR-1611-DC-RED', Airflow.EXHAUST),
@@ -96,6 +100,7 @@ class DPS1600CB(DeltaPsu):
          ('secondary hotspot', Position.OTHER, 86, 92, 98),
          ('primary hotspot', Position.OTHER, 86, 92, 98),
       ],
+      maxRpm=25500,
    )
    IDENTIFIERS = [
       PsuIdent('DPS-1600CB P', 'PWR-1611-AC-RED', Airflow.EXHAUST),
@@ -110,6 +115,7 @@ class DPS1900AB(DeltaPsu):
          ('hotspot', Position.OTHER, 95, 110, 115),
          ('inlet', Position.INLET, 60, 70, 75),
       ],
+      maxRpm=25500,
    )
    IDENTIFIERS = [
       PsuIdent('DPS-1900AB A',   'PWR-1900AC-F', Airflow.EXHAUST),
@@ -125,6 +131,7 @@ class ECD16020102(DeltaPsu):
          ('primary hotspot', Position.OTHER, 70, 115, 120),
          ('secondary hotspot', Position.OTHER, 70, 120, 130),
       ],
+      maxRpm=25500,
    )
    IDENTIFIERS = [
       PsuIdent('ECD16020102', 'PWR-3001-AC-RED', Airflow.EXHAUST),
@@ -139,6 +146,7 @@ class ECD26020037(DeltaPsu):
          ('primary hotspot', Position.OTHER, 70, 115, 120),
          ('secondary hotspot', Position.OTHER, 70, 120, 130),
       ],
+      maxRpm=25500,
    )
    IDENTIFIERS = [
       PsuIdent('ECD26020037', 'PWR-3001-DC-RED', Airflow.EXHAUST),
@@ -155,6 +163,7 @@ class ECD3000M(DeltaPsu):
          ('primary hotspot', Position.OTHER, 70, 115, 120),
          ('secondary hotspot', Position.OTHER, 70, 120, 130),
       ],
+      maxRpm=28000,
    )
    IDENTIFIERS = [
       PsuIdent('ECD16020097', 'PWR-D1-3041-AC-BLUE', Airflow.INTAKE),
