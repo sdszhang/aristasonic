@@ -24,6 +24,8 @@ class DS495SPE(ArtesynPsu):
    IDENTIFIERS = [
       PsuIdent('DS495SPE-3-401 ', 'PWR-500AC-F', Airflow.EXHAUST),
       PsuIdent('DS495SPE-3-402 ', 'PWR-500AC-R', Airflow.INTAKE),
+      PsuIdent('DS495SPE-3-404 ', 'PWR-500AC-R', Airflow.INTAKE),
+      PsuIdent('DS495SPE-3-405 ', 'PWR-500AC-F', Airflow.EXHAUST),
    ]
 
 class DS460(ArtesynPsu):
@@ -59,4 +61,21 @@ class CSU500DP(ArtesynPsu):
    IDENTIFIERS = [
       PsuIdent('CSU500DP-3    ', 'PWR-511-AC-RED', Airflow.EXHAUST),
       PsuIdent('CSU500DP-3-001', 'PWR-511-AC-BLUE', Airflow.INTAKE),
+   ]
+
+class Art700(ArtesynPsu):
+   PMBUS_ADDR = 0x40
+   DRIVER = 'dps800'
+   CAPACITY = 3000
+   DUAL_INPUT = True
+   DESCRIPTION = psuDescHelper(
+      sensors=[
+         ('inlet', Position.INLET, 60, 65, 70),
+         ('primary hotspot', Position.OTHER, 70, 95, 100),
+         ('secondary hotspot', Position.OTHER, 70, 125, 130),
+      ],
+      maxRpm=29000,
+   )
+   IDENTIFIERS = [
+      PsuIdent('700-015522-0000', 'PWR-D4-3041-AC-BLUE', Airflow.INTAKE),
    ]

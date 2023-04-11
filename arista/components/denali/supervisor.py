@@ -4,11 +4,10 @@ from ...core.supervisor import Supervisor
 
 from ...descs.gpio import GpioDesc
 
-from ...libs.pci import readSecondaryBus
-
 from ..eeprom import At24C64
 from ..microsemi import Microsemi
 from ..pca9541 import Pca9541
+from ..psu.artesyn import Art700
 from ..psu.delta import ECD3000M
 from ..scd import Scd
 
@@ -146,6 +145,7 @@ class DenaliSupervisor(Supervisor):
             ],
             psus=[
                ECD3000M,
+               Art700,
             ],
          )
          self.psuSlots.append(slot)
