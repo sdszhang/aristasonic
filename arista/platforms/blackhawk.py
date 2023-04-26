@@ -29,6 +29,8 @@ class BlackhawkO(FixedSystem):
       (Sfp(i) for i in incrange(33, 34)),
    )
 
+   HW_LPMODE = True
+
    def __init__(self):
       super(BlackhawkO, self).__init__()
 
@@ -104,6 +106,7 @@ class BlackhawkO(FixedSystem):
          intrRegs=intrRegs,
          intrRegIdxFn=lambda xcvrId: 1,
          intrBitFn=lambda xcvrId: xcvrId - 1,
+         isHwLpModeAvail=self.HW_LPMODE,
       )
 
       scd.addXcvrSlots(
@@ -148,3 +151,5 @@ class BlackhawkDD(BlackhawkO):
       (QsfpDD(i) for i in incrange(1, 32)),
       (Sfp(i) for i in incrange(33, 34)),
    )
+
+   HW_LPMODE = False
