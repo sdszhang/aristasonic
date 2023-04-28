@@ -2,6 +2,9 @@
 
 from __future__ import print_function
 
+import subprocess
+import time
+
 try:
    from arista.core.onie import OnieEeprom
    from arista.libs.ping import ping
@@ -201,6 +204,8 @@ class LinecardSelfModule(LinecardModule):
       return self.MODULE_TYPE_LINE
 
    def reboot(self, reboot_type):
+      subprocess.run(['sync'], check=False)
+      time.sleep(1)
       result = self._get_rpc_client().linecardSelfPowerCycle()
       return result['status']
 
