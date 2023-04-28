@@ -75,14 +75,6 @@ class CatalinaP(FixedSystem):
 
       scd.addSmbusMasterRange(0x8000, 11, 0x80)
 
-      scd.addLeds([
-         (0x6050, 'status'),
-         (0x6060, 'fan_status'),
-         (0x6070, 'psu1'),
-         (0x6080, 'psu2'),
-         (0x6090, 'beacon'),
-      ])
-
       scd.addResets([
          ResetDesc('phy3_reset', addr=0x4000, bit=7),
          ResetDesc('phy2_reset', addr=0x4000, bit=6),
@@ -139,7 +131,7 @@ class CatalinaP(FixedSystem):
             presentGpio=scd.inventory.getGpio("%s_present" % name),
             inputOkGpio=scd.inventory.getGpio("%s_ac_status" % name),
             outputOkGpio=scd.inventory.getGpio("%s_status" % name),
-            led=scd.inventory.getLed('%s' % name),
+            led=self.cpu.cpld.inventory.getLed("%s" % name),
             psus=[
                PS2242,
             ],
