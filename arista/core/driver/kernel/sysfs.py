@@ -1,11 +1,8 @@
 
-from collections import defaultdict
 import os
-import re
 
 from ... import utils
 from ...config import Config
-from ...driver import Driver
 from ...log import getLogger
 
 from ....descs.fan import FanDesc
@@ -13,7 +10,6 @@ from ....descs.led import LedColor
 from ....descs.rail import (
    CurrentDesc,
    PowerDesc,
-   RailDesc,
    RailDirection,
    VoltageDesc,
 )
@@ -414,6 +410,9 @@ class TempSysfsImpl(Temp, GenericSysfs):
       self.lcrit = SysfsEntryFloat(self, 'temp%d_lcrit' % self.tempId)
       self.fault = SysfsEntryBool(self, 'temp%d_fault' % self.tempId)
 
+   def __str__(self):
+      return f'{self.__class__.__name__}({self.getName()})'
+
    def getName(self):
       if self.desc.name:
          return self.desc.name
@@ -706,20 +705,19 @@ class RailSysfsImpl(Rail):
       if self.current:
          value = self.current.getCurrent()
          if value is not None:
-             return value
+            return value
       return self._tryComputeDiv(self.power, self.voltage)
 
    def getVoltage(self):
       if self.voltage:
          value = self.voltage.getVoltage()
          if value is not None:
-             return value
+            return value
       return self._tryComputeDiv(self.power, self.current)
 
    def getPower(self):
       if self.power:
          value = self.power.getPower()
          if value is not None:
-             return value
+            return value
       return self._tryComputeMul(self.current, self.voltage)
-

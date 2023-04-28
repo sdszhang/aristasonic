@@ -104,7 +104,7 @@ class ThermalInfo(object):
       self.deltap = self.delta / (overheat - target)
 
    def __str__(self):
-      kwargs = ', '.join('%s=%s' % (k, v) for k, v in self.__dict__.items())
+      kwargs = ', '.join('%s=%s' % (k, str(v)) for k, v in self.__dict__.items())
       return '%s(%s)' % (self.__class__.__name__, kwargs)
 
 class ThermalInfos(object):
@@ -117,7 +117,7 @@ class ThermalInfos(object):
       desc = thermal.thermal.getDesc()
       maxTemp = min(desc.overheat, desc.critical)
       if not int(desc.target) or not int(maxTemp):
-         return None
+         return
 
       value = thermal.get(zone.algo.now)
 
@@ -143,17 +143,25 @@ class CoolingZone(object):
 
    MAX_SPEED = 100
 
-   def __init__(self, algo, name):
+   def __init__(self, algo, name, skus=None):
       self.algo = algo
       self.name = name
       self.maxDecrease = Config().cooling_max_decrease
       self.maxIncrease = Config().cooling_max_increase
       self.minSpeed = Config().cooling_min_speed
       self.targetOffset = Config().cooling_target_offset
-      inv = algo.platform.getInventory()
       self.speed = HistoricalData('target')
-      self.fans = { f : FanWrapper(f) for f in inv.getFans() }
-      self.thermals = { t : ThermalWrapper(t) for t in inv.getTemps() }
+      self.fans = {}
+      self.thermals = {}
+
+      for sku in skus:
+         self.loadSku(sku)
+
+   def loadSku(self, sku):
+      logging.debug('%s: loading sku %s', self, sku)
+      inv = sku.getInventory()
+      self.fans.update({ f : FanWrapper(f) for f in inv.getFans() })
+      self.thermals.update({ t : ThermalWrapper(t) for t in inv.getTemps() })
 
    def __str__(self):
       return '%s(%s)' % (self.__class__.__name__, self.name)
@@ -237,7 +245,7 @@ class CoolingZone(object):
          'thermals': [ t.dump() for t in self.thermals.values() ],
       }
       path = os.path.join(path, '%s.cooling.json' % self.name)
-      with open(path, 'w') as f:
+      with open(path, 'w', encoding='utf8') as f:
          json.dump(data, f)
 
 class CoolingAlgorithm(object):
@@ -250,8 +258,16 @@ class CoolingAlgorithm(object):
       self.now = None
       self.elapsed = None
       self.zones = []
-      # NOTE: for now only one zone
-      self.zones.append(CoolingZone(self, 'FixedSystem'))
+      # NOTE: for now only one zone on chassis
+      # pylint: disable=import-outside-toplevel
+      from .supervisor import Supervisor
+      if isinstance(self.platform, Supervisor):
+         chassis = self.platform.getChassis()
+         skus = [self.platform] + list(chassis.iterCards())
+         self.zones.append(CoolingZone(self, 'Chassis', skus=skus))
+      else:
+         skus = [self.platform]
+         self.zones.append(CoolingZone(self, 'FixedSystem', skus=skus))
 
    def __str__(self):
       return '%s()' % self.__class__.__name__
