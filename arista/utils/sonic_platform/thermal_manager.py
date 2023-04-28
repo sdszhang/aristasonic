@@ -15,4 +15,5 @@ class ThermalManager(ThermalManagerBase):
    """
    Manager for controlling thermal policies.
    """
-   pass
+   # override default interval of 60 by 10
+   _interval = 10
