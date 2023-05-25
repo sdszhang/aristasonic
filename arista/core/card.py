@@ -1,4 +1,6 @@
 
+import gc
+
 from .component import Priority
 from .component.slot import SlotComponent
 from .exception import UnknownPlatformError
@@ -84,11 +86,13 @@ class Card(Sku):
    def isDetected(self):
       return bool(self.SID) or bool(self.SKU)
 
+   def detach(self):
+      pass
+
    def __str__(self):
       if self.slot.parent is self:
          return '%s()' % self.__class__.__name__
-      else:
-         return '%s(slotId=%d)' % (self.__class__.__name__, self.slot.slotId)
+      return '%s(slotId=%d)' % (self.__class__.__name__, self.slot.slotId)
 
 class CardSlot(SlotComponent):
    def __init__(self, parent, slotId):
@@ -97,6 +101,9 @@ class CardSlot(SlotComponent):
       self.parent = parent
       self.card = None
       self.pci = None
+
+   def __str__(self):
+      return f'{self.__class__.__name__}(slotId={self.slotId})'
 
    def getEeprom(self):
       raise NotImplementedError
@@ -107,11 +114,17 @@ class CardSlot(SlotComponent):
    def enablePciPort(self):
       self.pci.enable()
 
+   def unloadCard(self):
+      self.card.detach()
+      self.card = None
+      gc.collect()
+
    def loadCard(self, card=None, **kwargs):
       if card is None:
          assert self.card, "No default card definition loaded"
          if not self.getPresence():
             logging.debug('Card slot %d is not present', self.slotId)
+            # TODO: remove current card and go back to default card
             return
 
          eeprom = self.getEeprom()
@@ -128,6 +141,10 @@ class CardSlot(SlotComponent):
          except UnknownPlatformError:
             logging.debug('Unsupported card %s for slot %d', sid, self.slotId)
             return
+
+      if self.card is not None:
+         # Cleanup existing card definition
+         self.unloadCard()
 
       self.card = card
       self.card.refresh()

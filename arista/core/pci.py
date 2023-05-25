@@ -102,6 +102,10 @@ class PciPort(PciComponent):
       self.ports[port.addr] = port
       port.upstream_ = self
 
+   def detach(self, port):
+      del self.ports[port.addr]
+      port.upstream_ = None
+
    @property
    def bus(self):
       return self.upstream.downstreamBus
@@ -155,7 +159,7 @@ class PciPort(PciComponent):
 
       value = None
       while not value:
-         with open(path) as f:
+         with open(path, encoding='utf8') as f:
             value = f.read()
       return int(value, 0)
 

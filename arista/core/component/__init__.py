@@ -42,15 +42,11 @@ class Component(object):
                 if k in attrs and v is not None]
       return '%s(%s)' % (self.__class__.__name__, ', '.join(kwargs))
 
+   def __repr__(self):
+      return f'<{self}>'
+
    def isEnabled(self):
       return True
-
-   def addComponents(self, components):
-      assert all(isinstance(c, Component) for c in components)
-      for component in components:
-         component.priority = max(component.priority, self.priority)
-         self.components.append(component)
-      return self
 
    def addComponent(self, component):
       assert isinstance(component, Component)
@@ -59,6 +55,8 @@ class Component(object):
       return self
 
    def newComponent(self, cls, *args, **kwargs):
+      # TODO: do not create inventory objects for components that don't need it
+      #       also consider LazyInventory as an alternative
       inventory = Inventory()
       component = cls(inventory=inventory, *args, parent=self, **kwargs)
       self.addComponent(component)

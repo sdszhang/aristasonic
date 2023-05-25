@@ -31,6 +31,11 @@ class DenaliCard(Card):
       self.gpio2 = None
       super(DenaliCard, self).__init__(*args, **kwargs)
 
+   def detach(self):
+      if self.plx:
+         self.slot.pci.detach(self.getUpstreamPort())
+      super().detach()
+
    def getEeprom(self):
       try:
          return self.eeprom.prefdl()

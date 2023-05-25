@@ -1,6 +1,4 @@
 
-from collections import namedtuple
-
 from ..core.component.i2c import I2cComponent
 from ..core.pci import PciSwitch, DownstreamPciPort, UpstreamPciPort
 from ..core.register import RegisterMap, Register, RegBitField, RegBitRange
@@ -109,7 +107,7 @@ class Plx(I2cComponent):
    def disablePort(self, port):
       raise NotImplementedError
 
-   def addPciSwitch(self, parent, upstream=None, **kwargs):
+   def addPciSwitch(self, parent, **kwargs):
       assert not self.pci
       self.pci = parent.newComponent(
          PlxPciSwitch,
