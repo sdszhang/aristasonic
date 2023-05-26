@@ -24,7 +24,7 @@ class SwitchChip(PciComponent):
 
    def __init__(self, addr, rescan=False, pcieResetDelay=500,
                 powerGpios=None, powerGoodGpios=None,
-                coreResets=None, pcieResets=None, quirks=None, **kwargs):
+                coreResets=None, pcieResets=None, **kwargs):
       super(SwitchChip, self).__init__(addr=addr, **kwargs)
       self.rescan = rescan
       self.pcieResetDelay = pcieResetDelay
@@ -32,7 +32,6 @@ class SwitchChip(PciComponent):
       self.powerGoodGpios = powerGoodGpios or []
       self.coreResets = coreResets or []
       self.pcieResets = pcieResets or []
-      self.quirks = quirks or []
 
    def __str__(self):
       return '%s(addr=%s)' % (self.__class__.__name__, self.addr)
@@ -81,12 +80,6 @@ class SwitchChip(PciComponent):
          waitFor(self.isPowerDown, interval=50,
                  description='waiting for power down')
          logging.debug('%s: power is off', self)
-
-   def applyQuirks(self, delayed=False):
-      for quirk in self.quirks:
-         if quirk.DELAYED == delayed:
-            logging.debug('%s: quirk: %s', self, quirk)
-            quirk.run(self)
 
    def isInReset(self):
       for reset in self.coreResets + self.pcieResets:

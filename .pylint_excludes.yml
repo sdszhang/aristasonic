@@ -119,8 +119,6 @@ arista/components/denali/linecard.py:
 - unrecognized-inline-option
 arista/components/denali/supervisor.py:
 - unused-import
-arista/components/dpm/pmbus.py:
-- bad-indentation
 arista/components/dpm/ucd.py:
 - bad-indentation
 - not-context-manager

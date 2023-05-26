@@ -115,3 +115,9 @@ class Component(LegacyComponent):
             except Exception: # pylint: disable=broad-except
                logging.exception("%s: failed to refresh hardware thresholds for %s"
                                  % (self, ts))
+
+   def applyQuirks(self, delayed=False):
+      for quirk in self.quirks:
+         if quirk.DELAYED == delayed:
+            logging.debug('%s: quirk: %s', self, quirk)
+            quirk.run(self)

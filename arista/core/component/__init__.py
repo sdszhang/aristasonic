@@ -22,7 +22,8 @@ class Priority(object):
 
 class Component(object):
    def __init__(self, addr=None, priority=Priority.DEFAULT, drivers=None,
-                inventoryCls=None, inventory=None, parent=None, **kwargs):
+                inventoryCls=None, inventory=None, parent=None, quirks=None,
+                **kwargs):
       super(Component, self).__init__()
       self.components = []
       self.addr = addr
@@ -30,6 +31,7 @@ class Component(object):
       self.drivers = OrderedDict()
       self.inventory = inventory
       self.parent = parent
+      self.quirks = quirks or []
       self.label = None
       if not inventory and inventoryCls:
          self.inventory = inventoryCls()

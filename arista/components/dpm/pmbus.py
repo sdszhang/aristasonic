@@ -34,6 +34,7 @@ class PmbusComponent(I2cComponent):
       pass
 
    def setup(self):
+      self.applyQuirks()
       try:
          serial = self.getVersion()
          logging.info('%s version: %s', self, serial)
@@ -54,4 +55,4 @@ class PmbusComponent(I2cComponent):
       }
 
 class PmbusDpm(PmbusComponent):
-    pass
+   pass
