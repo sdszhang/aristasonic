@@ -1,3 +1,4 @@
+from ..core.hwapi import HwApi
 from ..core.fixed import FixedSystem
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
@@ -58,7 +59,7 @@ class Upperlake(FixedSystem):
                     position=Position.INLET, target=55, overheat=65, critical=75),
       ])
 
-      scd.newComponent(Ucd90120A, addr=scd.i2cAddr(1, 0x4e, t=3))
+      self.configureCpuDpm()
       self.configureSwitchDpm()
 
       scd.addSmbusMasterRange(0x8000, 5, 0x80)
@@ -146,6 +147,9 @@ class Upperlake(FixedSystem):
          ],
       )
 
+   def configureCpuDpm(self):
+      self.scd.newComponent(Ucd90120A, addr=self.scd.i2cAddr(1, 0x4e, t=3))
+
    def configureSwitchDpm(self):
       self.scd.newComponent(Ucd90120A, addr=self.scd.i2cAddr(5, 0x4e, t=3), causes={
          'reboot': UcdGpi(1),
@@ -163,6 +167,10 @@ class UpperlakePlus(Upperlake):
 class UpperlakeElite(Upperlake):
    SID = ['UpperlakeElite']
    SKU = ['DCS-7060CX-32C']
+
+   def configureCpuDpm(self):
+      if self.getHwApi() < HwApi(2):
+         super().configureCpuDpm()
 
    def configureSwitchDpm(self):
       self.syscpld.addReloadCauseProvider(causes=[
