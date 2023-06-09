@@ -23,7 +23,12 @@ class StatusLedFeature(PollDaemonFeature):
 
    def getAllFansStatus(self, platform, led):
       inv = platform.getInventory()
-      fans = inv.getFanSlots() or inv.getFans()
+      fans = []
+      for slot in inv.getFanSlots():
+         fans.extend(slot.getFans())
+      if not fans:
+         fans = inv.getFans()
+
       for fan in fans:
          if not fan.getStatus():
             return LedColor.RED
