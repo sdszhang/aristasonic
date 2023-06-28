@@ -1,4 +1,5 @@
 from ..core.fixed import FixedSystem
+from ..core.hwapi import HwApi
 from ..core.platform import registerPlatform
 from ..core.port import PortLayout
 from ..core.psu import PsuSlot
@@ -11,33 +12,34 @@ from ..components.tmp464 import Tmp464
 from ..components.phy.babbagelp import BabbageLP
 from ..components.psu.liteon import PS2242
 from ..components.scd import Scd
+from ..components.vrm.raa228228 import Raa228228, Raa228228GainQuirk
 
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
-from ..descs.xcvr import Osfp, QsfpDD, Sfp
+from ..descs.xcvr import QsfpDD, Sfp
 
 from .chassis.tuba import Tuba
 
 from .cpu.lorikeet import LorikeetCpu
 
 @registerPlatform()
-class CatalinaP(FixedSystem):
+class CatalinaDD(FixedSystem):
 
-   SID = ['CatalinaP']
-   SKU = ['DCS-7060PX5-64S']
+   SID = ['CatalinaDD']
+   SKU = ['DCS-7060DX5-64S']
 
    CHASSIS = Tuba
 
    PHY = BabbageLP
 
    PORTS = PortLayout(
-      (Osfp(i) for i in incrange(1, 64)),
+      (QsfpDD(i) for i in incrange(1, 64)),
       (Sfp(i) for i in incrange(65, 66)),
    )
 
    def __init__(self):
-      super(CatalinaP, self).__init__()
+      super(CatalinaDD, self).__init__()
 
       self.cpu = self.newComponent(LorikeetCpu)
       self.cpu.addCpuDpm()
@@ -156,12 +158,11 @@ class CatalinaP(FixedSystem):
          ],
       )
 
-@registerPlatform()
-class CatalinaDD(CatalinaP):
-   SID = ['CatalinaDD']
-   SKU = ['DCS-7060DX5-64S']
-
-   PORTS = PortLayout(
-      (QsfpDD(i) for i in incrange(1, 64)),
-      (Sfp(i) for i in incrange(65, 66)),
-   )
+      quirks = [
+         Raa228228GainQuirk(
+            description='Update TH4 proportional gain',
+            model=[0x02, 0x83, 0x15, 0x00],
+            gain=[0xa9, 0x00, 0x73, 0x00],
+        ),
+      ] if self.getHwApi() < HwApi(5) else []
+      scd.newComponent(Raa228228, addr=scd.i2cAddr(16, 0x45), quirks=quirks)
