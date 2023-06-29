@@ -20,6 +20,7 @@
 #include <linux/mutex.h>
 #include <linux/i2c.h>
 #include <linux/leds.h>
+#include <linux/version.h>
 
 // led -> gpio pin mapping
 #define PS2_STATUS_LEDR	0
@@ -207,7 +208,12 @@ static int leds_pca9555_all_set(struct i2c_client *client, u8 bank1_val,
 	return 0;
 }
 
-static int leds_pca9555_remove(struct i2c_client *client)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
+static int
+#else
+static void
+#endif
+leds_pca9555_remove(struct i2c_client *client)
 {
 	int i;
 	struct pca9555_chip *chip = i2c_get_clientdata(client);
@@ -215,7 +221,9 @@ static int leds_pca9555_remove(struct i2c_client *client)
 	for (i = 0; i < chip->num_leds; i++)
 		led_classdev_unregister(&chip->leds[i].cdev);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
 	return 0;
+#endif
 }
 
 static int leds_pca9555_probe(struct i2c_client *client,

@@ -23,6 +23,7 @@
 #include <linux/slab.h>
 #include <linux/workqueue.h>
 #include <linux/leds.h>
+#include <linux/version.h>
 
 #define DRIVER_NAME "rook-fan-cpld"
 
@@ -871,7 +872,12 @@ static int cpld_init(struct cpld_data *cpld)
    return err;
 }
 
-static int cpld_remove(struct i2c_client *client)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
+static int
+#else
+static void
+#endif
+cpld_remove(struct i2c_client *client)
 {
    struct cpld_data *cpld = i2c_get_clientdata(client);
 
@@ -881,7 +887,9 @@ static int cpld_remove(struct i2c_client *client)
 
    cpld_leds_unregister(cpld, cpld->info->fan_count);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
    return 0;
+#endif
 }
 
 static int cpld_probe(struct i2c_client *client,

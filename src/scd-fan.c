@@ -16,6 +16,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/pci.h>
 
 #include "scd.h"
 #include "scd-attrs.h"

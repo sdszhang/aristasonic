@@ -18,6 +18,7 @@
 #include <linux/module.h>
 #include <linux/tty.h>
 #include <linux/tty_flip.h>
+#include <linux/version.h>
 
 #include "scd.h"
 #include "scd-hwmon.h"
@@ -304,7 +305,12 @@ static u8 scd_uart_brs_for_baud(speed_t baud) {
 
 static void scd_uart_set_termios(struct uart_port *port,
                                  struct ktermios *new,
-                                 struct ktermios *old)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
+                                 struct ktermios *old
+#else
+                                 const struct ktermios *old
+#endif
+                                 )
 {
    struct scd_uart_port *sp = to_scd_uart_port(port);
    union uart_rx_ctl rx_ctl = scd_read_rx_ctl(sp);

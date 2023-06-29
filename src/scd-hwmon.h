@@ -15,8 +15,8 @@
  *
  */
 
-#ifndef _LINUX_DRIVER_SCD_HWMON_H_
-#define _LINUX_DRIVER_SCD_HWMON_H_
+#ifndef LINUX_DRIVER_SCD_HWMON_H_
+#define LINUX_DRIVER_SCD_HWMON_H_
 
 #include <linux/printk.h>
 #include <linux/pci.h>
@@ -59,4 +59,4 @@ static inline struct kobject *get_scd_kobj(struct scd_context *ctx)
    return &ctx->pdev->dev.kobj;
 }
 
-#endif /* !_LINUX_DRIVER_SCD_HWMON_H_ */
+#endif /* !LINUX_DRIVER_SCD_HWMON_H_ */

@@ -21,6 +21,8 @@
 #include <linux/hwmon.h>
 #include <linux/hwmon-sysfs.h>
 #include <linux/leds.h>
+#include <linux/io.h>
+#include <linux/version.h>
 
 #define DRIVER_NAME "crow-cpld-fans"
 
@@ -502,13 +504,20 @@ void crow_print_version(struct i2c_client *client)
     }
 }
 
-static int crow_cpld_remove(struct i2c_client *client)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
+static int
+#else
+static void
+#endif
+crow_cpld_remove(struct i2c_client *client)
 {
     struct crow_cpld_data *data = i2c_get_clientdata(client);
 
     leds_unregister(data, NUM_FANS);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 0, 0)
     return 0;
+#endif
 }
 
 static void crow_force_fan_speed(struct i2c_client *client, u8 pwm)
