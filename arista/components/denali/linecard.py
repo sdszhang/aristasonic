@@ -217,6 +217,16 @@ class DenaliLinecard(DenaliLinecardBase):
       super(DenaliLinecard, self).setupPlx()
       self.setupPlxLcpuMode()
 
+   def getLastPostCode(self):
+      if self.syscpld.lcpuPresent():
+         return self.syscpld.lastPostCode()
+      return None
+
+   def hasNextPostCodeAvail(self):
+      if self.syscpld.lcpuPresent():
+         return self.syscpld.nextPostCodeAvailable()
+      return False
+
 class GpioRegisterMap(RegisterMap):
    BANK0 = GpioRegister(0x0,
       RegBitField(1, 'standbyPowerGood', ro=True),
@@ -280,3 +290,8 @@ class StandbyScdRegisterMap(RegisterMap):
    )
    PROVISION = Register(0x32, name='provision', ro=False)
    SRAM = ScdSramRegister(0x33, name='sram')
+   LAST_POST_CODE = Register(0x80, name='lastPostCode')
+   NEXT_POST_CODE_AVAIL = Register(0x84,
+      RegBitField(0, name='nextPostCodeAvailable', flip=True),
+   )
+   NEXT_POST_CODE = Register(0x85, name='nextPostCode')

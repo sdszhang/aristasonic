@@ -34,6 +34,12 @@ class MockLinecard(DenaliLinecardBase):
    def powerLcpuIs(self, on, lcpuCtx):
       pass
 
+   def getLastPostCode(self):
+      pass
+
+   def hasNextPostCodeAvail(self):
+      pass
+
 class CookieTest(unittest.TestCase):
    def testCallback(self):
       sup = MockSupervisor()

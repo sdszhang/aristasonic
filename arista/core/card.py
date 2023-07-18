@@ -49,6 +49,12 @@ class Card(Sku):
          return True
       return self.slot.getPresence()
 
+   def getLastPostCode(self):
+      raise NotImplementedError
+
+   def hasNextPostCodeAvail(self):
+      raise NotImplementedError
+
    def loadStandbyDomain(self):
       raise NotImplementedError
 
