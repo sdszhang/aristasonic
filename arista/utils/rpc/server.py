@@ -7,8 +7,6 @@ except ImportError:
 import json
 
 from ...core.log import getLogger
-
-from .api import RpcApi
 from .constants import JsonRpcError, JSONRPC_VERSION
 from .context import ClientContext
 
@@ -18,10 +16,10 @@ class RpcServer():
 
    READER_MSG_SIZE = 4096
 
-   def __init__(self, hosts, port, platform=None):
-      self.api = RpcApi(platform)
+   def __init__(self, hosts, port, api):
       self.hosts = hosts
       self.port = port
+      self.api = api
 
    def __str__(self):
       return self.__class__.__name__

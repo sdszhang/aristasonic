@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 from ....tests.testing import mock, unittest
 
-from ..api import RpcApi
+from ..api import RpcSupervisorApi
 from ..context import ClientContext
 from ....components.denali.card import DenaliLinecardBase, DenaliLinecardSlot
 from ....components.denali.linecard import DenaliLinecard
@@ -60,7 +60,7 @@ class FakeReloadCauseManager():
 
 class ClientTest(unittest.IsolatedAsyncioTestCase):
    def _newApi(self, platform=None, senderSlotId=None):
-      api = RpcApi(platform)
+      api = RpcSupervisorApi(platform)
       ipaddr = ('127.0.0.1' if senderSlotId is None else
                 f'127.100.{senderSlotId}.1')
       ctx = ClientContext((ipaddr, '43000'))

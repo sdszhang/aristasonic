@@ -6,7 +6,7 @@ import socket
 
 from ...core.log import getLogger
 
-from .api import RpcApi
+from .api import RpcSupervisorApi, RpcLinecardApi
 from .constants import JSONRPC_VERSION
 
 logging = getLogger(__name__)
@@ -149,7 +149,8 @@ class RpcClient():
       raise RpcClientException('JSON-RPC server did not respond')
 
    def __getattr__(self, name):
-      if name not in RpcApi.methods():
+      if name not in RpcSupervisorApi.methods() and \
+         name not in RpcLinecardApi.methods():
          return super().__getattr__(name)
 
       def fn(*args, **kwargs):

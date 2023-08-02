@@ -9,6 +9,7 @@ except ImportError:
 from ...core.cause import getLinecardReloadCauseManager
 from ...core.log import getLogger
 from ...core.supervisor import Supervisor
+from ...core.utils import inSimulation
 
 logging = getLogger(__name__)
 
@@ -23,7 +24,7 @@ def registerMethod(method):
    wrapper.isRpcMethod = True
    return wrapper
 
-def registerLinecardMethod(method):
+def registerLinecardToSupMethod(method):
    def wrapper(self, ctx, *args, **kwargs):
       if not isinstance(self.platform, Supervisor):
          raise RpcPermissionError('method only available on chassis systems')
@@ -47,14 +48,17 @@ def registerLinecardMethod(method):
    wrapper.isRpcMethod = True
    return wrapper
 
+def registerSupToLinecardMethod(method):
+   def wrapper(self, ctx, *args, **kwargs):
+      slotId = ctx.slotId()
+      if slotId not in (1, 2):
+         raise RpcPermissionError('method only available from supervisor')
+      return method(self, *args, **kwargs)
+   wrapper.isRpcMethod = True
+   return wrapper
+
+
 class RpcApi():
-   """An RpcApi object implements the functionality of the JSON-RPC API.
-
-   The JSON-RPC server should call methods on this object to run the
-   functionality associated with the method. A JSON-RPC client may use
-   the `methods` class property to determine what JSON-RPC methods are
-   supported."""
-
    _methods = []
 
    def __init__(self, platform=None):
@@ -74,6 +78,30 @@ class RpcApi():
       return {'status': proc.returncode == 0,
               'detail': '\n'.join([stdout.decode('utf-8'),
                                    stderr.decode('utf-8')])}
+
+   async def _doSelfReboot(self):
+      # We don't want the reboot to start until we have sent back the response.
+      logging.debug('%s: waiting 2s to self reboot', self)
+      await asyncio.sleep(2)
+      logging.debug('%s: issuing reboot command', self)
+
+      if inSimulation():
+         return {'status': True, 'detail': 'Skipping reboot because we are in simulation.'}
+      return await self._runCommand('reboot')
+
+   @classmethod
+   def methods(cls):
+      if not cls._methods:
+         cls._methods = [n for n, m in cls.__dict__.items() if getattr(m, 'isRpcMethod', False)]
+      return cls._methods
+
+class RpcSupervisorApi(RpcApi):
+   """An RpcApi object implements the functionality of the JSON-RPC API.
+
+   The JSON-RPC server should call methods on this object to run the
+   functionality associated with the method. A JSON-RPC client may use
+   the `methods` class property to determine what JSON-RPC methods are
+   supported."""
 
    async def _runAristaFabric(self, slot, *args):
       allArgs = ['-l', '/var/log/arista-fabric.log',
@@ -139,28 +167,21 @@ class RpcApi():
         - detail: Any output produced by the power off command."""
       return await self._runAristaFabric(slot, 'clean')
 
-   async def _doSelfReboot(self):
-      # We don't want the reboot to start until we have sent back the response.
-      logging.debug('%s: waiting 2s to self reboot', self)
-      await asyncio.sleep(2)
-      logging.debug('%s: issuing reboot command', self)
-      return await self._runCommand('reboot')
-
    @registerMethod
    async def supervisorSelfReboot(self):
       """Reboot the supervisor."""
       self.tasks.append(asyncio.create_task(self._doSelfReboot()))
       return {'status': True, 'detail': 'Reboot started'}
 
-   @registerLinecardMethod
+   @registerLinecardToSupMethod
    async def linecardStatusLedColorGet(self, lc):
       return lc.getInventory().getLed('status').getColor()
 
-   @registerLinecardMethod
+   @registerLinecardToSupMethod
    async def linecardStatusLedColorSet(self, lc, color):
       return lc.getInventory().getLed('status').setColor(color)
 
-   @registerLinecardMethod
+   @registerLinecardToSupMethod
    async def linecardSelfPowerCycle(self, lc):
       cmd = ('setup', '--on', '--lcpu', '--powerCycleIfOn')
       self.tasks.append(asyncio.create_task(
@@ -168,26 +189,28 @@ class RpcApi():
       logging.info('%s: Return from linecardSelfPowerCycle', self)
       return {'status': True, 'detail': 'Reboot started'}
 
-   @registerLinecardMethod
+   @registerLinecardToSupMethod
    async def getLinecardRebootCause(self, lc):
       return getLinecardReloadCauseManager(lc, read=True).toDict(latestOnly=True)
 
    # pylint: disable=unused-argument
-   @registerLinecardMethod
+   @registerLinecardToSupMethod
    async def getSupervisorEeprom(self, lc):
       return self.platform.getEeprom()
 
    # pylint: disable=unused-argument
-   @registerLinecardMethod
+   @registerLinecardToSupMethod
    async def getSupervisorMaxPowerDraw(self, lc):
       return self.platform.MAX_POWER_DRAW
 
-   @registerLinecardMethod
+   @registerLinecardToSupMethod
    async def hasSeuError(self, lc, name):
       return lc.plx.driver.regs.hasScdSeuError()
 
-   @classmethod
-   def methods(cls):
-      if not cls._methods:
-         cls._methods = [n for n, m in cls.__dict__.items() if getattr(m, 'isRpcMethod', False)]
-      return cls._methods
+class RpcLinecardApi(RpcApi):
+
+   @registerSupToLinecardMethod
+   async def gracefulShutdown(self):
+      """Shutdown the linecard itself."""
+      self.tasks.append(asyncio.create_task(self._doSelfReboot()))
+      return {'status': True, 'detail': 'Reboot started'}

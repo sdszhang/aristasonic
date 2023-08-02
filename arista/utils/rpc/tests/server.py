@@ -2,6 +2,8 @@ import json
 
 from ....tests.testing import mock, unittest
 
+from ....core.supervisor import Supervisor
+from ..api import RpcSupervisorApi
 from ..constants import JsonRpcError, JSONRPC_VERSION
 from ..context import ClientContext
 from ..server import RpcServer
@@ -22,7 +24,8 @@ class RpcServerTest(unittest.IsolatedAsyncioTestCase):
 
    def _newServer(self):
       ctx = ClientContext(('127.0.0.1', '43000'))
-      server = RpcServer([RpcServerTest.HOST], RpcServerTest.PORT)
+      server = RpcServer([RpcServerTest.HOST], RpcServerTest.PORT,
+                         RpcSupervisorApi(Supervisor))
       return server, ctx
 
    async def testHandleRequest(self):
