@@ -1,7 +1,9 @@
 from .config import Config
 from .log import getLogger
 from .metainventory import MetaInventory
+from .reboot import LinecardRebootManager
 from .sku import Sku
+from .utils import clog
 
 logging = getLogger(__name__)
 
@@ -114,3 +116,25 @@ class Modular(Sku):
    def iterPsus(self, presentOnly=True):
       return self._iterSlots(self.active.psuSlots, self.NUM_PSUS,
                              presentOnly=presentOnly)
+
+   def powerOffLinecards(self, linecards=None):
+      return LinecardRebootManager(self, linecards).powerOffLinecards()
+
+   def rebootLinecards(self, linecards=None, mode='soft'):
+      return LinecardRebootManager(self, linecards).rebootLinecards(mode)
+
+   def powerOffFabrics(self, fabrics=None):
+      if fabrics is None:
+         fabrics = self.iterFabrics()
+
+      for fabric in fabrics:
+         try:
+            if fabric.slot.getPresence() and fabric.poweredOn():
+               logging.info('Power off fabric card %s...', fabric)
+               fabric.powerOnIs(False)
+               logging.info('Power off fabric card %s succeeded', fabric)
+            else:
+               logging.info('Fabric card %s not present or powered off', fabric)
+         except:  # pylint: disable=bare-except
+            logging.exception('Failed to power off fabric %s', fabric)
+            clog('Failed to power off fabric %s', fabric)

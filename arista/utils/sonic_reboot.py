@@ -10,42 +10,14 @@ from __future__ import print_function
 
 import traceback
 
-from arista.core.card import Card
+from arista.core.log import LoggerError, getLogger, setupLogging
 from arista.core.config import Config
-from arista.core.linecard import LCpuCtx
 from arista.core.platform import getPlatform
 from arista.core.supervisor import Supervisor
 from arista.core.utils import klog
 from arista.libs.procfs import inKdump
-from .sonic_utils import getInventory
 
-def powerOffLinecards(chassis):
-   for linecard in chassis.iterLinecards():
-      try:
-         print('Power off linecard %s...' % linecard, end='')
-         if linecard.slot.getPresence() and linecard.poweredOn():
-            linecard.powerOnIs(False)
-            print('SUCCESS')
-         else:
-            print('SKIPPED')
-      except:
-         print('FAILED')
-         klog('Failed to power off linecard %s' % linecard, level=0)
-         klog(traceback.format_exc(), level=0)
-
-def powerOffFabrics(chassis):
-   for fabric in chassis.iterFabrics():
-      try:
-         print('Power off fabric card %s...' % fabric, end='')
-         if fabric.slot.getPresence() and fabric.poweredOn():
-            fabric.powerOnIs(False)
-            print('SUCCESS')
-         else:
-            print('SKIPPED')
-      except:
-         print('FAILED')
-         klog('Failed to power off fabric %s' % fabric, level=0)
-         klog(traceback.format_exc(), level=0)
+logging = getLogger(__name__)
 
 def powerOffCards(platform):
    """Power off linecards and fabric cards before rebooting supervisor.
@@ -61,12 +33,12 @@ def powerOffCards(platform):
    chassis = platform.getChassis()
    chassis.loadAll()
    if Config().power_off_linecard_on_reboot:
-      powerOffLinecards(chassis)
+      chassis.powerOffLinecards()
    if Config().power_off_fabric_on_reboot:
-      powerOffFabrics(chassis)
+      chassis.powerOffFabrics()
 
-def reboot(platform=None):
-   print("Running powercycle script")
+def do_reboot(platform=None):
+   logging.info("Running powercycle script")
    platform = platform or getPlatform()
    inventory = platform.getInventory()
 
@@ -83,3 +55,12 @@ def reboot(platform=None):
       except:
          klog("Failed to power cycle using %s" % powerCycle, level=0)
          klog(traceback.format_exc(), level=0)
+
+
+def reboot(platform=None):
+   try:
+      setupLogging()
+   except LoggerError as e:
+      print(e.msg)
+
+   do_reboot(platform)

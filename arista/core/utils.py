@@ -179,6 +179,13 @@ def klog(msg, level=2, *args):
    except: # pylint: disable-msg=W0702
       pass
 
+def clog(msg, *args):
+   try:
+      with open('/dev/console', 'w') as f:
+         f.write('arista: %s\n' % (msg % tuple(*args)))
+   except: # pylint: disable-msg=W0702
+      pass
+
 class Retrying:
    def __init__(self, interval=1.0, delay=0.05, maxAttempts=None):
       self.interval = interval
