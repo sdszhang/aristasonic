@@ -2,10 +2,12 @@ from ...core.cpu import Cpu
 from ...core.pci import PciRoot
 from ...core.register import Register, RegisterMap, RegBitField
 
+from ...components.cpu.intel.coretemp import Coretemp
 from ...components.scd import Scd
 from ...components.eeprom import At24C512
 from ...components.max6658 import Max6658
 
+from ...descs.sensor import SensorDesc, Position
 from ...descs.xcvr import Sfp
 
 class CpldSeuRegisterMap(RegisterMap):
@@ -49,10 +51,31 @@ class SprucefishCpu(Cpu):
          (0x60B0, 'beacon'),
       ])
 
+      self.newComponent(Coretemp, sensors=[
+         SensorDesc(diode=0, name='Physical id 0',
+                    position=Position.OTHER, target=82, overheat=95, critical=104),
+         SensorDesc(diode=1, name='CPU core0',
+                    position=Position.OTHER, target=82, overheat=95, critical=104),
+         SensorDesc(diode=2, name='CPU core1',
+                    position=Position.OTHER, target=82, overheat=95, critical=104),
+         SensorDesc(diode=3, name='CPU core2',
+                    position=Position.OTHER, target=82, overheat=95, critical=104),
+         SensorDesc(diode=4, name='CPU core3',
+                    position=Position.OTHER, target=82, overheat=95, critical=104),
+         SensorDesc(diode=5, name='CPU core4',
+                    position=Position.OTHER, target=82, overheat=95, critical=104),
+         SensorDesc(diode=6, name='CPU core5',
+                    position=Position.OTHER, target=82, overheat=95, critical=104),
+      ])
+
       self.eeprom = cpld.newComponent(At24C512, addr=cpld.i2cAddr(0, 0x50),
                                       label='supervisor')
 
-      self.max6658 = cpld.newComponent(Max6658, addr=cpld.i2cAddr(0, 0x4c))
+      self.max6658 = cpld.newComponent(Max6658, addr=cpld.i2cAddr(0, 0x4c),
+                                       sensors=[
+         SensorDesc(diode=0, name='Supervisor front',
+                    position=Position.INLET, target=44, overheat=50, critical=55),
+     ])
 
    def cpuDpmAddr(self, addr=0x4e, **kwargs):
       return self.cpld.i2cAddr(1, addr, **kwargs)
