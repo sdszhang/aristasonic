@@ -35,6 +35,10 @@ class HistoricalData(object):
       return self.set[-1][1]
 
    @property
+   def lastGet(self):
+      return self.get[-1][1]
+
+   @property
    def data(self):
       return {
          'name': self.name,
@@ -42,13 +46,31 @@ class HistoricalData(object):
          'set': list(self.set),
       }
 
-class FanWrapper(object):
-   def __init__(self, fan):
-      self.fan = fan
-      self.data = HistoricalData(fan.getName())
+class CoolingObject(object):
+   def __init__(self, name, inv=None):
+      super().__init__()
+      self.name = name
+      self.data = HistoricalData(name)
+      self.inv = inv
+      self._initialized = False
 
    def __str__(self):
-      return str(self.fan)
+      return '%s(%s)' % (self.__class__.__name__, self.name)
+
+   def dump(self):
+      return self.data.data
+
+class CoolingFanBase(CoolingObject):
+   def __init__(self, *args, **kwargs):
+      super().__init__(*args, **kwargs)
+
+   @property
+   def speed(self):
+      return self.data.lastGet
+
+   @speed.setter
+   def speed(self, value):
+      return self.data.getValue(monotonicRaw(), value)
 
    @property
    def current(self):
@@ -58,41 +80,45 @@ class FanWrapper(object):
    def last(self):
       return self.data.get[-2][1]
 
-   def get(self, now):
-      try:
-         return self.data.getValue(now, self.fan.getSpeed())
-      except Exception: # pylint: disable=broad-except
-         logging.exception('%s failed to read speed', self)
-         return None
+   def setSpeed(self, value):
+      assert self.inv is not None or self.api is not None
+      if self.inv is not None:
+         self.inv.setSpeed(value)
+      else:
+         self.api.set_speed(value)
 
    def set(self, now, value):
       try:
-         self.fan.setSpeed(value)
+         self.setSpeed(value)
          return self.data.setValue(now, value)
       except Exception: # pylint: disable=broad-except
          logging.exception('%s failed to write speed', self)
          return None
 
-   def dump(self):
-      return self.data.data
+class CoolingThermalBase(CoolingObject):
+   def __init__(self, *args, **kwargs):
+      super().__init__(*args, **kwargs)
+      self.overheat = None
+      self.critical = None
 
-class ThermalWrapper(object):
-   def __init__(self, thermal):
-      self.thermal = thermal
-      self.data = HistoricalData(thermal.getName())
+   @property
+   def temperature(self):
+      return self.data.lastGet
 
-   def __str__(self):
-      return str(self.thermal)
+   @temperature.setter
+   def temperature(self, value):
+      return self.data.getValue(monotonicRaw(), value)
 
-   def get(self, now):
-      try:
-         return self.data.getValue(now, self.thermal.getTemperature())
-      except Exception: # pylint: disable=broad-except
-         logging.exception('%s failed to read temperature', self)
-         return None
+   @property
+   def target(self):
+      if self.inv is not None:
+         return self.inv.getDesc().target
+      return Config().cooling_target_factor * self.overheat
 
-   def dump(self):
-      return self.data.data
+   def valid(self):
+      return self.temperature is not None and \
+             self.overheat is not None and \
+             self.critical is not None
 
 class ThermalInfo(object):
    def __init__(self, thermal, value, target, overheat):
@@ -113,19 +139,21 @@ class ThermalInfos(object):
       self.targetOffset = targetOffset
       self.infos = []
 
-   def process(self, zone, thermal):
-      desc = thermal.thermal.getDesc()
-      maxTemp = min(desc.overheat, desc.critical)
-      if not int(desc.target) or not int(maxTemp):
+   def process(self, thermal):
+      if not thermal.valid():
          return
 
-      value = thermal.get(zone.algo.now)
+      maxTemp = min(thermal.overheat, thermal.critical)
+      if not int(thermal.target) or not int(maxTemp):
+         return
+
+      value = thermal.temperature
 
       if value > maxTemp:
          logging.debug('%s: temp is above overheat threshold', thermal)
          self.overheat = True
 
-      target = desc.target + self.targetOffset
+      target = thermal.target + self.targetOffset
       info = ThermalInfo(thermal, value, target, maxTemp)
       logging.debug('%s', info)
       self.infos.append(info)
@@ -143,7 +171,7 @@ class CoolingZone(object):
 
    MAX_SPEED = 100
 
-   def __init__(self, algo, name, skus=None):
+   def __init__(self, algo, name):
       self.algo = algo
       self.name = name
       self.maxDecrease = Config().cooling_max_decrease
@@ -151,20 +179,23 @@ class CoolingZone(object):
       self.minSpeed = Config().cooling_min_speed
       self.targetOffset = Config().cooling_target_offset
       self.speed = HistoricalData('target')
-      self.fans = {}
-      self.thermals = {}
-
-      for sku in skus:
-         self.loadSku(sku)
-
-   def loadSku(self, sku):
-      logging.debug('%s: loading sku %s', self, sku)
-      inv = sku.getInventory()
-      self.fans.update({ f : FanWrapper(f) for f in inv.getFans() })
-      self.thermals.update({ t : ThermalWrapper(t) for t in inv.getTemps() })
+      self.fans = None
+      self.thermals = None
+      self.initialized = False
 
    def __str__(self):
       return '%s(%s)' % (self.__class__.__name__, self.name)
+
+   def load(self, fans=None, thermals=None):
+      self.fans = fans or {}
+      self.thermals = thermals or {}
+      self.initialized = True
+
+   def update(self):
+      for f in self.fans.values():
+         f.update()
+      for t in self.thermals.values():
+         t.update()
 
    @property
    def lastSpeed(self):
@@ -211,7 +242,7 @@ class CoolingZone(object):
 
       # Read the current fan speed to have it stored in the data
       for fan in self.fans.values():
-         currentSpeed = fan.get(self.algo.now)
+         currentSpeed = fan.speed
          if lastSpeed is None: # useful when no speed has been set by the algo
             logging.debug('%s: detected last speed %d', self, currentSpeed)
             lastSpeed = currentSpeed
@@ -222,12 +253,17 @@ class CoolingZone(object):
 
       return lastSpeed
 
-   def run(self):
+   def run(self, fans=None, thermals=None, update=False):
+      if not self.initialized:
+         self.load(fans=fans, thermals=thermals)
+      if update:
+         self.update()
+
       lastSpeed = self.readLastSpeed()
 
       infos = ThermalInfos(self.targetOffset)
       for thermal in self.thermals.values():
-         infos.process(self, thermal)
+         infos.process(thermal)
 
       desiredSpeed = self.computeFanSpeed(lastSpeed, infos)
 
@@ -258,19 +294,14 @@ class CoolingAlgorithm(object):
       self.now = None
       self.elapsed = None
       self.zones = []
-      # NOTE: for now only one zone on chassis
-      # pylint: disable=import-outside-toplevel
-      from .supervisor import Supervisor
-      if isinstance(self.platform, Supervisor):
-         chassis = self.platform.getChassis()
-         skus = [self.platform] + list(chassis.iterCards())
-         self.zones.append(CoolingZone(self, 'Chassis', skus=skus))
-      else:
-         skus = [self.platform]
-         self.zones.append(CoolingZone(self, 'FixedSystem', skus=skus))
+      self.load()
 
    def __str__(self):
       return '%s()' % self.__class__.__name__
+
+   def load(self):
+      # NOTE: for now only one zone
+      self.zones.append(CoolingZone(self, 'System'))
 
    def export(self, path):
       if inSimulation():
@@ -278,7 +309,7 @@ class CoolingAlgorithm(object):
       for zone in self.zones:
          zone.export(path)
 
-   def run(self, elapsed=None):
+   def run(self, elapsed=None, fans=None, thermals=None, update=False):
       self.previous = self.now
       self.now = monotonicRaw()
       if self.previous is None:
@@ -287,7 +318,7 @@ class CoolingAlgorithm(object):
 
       logging.debug('%s: running algorithm (elapsed %.4fs)', self, self.elapsed)
       for zone in self.zones:
-         zone.run()
+         zone.run(fans=fans, thermals=thermals, update=update)
       logging.debug('%s: algorithm took %.4fs to run', self,
                     monotonicRaw() - self.now)
 

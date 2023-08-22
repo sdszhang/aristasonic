@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+import os
 
 try:
    from sonic_platform_base.platform_base import PlatformBase
    import arista.platforms
+   from arista.core.log import setupLogging
    from arista.core.platform import getPlatform
    from arista.utils.sonic_platform.chassis import Chassis
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
+
+def _maybeEnableTracing():
+   tracing = os.getenv('ARTRACE')
+   if tracing is None:
+      return
+   # pylint: disable=import-outside-toplevel
+   setupLogging(tracing)
 
 class Platform(PlatformBase):
 
@@ -30,3 +38,5 @@ class Platform(PlatformBase):
          self._platform = platform
          self._chassis = Chassis(self._platform)
          Platform.PLATFORM_CACHE[uid] = self
+
+_maybeEnableTracing()

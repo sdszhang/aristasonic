@@ -46,7 +46,11 @@ class Config():
          cls.instance_.cooling_max_decrease = 10
          cls.instance_.cooling_max_increase = 25
          cls.instance_.cooling_min_speed = 30
+         cls.instance_.cooling_loop_interval = 20
          cls.instance_.cooling_target_offset = 0
+         cls.instance_.cooling_target_factor = 0.8
+         cls.instance_.cooling_gc_count = 15
+         cls.instance_.cooling_xcvrs_via_api = False
          cls.instance_._parseConfig()
          cls.instance_._parseCmdline()
       return cls.instance_

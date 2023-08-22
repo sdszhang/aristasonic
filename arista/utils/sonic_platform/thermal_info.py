@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-
 try:
    from sonic_platform_base.sonic_thermal_control.thermal_info_base \
       import ThermalPolicyInfoBase
    from sonic_platform_base.sonic_thermal_control.thermal_json_object \
       import thermal_json_object
    from arista.core.cooling import CoolingAlgorithm
+   from .thermal_helper import CoolingEntityManager
 except ImportError as e:
    raise ImportError("%s - required module not found" % e)
 
@@ -21,66 +20,46 @@ class ThermalPolicyInfo(ThermalPolicyInfoBase):
 @thermal_json_object("fan_info")
 class FanInfo(ThermalPolicyInfo):
    def __init__(self):
+      super().__init__()
       self.fans = {}
-      self.fans_presence = {}
-      self.fans_status = {}
-
-   def _collect_fans(self, fans):
-      for fan in fans:
-         name = fan.get_name()
-         self.fans[name] = fan
-         self.fans_presence[name] = fan.get_presence()
-         self.fans_status[name] = fan.get_status()
 
    def collect(self, chassis):
-      if chassis.get_num_fan_drawers():
-         for drawer in chassis.get_all_fan_drawers():
-            self._collect_fans(drawer.get_all_fans())
-      else:
-         self._collect_fans(chassis.get_all_fans())
+      self.fans = CoolingEntityManager.get(chassis).get_all_fans()
+      for fan in self.fans.values():
+         fan.update()
 
 @thermal_json_object("thermal_info")
 class ThermalInfo(ThermalPolicyInfo):
    def __init__(self):
+      super().__init__()
       self.thermals = {}
-      self.thermals_overheat = {}
-      self.thermals_critical = {}
 
    def collect(self, chassis):
-      for thermal in chassis.get_all_thermals():
-         desc = thermal.get_inventory_object().getDesc()
-         name = thermal.get_name()
-         value = thermal.get_temperature()
-         status = thermal.get_status()
-         self.thermals[name] = thermal
-         self.thermals_overheat[name] = value > desc.overheat if status else False
-         self.thermals_critical[name] = value > desc.critical if status else False
+      self.thermals = CoolingEntityManager.get(chassis).get_all_thermals()
+      for thermal in self.thermals.values():
+         thermal.update()
 
 @thermal_json_object("psu_info")
 class PsuInfo(ThermalPolicyInfo):
    def __init__(self):
-      self.psus = {}
-      self.psus_presence = {}
-      self.psus_status = {}
-
-   def _collect_psus(self, psus):
-      for psu in psus:
-         name = psu.get_name()
-         self.psus[name] = psu
-         self.psus_presence[name] = psu.get_presence()
-         self.psus_status[name] = psu.get_status()
+      super().__init__()
+      self.psus = None
 
    def collect(self, chassis):
-      self._collect_psus(chassis.get_all_psus())
+      self.psus = CoolingEntityManager.get(chassis).get_all_psus()
+      for psu in self.psus.values():
+         psu.update()
 
 @thermal_json_object("control_info")
 class ControlInfo(ThermalPolicyInfo):
    def __init__(self):
+      super().__init__()
       self.algo = None
 
    def collect(self, chassis):
       if self.algo is None:
-         self.algo = CoolingAlgorithm(chassis._platform)
+         self.algo = CoolingAlgorithm(chassis.getPlatform())
+      CoolingEntityManager.get(chassis).gc()
 
 @thermal_json_object("chassis_info")
 class ChassisInfo(ControlInfo):

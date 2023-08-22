@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 try:
+   from arista.core.config import Config
    from arista.utils.sonic_platform.thermal_action import *
    from arista.utils.sonic_platform.thermal_condition import *
    from arista.utils.sonic_platform.thermal_info import *
@@ -16,4 +17,4 @@ class ThermalManager(ThermalManagerBase):
    Manager for controlling thermal policies.
    """
    # override default interval of 60 by 10
-   _interval = 10
+   _interval = Config().cooling_loop_interval

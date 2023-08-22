@@ -224,6 +224,9 @@ class Chassis(ChassisBase):
    def getThermalControl(self):
       return thermal_control
 
+   def getPlatform(self):
+      return self._platform
+
    def get_port_or_cage_type(self, index):
       # pylint: disable=redefined-outer-name
 

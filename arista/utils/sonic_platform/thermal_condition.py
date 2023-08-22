@@ -19,42 +19,50 @@ class ThermalPolicyCondition(ThermalPolicyConditionBase):
 @thermal_json_object("thermal.any.critical")
 class ThermalAnyCriticalCondition(ThermalPolicyCondition):
    def is_match(self, thermal_info_dict):
-      return any(thermal_info_dict['thermal_info'].thermals_critical.values())
+      thermals = thermal_info_dict['thermal_info'].thermals.values()
+      return any(t.in_critical_condition for t in thermals)
 
 @thermal_json_object("thermal.any.overheat")
 class ThermalAnyOverheatCondition(ThermalPolicyCondition):
    def is_match(self, thermal_info_dict):
-      return any(thermal_info_dict['thermal_info'].thermals_overheat.values())
+      thermals = thermal_info_dict['thermal_info'].thermals.values()
+      return any(t.in_overheat_condition for t in thermals)
 
 @thermal_json_object("fan.any.absence")
 class FanAnyAbsentCondition(ThermalPolicyCondition):
    def is_match(self, thermal_info_dict):
-      return not all(thermal_info_dict['fan_info'].fans_presence.values())
+      fans = thermal_info_dict['fan_info'].fans.values()
+      return not all(f.presence for f in fans)
 
 @thermal_json_object("fan.all.presence")
 class FanAllPresentCondition(ThermalPolicyCondition):
    def is_match(self, thermal_info_dict):
-      return all(thermal_info_dict['fan_info'].fans_presence.values())
+      fans = thermal_info_dict['fan_info'].fans.values()
+      return all(f.presence for f in fans)
 
 @thermal_json_object("fan.any.fault")
 class FanAnyFaultCondition(ThermalPolicyCondition):
    def is_match(self, thermal_info_dict):
-      return not all(thermal_info_dict['fan_info'].fans_status.values())
+      fans = thermal_info_dict['fan_info'].fans.values()
+      return not all(f.status for f in fans)
 
 @thermal_json_object("psu.any.absence")
 class PsuAnyAbsentCondition(ThermalPolicyCondition):
    def is_match(self, thermal_info_dict):
-      return not all(thermal_info_dict['psu_info'].psus_presence.values())
+      psus = thermal_info_dict['psu_info'].psus.values()
+      return not all(p.presence for p in psus)
 
 @thermal_json_object("psu.all.presence")
 class PsuAllPresenceCondition(ThermalPolicyCondition):
    def is_match(self, thermal_info_dict):
-      return all(thermal_info_dict['psu_info'].psus_presence.values())
+      psus = thermal_info_dict['psu_info'].psus.values()
+      return all(p.presence for p in psus)
 
 @thermal_json_object("psu.any.fault")
 class PsuAnyFaultCondition(ThermalPolicyCondition):
    def is_match(self, thermal_info_dict):
-      return not all(thermal_info_dict['psu_info'].psus_status.values())
+      psus = thermal_info_dict['psu_info'].psus.values()
+      return not all(p.status for p in psus)
 
 @thermal_json_object("normal")
 class NormalCondition(ThermalPolicyCondition):
