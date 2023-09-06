@@ -51,15 +51,20 @@ We try to avoid breaking the CLI but it can happen.
 
 The following platforms are currently supported,
 
+ - CCS-720DT-48S
  - DCS-7050QX-32
  - DCS-7050QX-32S
  - DCS-7050CX3-32S
  - DCS-7060CX-32
  - DCS-7060CX2-32
  - DCS-7060PX4-32 and DCS-7060DX4-32
+ - DCS-7060DX5-32
+ - DCS-7060PX5-64 and DCS-7060DX5-64
+ - DCS-7060DX5-64S
  - DCS-7170-32C
  - DCS-7170-32CD
  - DCS-7170-64C
+ - DCS-7170B-64C
  - DCS-7260CX3-64
  - DCS-7280CR3-32P4 and DCS-7280CR3-32D4
 
