@@ -7,6 +7,7 @@ except ImportError:
    raise
 
 from ...core.cause import getLinecardReloadCauseManager
+from ...core.config import Config
 from ...core.log import getLogger
 from ...core.supervisor import Supervisor
 from ...core.utils import inSimulation
@@ -115,13 +116,13 @@ class RpcSupervisorApi(RpcApi):
       allArgs.extend(args)
       return await self._runCommand('arista', *allArgs)
 
-   async def _runAsyncAristaLinecard(self, slot, *args):
+   async def _runAsyncAristaLinecard(self, slot, *args, delay=0):
       allArgs = ['-l', '/var/log/arista-linecard.log',
                  'linecard', '-i', str(slot)]
       allArgs.extend(args)
-      delay = 2
-      logging.info('%s: Delay for %d seconds', self, delay)
-      await asyncio.sleep(delay)
+      if delay:
+         logging.info('%s: Delay for %d seconds', self, delay)
+         await asyncio.sleep(delay)
       logging.info('%s: issue arista command: %s', self, str(allArgs))
       return await self._runCommand('arista', *allArgs)
 
@@ -183,9 +184,14 @@ class RpcSupervisorApi(RpcApi):
 
    @registerLinecardToSupMethod
    async def linecardSelfPowerCycle(self, lc):
-      cmd = ('setup', '--on', '--lcpu', '--powerCycleIfOn')
+      if Config().api_linecard_reboot_graceful:
+         cmd = ('reboot', '--mode=hard')
+         delay = 5
+      else:
+         cmd = ('setup', '--on', '--lcpu', '--powerCycleIfOn')
+         delay = 2
       self.tasks.append(asyncio.create_task(
-         self._runAsyncAristaLinecard(lc.getSlotId(), *cmd)))
+         self._runAsyncAristaLinecard(lc.getSlotId(), *cmd, delay=delay)))
       logging.info('%s: Return from linecardSelfPowerCycle', self)
       return {'status': True, 'detail': 'Reboot started'}
 

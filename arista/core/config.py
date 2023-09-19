@@ -41,6 +41,7 @@ class Config():
          cls.instance_.api_rpc_lcx = "127.100.{}.1"
          cls.instance_.api_rpc_host = '127.0.0.1'
          cls.instance_.api_rpc_port = '12322'
+         cls.instance_.api_linecard_reboot_graceful = False
          cls.instance_.cooling_data_points = 10
          cls.instance_.cooling_export_path = None
          cls.instance_.cooling_max_decrease = 10
