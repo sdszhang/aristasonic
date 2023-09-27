@@ -110,4 +110,5 @@ class LorikeetPrimeCpu(LorikeetCpu):
          ScdCause(0x28, ScdCause.RAIL, 'POS0V9'),
          ScdCause(0x29, ScdCause.RAIL, 'ALW_ON_PGOOD'),
          ScdCause(0x2a, ScdCause.RAIL, 'ISL0_CAT_FAULT'),
-      ], regmap=LorikeetPrimeScdReloadCauseRegisters)
+      ], regmap=LorikeetPrimeScdReloadCauseRegisters,
+         priority=ScdCause.Priority.SECONDARY)

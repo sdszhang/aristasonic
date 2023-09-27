@@ -6,6 +6,7 @@ from ..core.psu import PsuSlot
 from ..core.utils import incrange
 
 from ..components.asic.xgs.tomahawk4 import Tomahawk4
+from ..components.cpld import SysCpldCause, SysCpldReloadCauseRegistersV2
 from ..components.dpm.ucd import Ucd90320, UcdGpi
 from ..components.lm73 import Lm73
 from ..components.tmp464 import Tmp464
@@ -21,7 +22,7 @@ from ..descs.xcvr import QsfpDD, Sfp
 
 from .chassis.tuba import Tuba
 
-from .cpu.lorikeet import LorikeetCpu
+from .cpu.lorikeet import LorikeetCpu, LorikeetPrimeCpu
 
 @registerPlatform()
 class CatalinaDD(FixedSystem):
@@ -41,19 +42,11 @@ class CatalinaDD(FixedSystem):
    def __init__(self):
       super(CatalinaDD, self).__init__()
 
-      self.cpu = self.newComponent(LorikeetCpu)
+      cpuCls = LorikeetCpu if self.getHwApi() < HwApi(6) else LorikeetPrimeCpu
+      self.cpu = self.newComponent(cpuCls)
+      self.syscpld = self.cpu.syscpld
+      self.addSwitchDpm()
       self.cpu.addCpuDpm()
-      self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(0x11),
-                                 causes={
-         'overtemp': UcdGpi(1),
-         'powerloss': UcdGpi(3),
-         'psufault': UcdGpi(4),
-         'watchdog': UcdGpi(5),
-         'cpu': UcdGpi(6),
-         'reboot': UcdGpi(8),
-      })
-      # TODO sys cpld
-      #self.syscpld = self.cpu.syscpld
 
       port = self.cpu.getPciPort(0)
       scd = port.newComponent(Scd, addr=port.addr)
@@ -166,3 +159,35 @@ class CatalinaDD(FixedSystem):
         ),
       ] if self.getHwApi() < HwApi(5) else []
       scd.newComponent(Raa228228, addr=scd.i2cAddr(16, 0x45), quirks=quirks)
+
+   def addSwitchDpm(self):
+      if self.getHwApi() < HwApi(6):
+         self.cpu.cpld.newComponent(Ucd90320, addr=self.cpu.switchDpmAddr(0x11),
+                                    causes=[
+            UcdGpi(1, 'overtemp'),
+            UcdGpi(3, 'powerloss'),
+            UcdGpi(4, 'psufault'),
+            UcdGpi(5, 'watchdog'),
+            UcdGpi(6, 'cpu'),
+            UcdGpi(8, 'reboot'),
+         ])
+      else:
+         self.syscpld.addReloadCauseProvider(causes=[
+            SysCpldCause(0x00, SysCpldCause.UNKNOWN),
+            SysCpldCause(0x01, SysCpldCause.OVERTEMP),
+            SysCpldCause(0x02, SysCpldCause.SEU),
+            SysCpldCause(0x03, SysCpldCause.WATCHDOG,
+                         priority=SysCpldCause.Priority.HIGH),
+            SysCpldCause(0x04, SysCpldCause.CPU, 'CPU source or CPU PGOOD',
+                         priority=SysCpldCause.Priority.LOW),
+            SysCpldCause(0x08, SysCpldCause.REBOOT, 'Software Reboot'),
+            SysCpldCause(0x09, SysCpldCause.POWERLOSS, 'PSU AC'),
+            SysCpldCause(0x0a, SysCpldCause.POWERLOSS, 'PSU DC'),
+            SysCpldCause(0x0b, SysCpldCause.NOFANS),
+            SysCpldCause(0x0c, SysCpldCause.CPU, 'CAT_ERR'),
+            SysCpldCause(0x0d, SysCpldCause.CPU_S3,
+                         priority=SysCpldCause.Priority.LOW),
+            SysCpldCause(0x0e, SysCpldCause.CPU_S3,
+                         priority=SysCpldCause.Priority.LOW),
+            SysCpldCause(0x0f, SysCpldCause.SEU, 'bitshadow rx parity error'),
+         ], regmap=SysCpldReloadCauseRegistersV2)

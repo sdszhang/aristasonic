@@ -72,8 +72,8 @@ class ScdReloadCauseProvider(ReloadCauseProviderHelper):
 
    FAULT_TIME_BASE = datetime.datetime(2000, 1, 1)
 
-   def __init__(self, scd, regmap, causes):
-      super().__init__(name=str(scd))
+   def __init__(self, scd, regmap, causes, **kwargs):
+      super().__init__(name=str(scd), **kwargs)
       self.scd = scd
       self.regmap = regmap
       self.causes = causes

@@ -5,6 +5,9 @@ class ReloadCausePriority(object):
    NORMAL = 20
    HIGH = 30
 
+   PRIMARY = 0
+   SECONDARY = 1
+
 class ReloadCauseScore(object):
    # DO NOT CHANGE EXISTING VALUES UNLESS YOU UNDERSTAND THE IMPLICATIONS
    # format:
@@ -16,8 +19,8 @@ class ReloadCauseScore(object):
 
    @staticmethod
    def getPriority(value):
-       assert value == (value & 0xff)
-       return value & 0xff
+      assert value == (value & 0xff)
+      return value & 0xff
 
 class ReloadCauseDesc(object):
 
@@ -61,4 +64,3 @@ class ReloadCauseDesc(object):
       self.priority = priority
       if description is not None:
          self.description = f'{self.description} - {description}'
-

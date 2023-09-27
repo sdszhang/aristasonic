@@ -29,6 +29,10 @@ class ReloadCauseProvider(InventoryInterface):
    def getExtra(self):
       raise NotImplementedError
 
+   @diagmethod('priority')
+   def getPriority(self):
+      raise NotImplementedError
+
    def setRealTimeClock(self):
       pass
 

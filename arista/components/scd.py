@@ -509,13 +509,14 @@ class Scd(PciComponent):
       for i, addr in enumerate(addrs, 0):
          self.addUartPort(addr, i)
 
-   def addReloadCauseProvider(self, causes=None, regmap=None, addr=None):
+   def addReloadCauseProvider(self, causes=None, regmap=None, addr=None,
+                              priority=ScdCause.Priority.PRIMARY):
       if isinstance(addr, int):
          # Initial DPM-less reboot cause support e.g PikeZ
-         provider = SimpleScdReloadCauseProvider(self, addr, causes)
+         rcp = SimpleScdReloadCauseProvider(self, addr, causes)
       else:
-         provider = ScdReloadCauseProvider(self, regmap, causes)
-      return self.inventory.addReloadCauseProvider(provider)
+         rcp = ScdReloadCauseProvider(self, regmap, causes, priority=priority)
+      return self.inventory.addReloadCauseProvider(rcp)
 
    def addSeuReporter(self, regmap):
       return self.inventory.addSeuReporter(ScdSeuReporter(self, regmap))

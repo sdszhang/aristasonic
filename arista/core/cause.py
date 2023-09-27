@@ -64,10 +64,12 @@ class ReloadCauseEntry(ReloadCause):
       )
 
 class ReloadCauseProviderHelper(ReloadCauseProvider):
-   def __init__(self, name='unknown', causes=None, extra=None):
+   def __init__(self, name='unknown', causes=None, extra=None,
+                priority=ReloadCausePriority.PRIMARY):
       self.name = name
       self.causes = causes or []
       self.extra = extra or {}
+      self.priority = priority
 
    def getSourceName(self):
       return self.name
@@ -77,6 +79,9 @@ class ReloadCauseProviderHelper(ReloadCauseProvider):
 
    def getExtra(self):
       return self.extra
+
+   def getPriority(self):
+      return self.priority
 
    def process(self):
       raise NotImplementedError
@@ -154,14 +159,13 @@ class ReloadCauseReport(object):
       self.providers = providers or []
 
    def processProviders(self, providers):
-      for provider in providers:
+      for provider in sorted(providers, key=lambda p: p.getPriority()):
          provider.process()
          remotes = provider.getRemoteProviders()
          if remotes:
             self.providers.extend(remotes)
          else:
             self.providers.append(provider)
-
 
    def analyzeCauses(self):
       causes = defaultdict(list)
