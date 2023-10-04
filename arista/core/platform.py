@@ -5,6 +5,7 @@ import re
 
 from .config import etcPath, flashPath
 from .driver.kernel import KernelDriver
+from .dynload import importSubmodules
 from .exception import UnknownPlatformError
 from .log import getLogger
 from .prefdl import Prefdl
@@ -15,9 +16,6 @@ from ..libs.benchmark import timeit
 
 logging = getLogger(__name__)
 
-platforms = []
-platformSidIndex = {}
-platformSkuIndex = {}
 syseeprom = None
 syseepromData = None
 
@@ -32,6 +30,74 @@ PREREQUISITES = [
 IDENT_BUS_NAMES = [
    'SMBus PIIX4 adapter port 1 at 0b20',
 ]
+
+class PlatformManager:
+   def __init__(self):
+      self.platforms = []
+      self.platformSidIndex = {}
+      self.platformSkuIndex = {}
+
+   def registerPlatform(self, cls):
+      self.platforms.append(cls)
+
+      for sid in cls.SID:
+         self.platformSidIndex[sid] = cls
+      for sku in cls.SKU:
+         self.platformSkuIndex[sku] = cls
+
+      if cls.PLATFORM is not None:
+         # this is a hack for older platforms that did not provide sid=
+         assert cls.PLATFORM not in self.platformSidIndex
+         self.platformSidIndex[cls.PLATFORM] = cls
+
+      return cls
+
+   def detectPlatform(self):
+      # TODO: refactor by obtaining a Cpu object based on the platform= from
+      #       cmdline implement getEeprom on all Cpu to get the prefdl from hw
+      #       add a fallback mechanism to read /etc/sonic/.syseeprom like done
+      #       today
+      getSysEeprom()
+
+      sid = readSid()
+      platformCls = self.platformSidIndex.get(sid)
+      if platformCls is not None:
+         return platformCls
+
+      sku = readSku()
+      platformCls = self.platformSkuIndex.get(sku)
+      if platformCls is not None:
+         return platformCls
+
+      name = readPlatformName()
+      platformCls = self.platformSidIndex.get(name)
+      if platformCls is not None:
+         return platformCls
+
+      raise UnknownPlatformError(sku, sid, name, self.platforms)
+
+   def getPlatformCls(self, *names):
+      if not names or not [name for name in names if name]:
+         return self.detectPlatform()
+
+      for name in names:
+         if name is None:
+            continue
+
+         platformCls = self.platformSkuIndex.get(name)
+         if platformCls is not None:
+            return platformCls
+
+         platformCls = self.platformSidIndex.get(name)
+         if platformCls is not None:
+            return platformCls
+
+      raise UnknownPlatformError(names, self.platforms)
+
+   def loadPlatforms(self, package):
+      return importSubmodules(package).keys()
+
+manager = PlatformManager()
 
 def loadPrerequisites():
    for driver in PREREQUISITES:
@@ -129,80 +195,30 @@ def readPlatformName():
 def readHwApi():
    return getSysEepromData().get('HwApi')
 
-def detectPlatform():
-   # TODO: refactor by obtaining a Cpu object based on the platform= from cmdline
-   #       implement getEeprom on all Cpu to get the prefdl from hw
-   #       add a fallback mechanism to read /etc/sonic/.syseeprom like we do today
-   getSysEeprom()
-
-   sid = readSid()
-   platformCls = platformSidIndex.get(sid)
-   if platformCls is not None:
-      return platformCls
-
-   sku = readSku()
-   platformCls = platformSkuIndex.get(sku)
-   if platformCls is not None:
-      return platformCls
-
-   name = readPlatformName()
-   platformCls = platformSidIndex.get(name)
-   if platformCls is not None:
-      return platformCls
-
-   raise UnknownPlatformError(sku, sid, name, platforms)
-
 def getPlatformCls(*names):
-   if not names or not [name for name in names if name]:
-      return detectPlatform()
-
-   for name in names:
-      if name is None:
-         continue
-
-      platformCls = platformSkuIndex.get(name)
-      if platformCls is not None:
-         return platformCls
-
-      platformCls = platformSidIndex.get(name)
-      if platformCls is not None:
-         return platformCls
-
-   raise UnknownPlatformError(names, platforms)
+   return manager.getPlatformCls(*names)
 
 def getPlatform(name=None):
-   platformCls = getPlatformCls(name)
+   platformCls = manager.getPlatformCls(name)
    platform = platformCls()
    platform.refresh()
    return platform
 
 def getPlatformSkus():
-   return platformSkuIndex
+   return manager.platformSkuIndex
 
 def getPlatformSids():
-   return platformSidIndex
+   return manager.platformSidIndex
 
 def getPlatforms():
-   return platforms
+   return manager.platforms
 
 def loadPlatforms():
    with timeit('Loading platform definitions'):
       from .. import platforms as _
-   logging.debug('Loaded %d platforms', len(platforms))
+   logging.debug('Loaded %d platforms', len(manager.platforms))
 
 def registerPlatform():
    def wrapper(cls):
-      platforms.append(cls)
-
-      for sid in cls.SID:
-         platformSidIndex[sid] = cls
-      for sku in cls.SKU:
-         platformSkuIndex[sku] = cls
-
-      if cls.PLATFORM is not None:
-         # this is a hack for older platforms that did not provide sid=
-         assert cls.PLATFORM not in platformSidIndex
-         platformSidIndex[cls.PLATFORM] = cls
-
-      return cls
+      return manager.registerPlatform(cls)
    return wrapper

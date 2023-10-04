@@ -91,7 +91,7 @@ class SfpEepromGenerator():
       sys.path.insert(0, '..')
       import arista.platforms
 
-      for cls in arista.core.platform.platforms:
+      for cls in arista.core.platform.getPlatforms():
          if not issubclass(cls, arista.core.fixed.FixedSystem):
             continue
          self.computePlatform(cls)
