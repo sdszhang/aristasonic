@@ -1,4 +1,5 @@
 import os
+import shutil
 import yaml
 
 from .log import getLogger
@@ -6,7 +7,9 @@ from ..libs.procfs import getCmdlineDict
 
 logging = getLogger(__name__)
 
+DEFAULT_FLASH_PATH = '/host'
 CONFIG_PATH = "/etc/sonic/arista.config"
+FLASH_CONFIG_PATH = os.path.join(DEFAULT_FLASH_PATH, 'arista-platform.config')
 
 class Config():
    instance_ = None
@@ -34,7 +37,7 @@ class Config():
          cls.instance_.api_use_sfpoptoe = True
          cls.instance_.api_sfp_thermal = False
          cls.instance_.api_event_use_interrupts = False
-         cls.instance_.flash_path = '/host'
+         cls.instance_.flash_path = DEFAULT_FLASH_PATH
          cls.instance_.tmpfs_path = '/var/run/platform_cache/arista'
          cls.instance_.etc_path = '/etc/sonic'
          cls.instance_.api_rpc_sup = '127.100.1.1'
@@ -88,6 +91,18 @@ class Config():
             self.setAttr(key, cmdline[k])
 
    def _parseConfig(self):
+      if os.path.exists(FLASH_CONFIG_PATH):
+         try:
+            if os.path.exists(CONFIG_PATH):
+               logging.warning(
+                  'Configuration %s exists, removing migration config %s from flash',
+                  CONFIG_PATH, FLASH_CONFIG_PATH)
+               os.remove(FLASH_CONFIG_PATH)
+
+            shutil.move(FLASH_CONFIG_PATH, CONFIG_PATH)
+         except Exception as e: #  pylint: disable=broad-except
+            logging.exception('could not migrate platform config from flash')
+
       if not os.path.exists(CONFIG_PATH):
          return
 
