@@ -85,8 +85,8 @@ A working configuration is maintained under the [SONiC kernel repository](https:
 
 The current debian packaging mechanism creates 4 packages.
  - sonic-platform-arista : system configuration files
+ - sonic-platform-arista-libs : shared libraries
  - drivers-sonic-platform-arista : kernel modules and drivers
- - python2-sonic-platform-arista : python2 library to manage the hardware
  - python3-sonic-platform-arista : python3 library to manage the hardware
 
 ## Usage
@@ -96,7 +96,7 @@ will perform the platform initialization.
 
 The central piece of the platform support is the `arista` entry point.
 It is a python script that load the arista platform library to perform actions.
-This library is python2/python3 compatible.
+This library is python3 only, python2 support is now deprecated.
 
 For more details on the available commands see the help message
 ```

@@ -202,7 +202,7 @@ pylint:
 pycoverage:
 	$(PYTHON3) -m pytest --cov-config=.coveragerc --cov-report term-missing:skip-covered --cov $(PACKAGE_NAME)
 
-test: test-py py3k pylint
+test: test-py pylint
 
 #
 # dev tools
