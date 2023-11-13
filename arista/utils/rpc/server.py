@@ -77,7 +77,11 @@ class RpcServer():
          elif isinstance(params, list):
             result = await method(ctx, *params)
          elif isinstance(params, dict):
-            result = await method(ctx, **params)
+            argList = []
+            if '_args' in params:
+               argList = params[ '_args' ]
+               del params[ '_args' ]
+            result = await method(ctx, *argList, **params)
          else:
             return self.errorResponse(JsonRpcError.INVALID_PARAMS,
                                       'params is not array or object',

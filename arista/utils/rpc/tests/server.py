@@ -51,6 +51,32 @@ class RpcServerTest(unittest.IsolatedAsyncioTestCase):
             'result': method_result
          })
 
+   async def testHandleRequestKwargs(self):
+      server, ctx = self._newServer()
+      with mock.patch.object(server.api, 'linecardSetup',
+                             new_callable=mock.AsyncMock) as mockObj:
+         method_result = {
+            'status': True,
+            'detail': None
+         }
+         mockObj.return_value = method_result
+         result = await server.handleRequest(ctx, {
+            'jsonrpc': JSONRPC_VERSION,
+            'id': 5,
+            'method': 'linecardSetup',
+            'params': {
+               '_args': [7],
+               'powerCycleIfOn': True,
+            },
+         })
+         mockObj.assert_called_once_with(ctx, 7, powerCycleIfOn=True)
+         print(result)
+         self.assertEqual(json.loads(result), {
+            'jsonrpc': JSONRPC_VERSION,
+            'id': 5,
+            'result': method_result
+         })
+
    async def testHandleRequestNoSuchMethod(self):
       server, ctx = self._newServer()
       result = await server.handleRequest(ctx, {

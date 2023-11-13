@@ -124,9 +124,11 @@ class RpcClient():
       if self.sock is None:
          self._connectSocket()
       uid = self.next_id()
-      params = args
-      if not params:
-         params = kwargs
+      params = kwargs
+      if params:
+         params[ '_args' ] = args
+      else:
+         params = args
       if not params:
          params = None
       command = json.dumps({
