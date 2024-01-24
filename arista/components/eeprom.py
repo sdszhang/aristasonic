@@ -6,6 +6,7 @@ from ..core.prefdl import Prefdl
 from ..core.utils import JsonStoredData
 
 from ..drivers.eeprom import (
+   At24C32KernelDriver,
    At24C64KernelDriver,
    At24C512KernelDriver,
    EepromKernelDriver,
@@ -74,6 +75,9 @@ class I2cSeeprom(I2cEeprom):
    def readPrefdlRaw(self):
       header = self.driver.read(self.hdrSz)
       return header + self.readPrefdl().getRaw()
+
+class At24C32(I2cEeprom):
+   DRIVER = At24C32KernelDriver
 
 class At24C64(I2cSeeprom):
    DRIVER = At24C64KernelDriver

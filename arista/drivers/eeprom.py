@@ -18,13 +18,16 @@ class EepromKernelDriver(I2cKernelDriver):
          return bytearray(f.read(size))
 
    def setup(self):
-       super(EepromKernelDriver, self).setup()
-       if not inSimulation():
-           waitFor(lambda: os.path.exists(self.eepromPath()),
-                   description="eeprom sysfs entry")
+      super(EepromKernelDriver, self).setup()
+      if not inSimulation():
+         waitFor(lambda: os.path.exists(self.eepromPath()),
+                 description="eeprom sysfs entry")
 
 class At24KernelDriver(EepromKernelDriver):
    MODULE = 'at24'
+
+class At24C32KernelDriver(At24KernelDriver):
+   NAME = '24c32'
 
 class At24C64KernelDriver(At24KernelDriver):
    NAME = '24c64'
