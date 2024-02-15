@@ -171,3 +171,18 @@ class ECD3000M(DeltaPsu):
       PsuIdent('ECD56020024', 'PWR-D3-3041-AC-BLUE', Airflow.INTAKE),
       PsuIdent('ECD56020026', 'PWR-D4-3041-AC-BLUE', Airflow.INTAKE),
    ]
+
+class ECD1502005(DeltaPsu):
+   CAPACITY = 2400
+   DESCRIPTION = psuDescHelper(
+      sensors=[
+         ('inlet', Position.OTHER, 60, 65, 70),
+         ('secondary hotspot', Position.OTHER, 110, 120, 130),
+         ('primary hotspot', Position.OTHER, 110, 115, 120),
+      ],
+      maxRpm=25500,
+   )
+   IDENTIFIERS = [
+      PsuIdent('ECD15020056', 'PWR-2421-HV-RED', Airflow.EXHAUST),
+      PsuIdent('ECD15020057', 'PWR-2421-HV-BLUE', Airflow.INTAKE),
+   ]
