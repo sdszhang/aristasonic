@@ -17,6 +17,7 @@
 
 #include <linux/module.h>
 #include <linux/pci.h>
+#include <linux/version.h>
 
 #include "scd.h"
 #include "scd-hwmon.h"
@@ -251,7 +252,12 @@ static int gearbox_ioctl(struct net_device *netdev, struct ifreq *req, int cmd)
 }
 
 static const struct net_device_ops gearbox_netdev_ops = {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0)
+    // For backward compatibility with kernel versions before bookworm
    .ndo_do_ioctl = gearbox_ioctl,
+#else
+   .ndo_eth_ioctl = gearbox_ioctl,
+#endif
 };
 
 static void gearbox_setup(struct net_device *dev)
