@@ -14,7 +14,7 @@ class Priority(object):
    POWER = 1
    LED = 1
 
-   def priorityFilter(*priorities):
+   def priorityFilter(*priorities):  # pylint: disable=no-self-argument
       return staticmethod(lambda component: component.priority in priorities)
 
    defaultFilter = priorityFilter(DEFAULT)

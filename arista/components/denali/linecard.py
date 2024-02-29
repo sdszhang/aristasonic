@@ -124,13 +124,13 @@ class DenaliLinecard(DenaliLinecardBase):
             try:
                self.powerStandbyDomainOn(cycle=i > 0)
                return
-            except Exception: # pylint: broad-except
+            except Exception: # pylint: disable=broad-except
                logging.exception('%s: failed to power standby on', self)
       else:
          try:
             self.powerStandbyDomainOff()
             return
-         except Exception: # pylint: broad-except
+         except Exception: # pylint: disable=broad-except
             logging.exception('%s: failed to power standby off', self)
 
    def powerControlDomainIs(self, on):
@@ -140,12 +140,12 @@ class DenaliLinecard(DenaliLinecardBase):
       if on:
          try:
             self.powerControlDomainOn()
-         except Exception:
+         except Exception: # pylint: disable=broad-except
             logging.exception('%s: failed to power control plane on', self)
       else:
          try:
             self.powerControlDomainOff()
-         except Exception:
+         except Exception: # pylint: disable=broad-except
             logging.exception('%s: failed to power control plane off', self)
 
    def populateSramFromPrefdl(self):

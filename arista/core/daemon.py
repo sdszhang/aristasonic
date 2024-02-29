@@ -45,7 +45,7 @@ class PollDaemonFeature(DaemonFeature):
          now = self.daemon.loop.time()
          try:
             self.callback(now - last)
-         except Exception:
+         except Exception:  # pylint: disable=broad-except
             logging.debug('%s raised exception', self.NAME, exc_info=True)
          last = now
          await asyncio.sleep(self.INTERVAL)
@@ -75,7 +75,7 @@ class Daemon(object):
          feature.attachToDaemon(self)
          try:
             feature.init()
-         except Exception as e:
+         except Exception as e:  # pylint: disable=broad-except
             logging.error('daemon: failed to initialize feature %s', feature)
             logging.error('%s', e)
 

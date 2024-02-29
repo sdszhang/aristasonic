@@ -28,6 +28,6 @@ def doSetup(ctx, args):
       logging.debug('Setting up %s', fabric)
       try:
          setupFabric(fabric, args)
-      except Exception as e:
+      except Exception as e:  # pylint: disable=broad-except
          logging.warning('Failed to setup %s: %s', fabric, str(e))
 

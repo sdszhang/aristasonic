@@ -100,7 +100,7 @@ class Config():
                os.remove(FLASH_CONFIG_PATH)
 
             shutil.move(FLASH_CONFIG_PATH, CONFIG_PATH)
-         except Exception as e: #  pylint: disable=broad-except
+         except Exception:  # pylint: disable=broad-except
             logging.exception('could not migrate platform config from flash')
 
       if not os.path.exists(CONFIG_PATH):

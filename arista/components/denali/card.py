@@ -209,7 +209,7 @@ class DenaliCard(Card):
          return False
       try:
          return self.gpio1.powerGood()
-      except Exception: # broad-except
+      except Exception:  # pylint: disable=broad-except
          logging.debug('%s: failed to read power good', self)
          return False
 

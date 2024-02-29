@@ -11,6 +11,6 @@ def doSetup(ctx, args):
    for fabric in ctx.fabrics:
       try:
          fabric.powerOnIs(power)
-      except Exception as e:
+      except Exception as e:  # pylint: disable=broad-except
          logging.error('Failed to power %s fabric %s: %s', args.state,
                        fabric, str(e))

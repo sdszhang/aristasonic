@@ -12,17 +12,23 @@ disable=invalid-name,
         no-self-use,
         fixme,
         no-absolute-import,
+        superfluous-parens,
         too-many-ancestors,
         too-many-arguments,
         too-many-statements,
         too-many-locals,
         too-many-instance-attributes,
         too-many-branches,
+        unnecessary-lambda-assignment,
         unnecessary-pass,
         consider-using-f-string,
         useless-object-inheritance,
         super-with-arguments,
         no-member,
+
+        # Compatibility with pylint from older Debian releases
+        unrecognized-option,
+        useless-option-value,
 
 [BASIC]
 bad-functions=apply,input

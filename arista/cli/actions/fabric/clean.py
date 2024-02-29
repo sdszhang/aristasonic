@@ -15,6 +15,6 @@ def doClean(ctx, args):
          fabric.clean()
          if args.off:
             fabric.powerOnIs(False)
-      except Exception as e:
+      except Exception as e:  # pylint: disable=broad-except
          logging.warning('Failed to clean %s: %s', fabric, str(e))
 
