@@ -2,18 +2,23 @@ from ...core.cpu import Cpu
 from ...core.pci import PciRoot
 
 from ...components.cpu.amd.k10temp import K10Temp
-from ...components.cpld import SysCpld, SysCpldCommonRegistersV2
-from ...components.dpm.adm1266 import Adm1266, AdmPin, AdmPriority
+from ...components.cpld import (
+   SysCpld,
+   SysCpldCommonRegistersV2,
+)
 from ...components.max6658 import Max6658
-from ...components.scd import Scd
+from ...components.scd import Scd, ScdCause, ScdReloadCauseRegisters
 
 from ...descs.sensor import Position, SensorDesc
 
-class Puffin(Cpu):
+class PuffinPrimeSysCpld(SysCpld):
+   REGISTER_CLS = SysCpldCommonRegistersV2
+
+class PuffinPrimeCpu(Cpu):
 
    PLATFORM = 'puffin'
 
-   def __init__(self, cpldRegisterCls=SysCpldCommonRegistersV2, **kwargs):
+   def __init__(self, registerCls=SysCpldCommonRegistersV2, **kwargs):
       super().__init__(**kwargs)
 
       self.pciRoot = self.newComponent(PciRoot)
@@ -48,28 +53,35 @@ class Puffin(Cpu):
                     position=Position.OUTLET, target=55, overheat=75, critical=85),
       ])
 
-      self.addCpuDpm()
+      cpld.addReloadCauseProvider(causes=[
+         ScdCause(0x01, ScdCause.OVERTEMP),
+         ScdCause(0x08, ScdCause.REBOOT, 'Software Reboot'),
+         ScdCause(0x0a, ScdCause.POWERLOSS, 'PSU DC to CPU'),
+         ScdCause(0x0b, ScdCause.NOFANS),
+         ScdCause(0x0c, ScdCause.CPU),
+         ScdCause(0x0d, ScdCause.CPU_S3),
+         ScdCause(0x0e, ScdCause.CPU_S5),
+         ScdCause(0x20, ScdCause.RAIL, 'CPU_PWROK_3V3'),
+         ScdCause(0x21, ScdCause.RAIL, 'POSVDD_CPU_S0'),
+         ScdCause(0x22, ScdCause.RAIL, 'POSVDD_SOC_S0'),
+         ScdCause(0x23, ScdCause.RAIL, 'POS1V8_S0,POS3V3_S0'),
+         ScdCause(0x24, ScdCause.RAIL, 'POS0V6_VTT_MEM'),
+         ScdCause(0x25, ScdCause.RAIL, 'POS1V2_VDD_MEM'),
+         ScdCause(0x26, ScdCause.RAIL, 'POS2V5_VPP_MEM'),
+         ScdCause(0x27, ScdCause.RAIL, 'POS1V8'),
+         ScdCause(0x28, ScdCause.RAIL, 'POS0V9'),
+      ], regmap=ScdReloadCauseRegisters,
+         priority=ScdCause.Priority.SECONDARY)
 
       self.addFanGroup(self.parent.CHASSIS.FAN_SLOTS, self.parent.CHASSIS.FAN_COUNT)
 
-      self.syscpld = self.newComponent(SysCpld, addr=cpld.i2cAddr(4, 0x23),
-                                       registerCls=cpldRegisterCls)
+      self.syscpld = self.newComponent(PuffinPrimeSysCpld,
+                                       addr=cpld.i2cAddr(4, 0x23),
+                                       registerCls=registerCls)
       self.syscpld.addPowerCycle()
 
-   def addCpuDpm(self, addr=None, causes=None):
-      addr = addr or self.cpuDpmAddr()
-      return self.cpld.newComponent(Adm1266, addr=addr, causes=causes or {
-         # TODO
-      })
-
-   def cpuDpmAddr(self, addr=0x4f, t=3, **kwargs):
-      return self.cpld.i2cAddr(1, addr, t=t, **kwargs)
-
-   def switchDpmAddr(self, addr=0x4f, t=3, **kwargs):
-      return self.cpld.i2cAddr(5, addr, t=t, **kwargs)
-
-   def switchGpAddr(self, addr, **kwargs):
-      return self.cpld.i2cAddr(4, addr, **kwargs)
+   def addScdComponents(self, scd, hwmonBus=0):
+      pass
 
    def getPciPort(self, num):
       device, func = {
