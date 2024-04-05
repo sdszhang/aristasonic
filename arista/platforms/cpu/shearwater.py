@@ -14,6 +14,8 @@ from ...descs.sensor import Position, SensorDesc
 class ShearwaterCpu(Cpu):
 
    PLATFORM = 'shearwater'
+   SID = ['ShearwaterMk2', 'ShearwaterMk2N']
+   SKU = ['DCS-7001-SUP-A', 'DCS-7001-SUP-A-N']
 
    def __init__(self, **kwargs):
       super(ShearwaterCpu, self).__init__(**kwargs)
