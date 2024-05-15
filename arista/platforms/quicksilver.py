@@ -15,7 +15,7 @@ from ..components.lm75 import Tmp75
 from ..descs.gpio import GpioDesc
 from ..descs.reset import ResetDesc
 from ..descs.sensor import Position, SensorDesc
-from ..descs.xcvr import Osfp, QsfpDD
+from ..descs.xcvr import Osfp, QsfpDD, Sfp
 
 from .chassis.maunakea import MaunaKea2
 from .cpu.shearwater import ShearwaterCpu
@@ -103,6 +103,15 @@ class QuicksilverBase(FixedSystem):
          intrBitFn=lambda xcvrId: (xcvrId - 1) % 32,
       )
 
+      scd.addXcvrSlots(
+         ports=self.PORTS.getSfps(),
+         addr=0xA900,
+         bus=88,
+         ledAddr=0x6900,
+         ledAddrOffsetFn=lambda x: 0x40,
+         # no interrupts
+      )
+
       for psuId, bus in [(1, 11), (2, 12)]:
          addrFunc=lambda addr, bus=bus: \
                   self.scd.i2cAddr(bus, addr, t=3, datr=2, datw=3)
@@ -156,6 +165,7 @@ class QuicksilverDd(QuicksilverBase):
 
    PORTS = PortLayout(
       (QsfpDD(i) for i in incrange(1, 64)),
+      (Sfp(i) for i in incrange(65, 66)),
    )
 
 @registerPlatform()
@@ -168,6 +178,7 @@ class QuicksilverP(QuicksilverBase):
 
    PORTS = PortLayout(
       (Osfp(i) for i in incrange(1, 64)),
+      (Sfp(i) for i in incrange(65, 66)),
    )
 
    HAS_TH5_EXT_DIODE = False
