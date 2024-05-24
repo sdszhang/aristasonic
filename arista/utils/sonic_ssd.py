@@ -2,10 +2,15 @@
 import os
 
 # pylint: disable=import-error
-from sonic_platform_base.sonic_ssd.ssd_base import SsdBase
-from sonic_platform_base.sonic_ssd.ssd_generic import SsdUtil as SsdUtilDefault
+try:
+   from sonic_platform_base.sonic_storage.storage_base import StorageBase
+   from sonic_platform_base.sonic_storage.ssd import SsdUtil as SsdUtilDefault
+except ImportError:
+   # fallback to the old imports if the new ones can't be found
+   from sonic_platform_base.sonic_ssd.ssd_base import SsdBase as StorageBase
+   from sonic_platform_base.sonic_ssd.ssd_generic import SsdUtil as SsdUtilDefault
 
-class EmmcUtil(SsdBase):
+class EmmcUtil(StorageBase):
    def __init__(self, diskdev):
       self.diskdev = diskdev
       self.path = os.path.join('/sys/block', os.path.basename(diskdev))
