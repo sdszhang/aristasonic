@@ -45,3 +45,18 @@ class PS2242(LiteonPsu):
       ],
       maxRpm=25500,
    )
+
+class LiteOn2400HV(LiteonPsu):
+   DRIVER = 'dps800'
+   CAPACITY = 2400
+   IDENTIFIERS = [
+      PsuIdent('PS-2242-9A ', 'PWR-2422-HV-RED',  Airflow.EXHAUST),
+   ]
+   DESCRIPTION = psuDescHelper(
+      sensors=[
+         ('inlet', Position.OTHER, 60, 65, 70),
+         ('secondary hotspot', Position.OTHER, 110, 120, 130),
+         ('primary hotspot', Position.OTHER, 110, 115, 120),
+      ],
+      maxRpm=25500,
+   )
