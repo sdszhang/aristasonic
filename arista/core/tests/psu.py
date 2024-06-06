@@ -82,6 +82,9 @@ class MockPmbusDetect(object):
    def getMetadata(self):
       return self.mockData
 
+   def exists(self):
+      return True
+
 class MockPsuSlot(PsuSlot):
    pass
 

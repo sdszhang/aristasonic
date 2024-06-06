@@ -1,17 +1,11 @@
 
-from __future__ import absolute_import, division, print_function
-
-# pylint: disable=unused-import
-
 import re
 import unittest
 
 try:
-   import unittest.mock as mock
+   from unittest import mock
 except ImportError:
    import mock
-
-from ..core.log import setupLogging
 
 patch = mock.patch
 
@@ -24,8 +18,3 @@ if not hasattr( unittest.TestCase, 'assertRegex' ):
    def assertNotRegex( self, string, regex, **kwargs ):
       self.assertIsNone( re.search( regex, string ), **kwargs )
    setattr( unittest.TestCase, 'assertNotRegex', assertNotRegex )
-
-_loggingInitialized = False
-if not _loggingInitialized:
-   setupLogging(verbosity='.*/DEBUG')
-   _loggingInitialized = True

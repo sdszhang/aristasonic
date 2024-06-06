@@ -4,6 +4,7 @@ import copy
 from .component import Priority
 from .component.slot import SlotComponent
 from .component.unmanaged import UnmanagedComponent
+from .dynload import importSubmodules
 from .log import getLogger
 from .utils import JsonStoredData, inSimulation
 
@@ -84,12 +85,130 @@ class PsuSlotImpl(PsuSlotInv):
                        self.psu)
       self.psu = PsuImpl(self, self.slot.model, psu)
 
-class PsuIdent():
+class PsuIdent:
    def __init__(self, partName=None, aristaName=None, airflow=None, metadata=None):
       self.partName = partName
       self.aristaName = aristaName
       self.airflow = airflow
       self.metadata = metadata
+
+class PsuModel:
+   MANUFACTURER = None
+   MANUFACTURER_ALIASES = []
+   IDENTIFIERS = []
+   IPMI_ADDR = 0x50
+   PMBUS_ADDR = None
+
+   DUAL_INPUT = False
+   CAPACITY = 0 # in Watts
+
+   PMBUS_CLS = None
+   DRIVER = None
+   DESCRIPTION = PsuDesc()
+
+   AUTODETECT_IPMI = False
+   AUTODETECT_PMBUS = True
+
+   def __init__(self, identifier):
+      self.identifier = identifier
+
+   def getProductName(self):
+      return self.identifier.aristaName
+
+   @classmethod
+   def isManufacturer(cls, name):
+      name = name.rstrip()
+      if name == cls.MANUFACTURER.lower():
+         return True
+      for alias in cls.MANUFACTURER_ALIASES:
+         if name == alias.lower():
+            return True
+      return False
+
+class PsuManager:
+   def __init__(self):
+      self.psus_ = []
+      self.modules = None
+      self.package = 'arista.components.psu'
+
+   def _loadModule(self, module):
+      for value in module.__dict__.values():
+         if isinstance(value, type) and issubclass(value, PsuModel) and \
+            value != PsuModel:
+            self.psus_.append(value)
+
+   def loadPsuModels(self):
+      if self.modules is not None:
+         return
+      self.modules = importSubmodules(self.package)
+      for name, module in self.modules.items():
+         if '/tests/' in name:
+            continue
+         self._loadModule(module)
+
+   @property
+   def psuModels(self):
+      if not self.psus_:
+         self.loadPsuModels()
+      return self.psus_
+
+   def psuForIdentifier(self, clsname, identifier):
+      for model in self.psuModels:
+         if model.__name__ == clsname:
+            return model(identifier)
+      return None
+
+   def identifyPsuModel(self, model, detector):
+      if not model.isManufacturer(detector.id().lower()):
+         return None
+
+      for ident in model.IDENTIFIERS:
+         if ident.partName.rstrip() == detector.model().rstrip():
+            ident = copy.deepcopy(ident)
+            ident.metadata = detector.getMetadata()
+            return ident
+
+      return None
+
+   def autodetectPmbusPsu(self, slot):
+      psus = []
+      detectors = {}
+      # try expected PSU models first
+      models = slot.psus + [p for p in self.psuModels if p not in slot.psus]
+      for model in models:
+         if not model.PMBUS_ADDR:
+            continue
+
+         try:
+            # cache pmbus detector to minimize IO operations
+            detector = detectors.get(model.PMBUS_ADDR)
+            detectorCached = True
+            if detector is None:
+               detector = PsuPmbusDetect(slot.addrFunc(model.PMBUS_ADDR))
+               detectorCached = False
+               detectors[model.PMBUS_ADDR] = detector
+
+            if not detector.exists():
+               # No PMBus device found at the address expected for this model
+               continue
+
+            if not detectorCached:
+               logging.debug('searching for psu vendor "%s" model "%s"',
+                             detector.id(), detector.model())
+
+            ident = self.identifyPsuModel(model, detector)
+            if ident is not None:
+               # TODO: add logging
+               logging.debug('found matching psu %s', model.__name__)
+               psus.append(model(ident))
+         except Exception as e: # pylint: disable=broad-except
+            logging.error('something happened while trying to detect the psu: %s', e)
+
+      return psus
+
+_manager = PsuManager()
+def getPsuManager():
+   return _manager
 
 class PsuSlot(SlotComponent):
 
@@ -108,7 +227,7 @@ class PsuSlot(SlotComponent):
       self.inputOkGpio = inputOkGpio
       self.outputOkGpio = outputOkGpio
       self.led = led
-      self.psus = psus
+      self.psus = psus or []
       self.forcePsuLoad = forcePsuLoad
 
       if self.addrFunc:
@@ -126,15 +245,7 @@ class PsuSlot(SlotComponent):
       return model(ident)
 
    def autodetectPsuModel(self):
-      psus = []
-      for psuCls in self.psus:
-         try:
-            psu = psuCls.tryLoadPsu(self)
-            if psu is not None:
-               psus.append(psu)
-         except Exception: # pylint: disable=broad-except
-            pass
-
+      psus = getPsuManager().autodetectPmbusPsu(self)
       if not psus:
          if self.forcePsuLoad:
             assert len(self.psus) == 1, "Forcing only works with one model"
@@ -168,11 +279,7 @@ class PsuSlot(SlotComponent):
 
       clsname = data['cls']
       identifier = PsuIdent(**data['identifier'])
-      for psuCls in self.psus:
-         if psuCls.__name__ == clsname:
-            return psuCls(identifier)
-
-      return None
+      return getPsuManager().psuForIdentifier(clsname, identifier)
 
    def logPsuInformation(self):
       logging.debug("PSU %d name: %s", self.slotId, self.model.identifier.aristaName)
@@ -220,6 +327,10 @@ class PsuSlot(SlotComponent):
       self.psu = psu
       self.components = self.components[:-1]
       return psu
+
+   def maybeLoadPsuDefinitions(self):
+      if self.psusLoaded:
+         return
 
    def load(self, useCache=True, cacheOnly=False):
       if not useCache:
@@ -277,74 +388,3 @@ class PsuSlot(SlotComponent):
          # has already been computed.
          self.psu.setup()
          self.psu.finish()
-
-class PsuModel():
-   MANUFACTURER = None
-   MANUFACTURER_ALIASES = []
-   IDENTIFIERS = []
-   IPMI_ADDR = 0x50
-   PMBUS_ADDR = None
-
-   DUAL_INPUT = False
-   CAPACITY = 0 # in Watts
-
-   PMBUS_CLS = None
-   DRIVER = None
-   DESCRIPTION = PsuDesc()
-
-   AUTODETECT_IPMI = True
-   AUTODETECT_PMBUS = True
-
-   def __init__(self, identifier):
-      self.identifier = identifier
-
-   def getProductName(self):
-      return self.identifier.aristaName
-
-   @classmethod
-   def isManufacturer(cls, name):
-      name = name.rstrip()
-      if name == cls.MANUFACTURER.lower():
-         return True
-      for alias in cls.MANUFACTURER_ALIASES:
-         if name == alias.lower():
-            return True
-      return False
-
-   @classmethod
-   def detectIpmi(cls, addr):
-      # TODO: Add ipmi detection
-      return None
-
-   @classmethod
-   def detectPmbus(cls, addr):
-      detector = PsuPmbusDetect(addr)
-      try:
-         logging.debug('testing model %s for %s : "%s"', cls.__name__,
-                       detector.id(), detector.model())
-         if not cls.isManufacturer(detector.id().lower()):
-            return None
-         for ident in cls.IDENTIFIERS:
-            if ident.partName.rstrip() == detector.model().rstrip():
-               ident = copy.deepcopy(ident)
-               ident.metadata = detector.getMetadata()
-               return ident
-      except Exception as e: # pylint: disable=broad-except
-         logging.error("something happened while trying to detect the psu: %s", e)
-      return None
-
-   @classmethod
-   def detectPsu(cls, addrFunc):
-      identifier = None
-      if cls.AUTODETECT_PMBUS and cls.PMBUS_ADDR:
-         identifier = cls.detectPmbus(addrFunc(cls.PMBUS_ADDR))
-      if cls.AUTODETECT_IPMI and cls.IPMI_ADDR and identifier is None:
-         identifier = cls.detectIpmi(addrFunc(cls.IPMI_ADDR))
-      return identifier
-
-   @classmethod
-   def tryLoadPsu(cls, slot, *args, **kwargs):
-      identifier = cls.detectPsu(slot.addrFunc)
-      if identifier is None:
-         return None
-      return cls(identifier, *args, **kwargs)

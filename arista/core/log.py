@@ -282,6 +282,9 @@ def getLoggerManager():
 def setupLogging(verbosity=None, logfile=None, logfileVerbosity=None,
                  syslog=False, syslogVerbosity=None, color=False):
    lm = getLoggerManager()
+   if lm.sinks:
+      return
+
    lm.initCliLogging(parseVerbosity(verbosity), color=color)
    if logfile:
       lm.initFileLogging(logfile, parseVerbosity(logfileVerbosity))

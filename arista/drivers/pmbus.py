@@ -20,6 +20,7 @@ class PsuPmbusDetect(I2cDevDriver):
    def __init__(self, addr):
       super(PsuPmbusDetect, self).__init__(name='pmbus-detect', addr=addr)
       self.addr = addr
+      self.exists_ = None
       self.id_ = None
       self.model_ = None
       self.revision_ = None
@@ -30,11 +31,18 @@ class PsuPmbusDetect(I2cDevDriver):
       self._prepare()
 
    def _prepare(self):
+      if not self.exists():
+         return
       try:
          # init device on page 0
          self.write_byte_data(0x00, 0x00)
       except Exception: # pylint: disable=broad-except
          pass
+
+   def exists(self):
+      if self.exists_ is None:
+         self.exists_ = self.smbusPing()
+      return self.exists_
 
    def id(self):
       if self.id_ is None:
@@ -95,7 +103,7 @@ class PmbusKernelDriver(I2cKernelDriver):
    def getInputOkGpio(self):
       def _isGood(value=None):
          try:
-            with open(self.getHwmonEntry('power1_input')) as f:
+            with open(self.getHwmonEntry('power1_input'), encoding='utf8') as f:
                return 1 if int(f.read()) else 0
          except Exception: # pylint: disable=broad-except
             return 0
@@ -104,7 +112,7 @@ class PmbusKernelDriver(I2cKernelDriver):
    def getOutputOkGpio(self, name=''):
       def _isGood(value=None):
          try:
-            with open(self.getHwmonEntry('power2_input')) as f:
+            with open(self.getHwmonEntry('power2_input'), encoding='utf8') as f:
                return 1 if int(f.read()) else 0
          except Exception: # pylint: disable=broad-except
             return 0

@@ -1,19 +1,6 @@
 
-from __future__ import absolute_import, division, print_function
-
-from collections import namedtuple
 import importlib
 import pkgutil
-import sys
-
-ModuleInfo = namedtuple('ModuleInfo', 'module_finder name ispkg')
-
-def iter_modules2(path=None, prefix=''):
-   """Starting from python3.6 iter_modules returns a the above namedtuple"""
-   for module_loader, name, ispkg in pkgutil.iter_modules(path, prefix):
-      yield ModuleInfo(module_loader, name, ispkg)
-
-iter_modules = iter_modules2 if sys.version_info < (3, 6) else pkgutil.iter_modules
 
 def walk_packages(path=None, prefix='', onerror=None):
    """Implementation from https://github.com/python/cpython/pull/11956"""
@@ -23,7 +10,7 @@ def walk_packages(path=None, prefix='', onerror=None):
       m[p] = True
       return False
 
-   for info in iter_modules(path, prefix):
+   for info in pkgutil.iter_modules(path, prefix):
       yield info
 
       if info.ispkg:
@@ -46,8 +33,7 @@ def walk_packages(path=None, prefix='', onerror=None):
             # don't traverse path items we've seen before
             path = [p for p in path if not seen(p)]
 
-            for item in walk_packages(path, info.name+'.', onerror):
-               yield item
+            yield from walk_packages(path, info.name + '.', onerror)
 
 def importSubmodules(package, prefix=None, recursive=True):
    if isinstance(package, str):

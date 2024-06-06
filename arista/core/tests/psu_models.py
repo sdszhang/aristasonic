@@ -1,26 +1,14 @@
 
-from ....core.dynload import importSubmodules
-from ....core.log import getLogger
-from ....core.psu import PsuModel, PsuIdent
+from ..log import getLogger
+from ..psu import PsuIdent, getPsuManager
 
-from ....descs.psu import PsuDesc
+from ...descs.psu import PsuDesc
 
-from ....tests.testing import unittest
+from ...tests.testing import unittest
 
 logging = getLogger(__name__)
 
 class PsuModelTest(unittest.TestCase):
-   def _getAllPsuModels(self, pkg):
-      modules = importSubmodules(pkg)
-      models = []
-      for name, module in modules.items():
-         if '/tests/' in name:
-            continue
-         for value in module.__dict__.values():
-            if isinstance(value, type) and issubclass(value, PsuModel) and \
-               value != PsuModel:
-               models.append(value)
-      return models
 
    def assertValidI2cAddr(self, addr):
       self.assertGreater(addr, 3)
@@ -52,7 +40,8 @@ class PsuModelTest(unittest.TestCase):
       self.assertIsInstance(model.DESCRIPTION, PsuDesc)
 
    def testPsuModels(self):
-      models = self._getAllPsuModels('arista.components.psu')
+      models = getPsuManager().psuModels
+      self.assertTrue(models)
       for model in models:
          self._testPsuModel(model)
 
