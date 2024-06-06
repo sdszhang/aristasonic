@@ -12,6 +12,11 @@ class PsuPmbusDetect(I2cDevDriver):
    MFR_DATE = 0x9d
    MFR_SERIAL = 0x9e
 
+   VENDOR_MFR_ID = 0xc9
+   VENDOR_MFR_MODEL = 0xca
+   VENDOR_MFR_REVISION = 0xcb
+   ARISTA_MFR_SKU = 0xcc
+
    UNKNOWN_METADATA = {
       key : 'N/A'
       for key in ['id', 'model', 'revision', 'location', 'date', 'serial']
@@ -44,6 +49,12 @@ class PsuPmbusDetect(I2cDevDriver):
          self.exists_ = self.smbusPing()
       return self.exists_
 
+   def _tryReadBlockStr(self, reg, default='N/A'):
+      try:
+         return self.read_block_data_str(reg)
+      except IOError:
+         return default
+
    def id(self):
       if self.id_ is None:
          self.id_ = self.read_block_data_str(self.MFR_ID)
@@ -56,37 +67,25 @@ class PsuPmbusDetect(I2cDevDriver):
 
    def revision(self):
       if self.revision_ is None:
-         try:
-            self.revision_ = self.read_block_data_str(self.MFR_REVISION)
-         except IOError:
-            self.revision_ = "N/A"
+         self.revision_ = self._tryReadBlockStr(self.MFR_REVISION)
       return self.revision_
 
    def location(self):
       if self.location_ is None:
-         try:
-            self.location_ = self.read_block_data_str(self.MFR_LOCATION)
-         except IOError:
-            self.location_ = "N/A"
+         self.location_ = self._tryReadBlockStr(self.MFR_LOCATION)
       return self.location_
 
    def date(self):
       if self.date_ is None:
-         try:
-            self.date_ = self.read_block_data_str(self.MFR_DATE)
-         except IOError:
-            self.date_ = "N/A"
+         self.date_ = self._tryReadBlockStr(self.MFR_DATE)
       return self.date_
 
    def serial(self):
       if self.serial_ is None:
-         try:
-            self.serial_ = self.read_block_data_str(self.MFR_SERIAL)
-         except IOError:
-            self.serial_ = "N/A"
+         self.serial_ = self._tryReadBlockStr(self.MFR_SERIAL)
       return self.serial_
 
-   def getMetadata(self):
+   def getMfrMetadata(self):
       return {
          'id': self.id(),
          'model': self.model(),
@@ -95,6 +94,20 @@ class PsuPmbusDetect(I2cDevDriver):
          'date': self.date(),
          'serial': self.serial(),
       }
+
+   def getAristaMetadata(self):
+      return {
+         'mfr_id': self._tryReadBlockStr(self.VENDOR_MFR_ID),
+         'mfr_model': self._tryReadBlockStr(self.VENDOR_MFR_MODEL),
+         'mfr_revision': self._tryReadBlockStr(self.VENDOR_MFR_REVISION),
+         'sku': self._tryReadBlockStr(self.ARISTA_MFR_SKU, None),
+      }
+
+   def getMetadata(self):
+      data = self.getMfrMetadata()
+      if data['id'] == 'Arista':
+         data['arista'] = self.getAristaMetadata()
+      return data
 
 class PmbusKernelDriver(I2cKernelDriver):
    MODULE = 'pmbus'
