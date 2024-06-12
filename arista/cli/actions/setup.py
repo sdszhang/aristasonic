@@ -36,10 +36,11 @@ def setupXcvrs(platform):
       except NotImplementedError:
          pass
       xcvrSlot.setTxDisable(False)
-      try:
-         xcvrSlot.setLowPowerMode(False)
-      except NotImplementedError:
-         pass
+      if Config().xcvr_lpmode_out:
+         try:
+            xcvrSlot.setLowPowerMode(False)
+         except NotImplementedError:
+            pass
 
 @registerAction(setupParser)
 def doSetup(ctx, args):
