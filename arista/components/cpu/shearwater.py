@@ -2,8 +2,7 @@
 from ...core.register import Register, RegBitField
 
 from ..cpld import SysCpld, SysCpldCommonRegisters
-
-from .lorikeet import LorikeetPrimeScdReloadCauseRegisters
+from ..scd import ScdReloadCauseRegisters
 
 class ShearwaterSysCpldRegisters(SysCpldCommonRegisters):
    PWR_CTRL_STS = Register(0x05,
@@ -29,5 +28,5 @@ class ShearwaterSysCpldRegisters(SysCpldCommonRegisters):
 class ShearwaterSysCpld(SysCpld):
    REGISTER_CLS = ShearwaterSysCpldRegisters
 
-class ShearwaterReloadCauseRegisters(LorikeetPrimeScdReloadCauseRegisters):
+class ShearwaterReloadCauseRegisters(ScdReloadCauseRegisters):
    pass

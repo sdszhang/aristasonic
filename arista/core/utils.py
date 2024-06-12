@@ -174,6 +174,12 @@ def sysfsFmtStr(x):
 def incrange(start, stop):
    return list(range(start, stop + 1))
 
+def incranges(*ranges):
+   items = []
+   for start, stop in ranges:
+      items.extend(incrange(start, stop))
+   return items
+
 def flatten(nestedList):
    return [val for sublist in nestedList for val in sublist]
 
