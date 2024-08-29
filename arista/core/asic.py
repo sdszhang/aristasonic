@@ -96,6 +96,7 @@ class SwitchChip(PciComponent):
    def _resetOut(self, wait=True):
       if self.isOutOfReset():
          logging.debug('%s: already out of reset', self)
+         self.applyQuirks()
          return
 
       logging.debug('%s: taking core out of reset', self)

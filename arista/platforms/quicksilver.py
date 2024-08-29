@@ -130,7 +130,7 @@ class QuicksilverBase(FixedSystem):
          )
 
       port = self.cpu.getPciPort(0)
-      port.newComponent(Tomahawk5, addr=port.addr,
+      self.asic = port.newComponent(Tomahawk5, addr=port.addr,
          coreResets=[
             scd.inventory.getReset('switch_chip_reset'),
          ],
