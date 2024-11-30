@@ -156,6 +156,7 @@ class SysfsEntryCustomLed(SysfsEntryIntLed):
          1 : LedColor.GREEN,
          2 : LedColor.RED,
          3 : LedColor.AMBER,
+         4 : LedColor.BLUE,
       }
       self.color2value = { v : k for k, v in self.value2color.items() }
       super(SysfsEntryCustomLed, self).__init__(parent, name)
