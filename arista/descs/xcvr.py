@@ -47,3 +47,6 @@ class QsfpDD(Qsfp56):
 class Osfp(Xcvr):
    LANES = 8
    SPEED = 50000
+
+class Osfp800(Osfp):
+   SPEED = 100000
