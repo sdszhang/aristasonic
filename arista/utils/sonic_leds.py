@@ -64,6 +64,8 @@ class LedControlSysfs(LedControlCommon):
    def _setIntfColor(self, port, idx, color):
       color = color + 10 if self.tricolor else color
       portList = self.portSysfsMapping[port.portNum]
+      if not portList:
+         return
       offset = port.offset
       if len(portList) == 1:
          # Some ports have only has one led
