@@ -26,3 +26,4 @@ obj-m += rook-fan-cpld.o
 obj-m += tmp468.o
 obj-m += amax31790.o
 obj-m += pali-fan-cpld.o
+obj-m += minke-fan-cpld.o
