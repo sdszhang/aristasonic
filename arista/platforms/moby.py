@@ -11,6 +11,7 @@ from ..components.cpld import SysCpldReloadCauseRegistersV2, SysCpldCause
 from ..components.max6581 import Max6581
 from ..components.minke import Minke
 from ..components.scd import Scd
+from ..components.lm75 import Tmp75
 from ..components.xcvr import CmisEeprom
 
 from ..descs.reset import ResetDesc
@@ -148,6 +149,11 @@ class Moby(FixedSystem):
       self.pscd = pscd
 
       pscd.addSmbusMasterRange(0x8000, 18, 0x80, 1)
+
+      pscd.newComponent(Tmp75, addr=pscd.i2cAddr(0, 0x4a), sensors=[
+         SensorDesc(diode=0, name='Port Card', position=Position.OTHER,
+            target=65, overheat=80, critical=95),
+      ])
 
       pintrRegs = [
          scd.createInterrupt(addr=0x3000, num=0),
