@@ -92,8 +92,7 @@ class EthernetSlotImpl(EthernetSlotInv):
       return self.slot.getName()
 
    def getPresence(self):
-      # Currently not supported
-      return False
+      return self.slot.getPresence()
 
    def getLeds(self):
       return self.slot.leds
@@ -346,6 +345,10 @@ class EthernetSlot(XcvrSlot):
          cls=Ethernet,
          portName=self.name
       )
+
+   def getPresence(self):
+      # Currently not supported
+      return False
 
 class SfpSlot(XcvrSlot):
    def __init__(self, rxLosGpio=None, txDisableGpio=None, txFaultGpio=None,

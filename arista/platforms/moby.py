@@ -35,6 +35,10 @@ class PaladinConnector(XcvrSlot):
       self.xcvr = eeprom
       self.leds = []
 
+   def getPresence(self):
+      # TODO: use presencGpio in the future
+      return True
+
 class PaladinHd(XcvrDesc):
    LANES = 48
    SPEED = 100
