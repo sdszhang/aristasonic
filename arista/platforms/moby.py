@@ -172,7 +172,7 @@ class Moby(FixedSystem):
       pscd.addXcvrSlots(
          ports=self.PORTS.getQsfps(),
          addr=0xA100,
-         bus=17,
+         bus=18,
          ledAddr=0x6200,
          ledAddrOffsetFn=lambda x: 0x10,
          intrRegs=pintrRegs,
