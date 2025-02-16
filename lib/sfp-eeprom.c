@@ -66,6 +66,7 @@ struct i2c_bus {
 #define SFP(...) (struct xcvr_info){ .addr = 0x50, ##__VA_ARGS__ }
 #define QSFP(...) (struct xcvr_info){ .addr = 0x50, ##__VA_ARGS__ }
 #define OSFP(...) (struct xcvr_info){ .addr = 0x50, ##__VA_ARGS__ }
+#define BACKPLANE(...) (struct xcvr_info){ .addr = 0x50, ##__VA_ARGS__ }
 #define PLATFORM(_name, _xcvrs) { \
    .name = _name, \
    .xcvrs = _xcvrs, \

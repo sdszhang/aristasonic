@@ -16,6 +16,7 @@ from .component.slot import SlotComponent
 class EthernetImpl(EthernetInv):
    def __init__(self, slot):
       self.slot = slot
+      self.addr = None
 
    def getType(self):
       return "ethernet"
@@ -27,7 +28,7 @@ class EthernetImpl(EthernetInv):
       return self.slot.getName()
 
    def getI2cAddr(self):
-      return None
+      return self.addr
 
 class SfpImpl(SfpInv):
    def __init__(self, addrFunc, slot):
@@ -91,8 +92,7 @@ class EthernetSlotImpl(EthernetSlotInv):
       return self.slot.getName()
 
    def getPresence(self):
-      # Currently not supported
-      return False
+      return self.slot.getPresence()
 
    def getLeds(self):
       return self.slot.leds
@@ -345,6 +345,10 @@ class EthernetSlot(XcvrSlot):
          cls=Ethernet,
          portName=self.name
       )
+
+   def getPresence(self):
+      # Currently not supported
+      return False
 
 class SfpSlot(XcvrSlot):
    def __init__(self, rxLosGpio=None, txDisableGpio=None, txFaultGpio=None,

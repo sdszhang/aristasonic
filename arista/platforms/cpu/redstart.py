@@ -59,6 +59,7 @@ class RedstartCpu(Cpu):
       device, func = {
          0: (0x1, 2),
          2: (0x2, 5),
+         3: (0x2, 3),
       }[num]
       bridge = self.pciRoot.pciBridge(device=device, func=func)
       return bridge.downstreamPort(port=0)

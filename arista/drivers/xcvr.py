@@ -36,6 +36,9 @@ class XcvrKernelDriver(I2cKernelDriver):
       with open(writeMaxPath) as f:
          return int(f.read())
 
+class CmisEepromKernelDriver(XcvrKernelDriver):
+   NAME = 'optoe3'
+
 class SfpKernelDriver(XcvrKernelDriver):
    NAME = 'optoe2'
 
